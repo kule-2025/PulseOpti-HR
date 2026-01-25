@@ -1,0 +1,170 @@
+# ========================================
+# PulseOpti HR 脉策聚效 - 环境变量配置
+# 包含用户端和超管端完整配置
+# ========================================
+
+# ========================================
+# 数据库配置（Neon PostgreSQL）
+# ========================================
+DATABASE_URL=postgresql://neondb_owner:npg_vWZaXz1Ai4jp@ep-dry-sunset-ah7xpibr-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require
+
+# ========================================
+# JWT认证配置
+# ========================================
+# JWT密钥（已为您生成安全的随机密钥）
+JWT_SECRET=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1
+JWT_EXPIRES_IN=7d
+
+# ========================================
+# 应用配置
+# ========================================
+# 本地开发环境
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NODE_ENV=development
+
+# 生产环境配置（使用自定义域名）
+# NEXT_PUBLIC_APP_URL=https://www.aizhixuan.com.cn
+# NODE_ENV=production
+
+# ========================================
+# 邮件服务配置（QQ邮箱SMTP）
+# ========================================
+SMTP_HOST=smtp.qq.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=208343256@qq.com
+SMTP_PASSWORD=xxwbcxaojrqwbjia
+SMTP_FROM=PulseOpti HR <208343256@qq.com>
+SMTP_NAME=PulseOpti HR 脉策聚效
+
+# 功能开关
+EMAIL_PROVIDER=smtp
+ENABLE_EMAIL_SERVICE=true
+
+# ========================================
+# 短信服务配置（Mock模式 - 开发环境，0成本）
+# ========================================
+SMS_PROVIDER=mock
+ENABLE_SMS_SERVICE=true
+
+# ========================================
+# AI集成配置（豆包大语言模型）
+# ========================================
+COZE_API_KEY=a915ab35-9534-43ad-b925-d9102c5007ba
+
+# ========================================
+# 对象存储配置（可选）
+# ========================================
+# AWS S3或兼容服务
+# S3_ACCESS_KEY_ID=your-access-key-id
+# S3_SECRET_ACCESS_KEY=your-secret-access-key
+# S3_REGION=us-east-1
+# S3_BUCKET=your-bucket-name
+# S3_ENDPOINT=https://s3.amazonaws.com
+
+# ========================================
+# 支付服务配置（可选）
+# ========================================
+# 微信支付
+# WECHAT_PAY_APP_ID=wx1234567890abcdef
+# WECHAT_PAY_MCH_ID=1234567890
+# WECHAT_PAY_API_KEY=your-wechat-api-key-32chars
+# WECHAT_PAY_API_V3_KEY=your-wechat-api-v3-key-32chars
+# WECHAT_PAY_SERIAL_NO=your-wechat-serial-no
+
+# 支付宝
+# ALIPAY_APP_ID=2021001234567890
+# ALIPAY_PRIVATE_KEY=your-alipay-private-key
+# ALIPAY_PUBLIC_KEY=your-alipay-public-key
+# ALIPAY_GATEWAY=https://openapi.alipay.com/gateway.do
+
+# ========================================
+# 日志级别配置
+# ========================================
+LOG_LEVEL=info
+
+# ========================================
+# 超管端功能开关
+# ========================================
+# 启用子账号管理功能
+ENABLE_SUB_ACCOUNT_MANAGEMENT=true
+
+# 启用工作流管理功能
+ENABLE_WORKFLOW_MANAGEMENT=true
+
+# 启用审计日志功能
+ENABLE_AUDIT_LOG=true
+
+# 启用系统监控功能
+ENABLE_SYSTEM_MONITOR=true
+
+# ========================================
+# 审计日志配置
+# ========================================
+# 审计日志级别（minimal, standard, full）
+AUDIT_LOG_LEVEL=full
+
+# 审计日志保留天数
+AUDIT_LOG_RETENTION_DAYS=90
+
+# 是否记录敏感操作
+AUDIT_LOG_SENSITIVE_OPERATIONS=true
+
+# ========================================
+# 安全策略配置
+# ========================================
+# 超管密码复杂度要求
+SUPER_ADMIN_PASSWORD_MIN_LENGTH=12
+SUPER_ADMIN_PASSWORD_REQUIRE_UPPERCASE=true
+SUPER_ADMIN_PASSWORD_REQUIRE_LOWERCASE=true
+SUPER_ADMIN_PASSWORD_REQUIRE_NUMBERS=true
+SUPER_ADMIN_PASSWORD_REQUIRE_SYMBOLS=true
+
+# 超管会话超时时间（分钟）
+SUPER_ADMIN_SESSION_TIMEOUT_MINUTES=60
+
+# 超管MFA（多因素认证）开关
+ENABLE_SUPER_ADMIN_MFA=false
+
+# 超管IP白名单（多个IP用逗号分隔，留空则不限制）
+SUPER_ADMIN_IP_WHITELIST=
+
+# 超管登录失败锁定阈值
+SUPER_ADMIN_LOGIN_FAILURE_THRESHOLD=5
+
+# 超管登录失败锁定时间（分钟）
+SUPER_ADMIN_LOGIN_FAILURE_LOCK_MINUTES=30
+
+# ========================================
+# 子账号默认配置
+# ========================================
+# 子账号默认角色（admin, manager, employee）
+SUB_ACCOUNT_DEFAULT_ROLE=admin
+
+# 子账号默认密码复杂度要求
+SUB_ACCOUNT_PASSWORD_MIN_LENGTH=8
+
+# 子账号是否需要MFA认证
+SUB_ACCOUNT_REQUIRE_MFA=false
+
+# 子账号是否继承超管权限
+SUB_ACCOUNT_INHERIT_SUPER_ADMIN_PERMISSIONS=false
+
+# ========================================
+# 超管端通知配置
+# ========================================
+# 超管操作通知邮箱（多个邮箱用逗号分隔）
+SUPER_ADMIN_NOTIFICATION_EMAILS=208343256@qq.com
+
+# 是否启用超管操作实时通知
+ENABLE_SUPER_ADMIN_REALTIME_NOTIFICATION=true
+
+# 通知类型（逗号分隔）
+# sub_account_created: 子账号创建
+# sub_account_deleted: 子账号删除
+# password_reset: 密码重置
+# login_failure: 登录失败
+SUPER_ADMIN_NOTIFICATION_TYPES=sub_account_created,sub_account_deleted,password_reset,login_failure
+
+# 通知频率限制（分钟）
+SUPER_ADMIN_NOTIFICATION_RATE_LIMIT_MINUTES=5

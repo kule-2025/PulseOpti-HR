@@ -1,0 +1,43 @@
+{
+  "buildCommand": "pnpm build",
+  "outputDirectory": ".next",
+  "devCommand": "pnpm dev",
+  "installCommand": "pnpm install",
+  "framework": "nextjs",
+  "env": {
+    "DATABASE_URL": "@database-url",
+    "COZE_BUCKET_ENDPOINT_URL": "@coze-bucket-endpoint-url",
+    "COZE_BUCKET_NAME": "@coze-bucket-name",
+    "COZE_WORKLOAD_IDENTITY_API_KEY": "@coze-workload-identity-api-key"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_API_URL": "https://pulseopti-hr.vercel.app"
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    }
+  ]
+}

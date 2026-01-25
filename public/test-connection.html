@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulseOpti HR 连接测试</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #2563EB;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .status {
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 2px solid #10b981;
+    }
+    .info {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 2px solid #3b82f6;
+    }
+    .section {
+      margin-bottom: 20px;
+    }
+    h2 {
+      color: #1e293b;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+    ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    li {
+      padding: 10px;
+      margin-bottom: 8px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border-left: 4px solid #3b82f6;
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+      margin: 5px;
+      transition: transform 0.2s;
+    }
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(37,99,235,0.4);
+    }
+    .note {
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎉 PulseOpti HR 连接测试成功！</h1>
+
+    <div class="status success">
+      ✓ 服务器运行正常，HTTP 200 OK
+    </div>
+
+    <div class="status info">
+      当前访问地址：<br>
+      <code id="current-url" style="font-size: 16px; font-weight: bold;"></code>
+    </div>
+
+    <div class="section">
+      <h2>📋 如果无法访问主页面，请尝试以下方法：</h2>
+      <ul>
+        <li><strong>1. 使用正确的协议</strong>：确保使用 <code>http://</code> 而不是 <code>https://</code></li>
+        <li><strong>2. 清除浏览器缓存</strong>：按 Ctrl+Shift+Delete (Windows) 或 Cmd+Shift+Delete (Mac)</li>
+        <li><strong>3. 尝试无痕模式</strong>：Ctrl+Shift+N (Chrome) 或 Cmd+Shift+N (Safari)</li>
+        <li><strong>4. 检查防火墙设置</strong>：确保防火墙没有阻止 5000 端口</li>
+        <li><strong>5. 尝试其他浏览器</strong>：Chrome、Firefox、Edge 等</li>
+        <li><strong>6. 重启浏览器</strong>：完全关闭浏览器后重新打开</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>🔗 推荐的访问地址：</h2>
+      <div style="text-align: center;">
+        <a href="http://localhost:5000" class="button">localhost:5000</a>
+        <a href="http://127.0.0.1:5000" class="button">127.0.0.1:5000</a>
+        <a href="http://192.168.0.250:5000" class="button">192.168.0.250:5000</a>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>💡 注意：</strong>如果以上方法都不行，请尝试：<br>
+      • 关闭代理或VPN<br>
+      • 检查浏览器是否有扩展程序干扰<br>
+      • 尝试使用手机热点网络
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('current-url').textContent = window.location.href;
+  </script>
+</body>
+</html>

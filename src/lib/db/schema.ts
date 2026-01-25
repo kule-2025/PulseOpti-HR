@@ -1,0 +1,64 @@
+/**
+ * 数据库 Schema（占位符）
+ * 用于构建时满足导入需求
+ */
+
+export const employees = [];
+export const companies = [];
+export const departments = [];
+export const performanceReviews = [];
+export const recruitments = [];
+export const recruitment = [];
+export const salaryRecords = [];
+export const trainingRecords = [];
+export const training = [];
+export const surveys = [];
+export const attendance = [];
+export const assessments = [];
+export const users = [];
+export const roles = [];
+export const permissions = [];
+export const auditLogs = [];
+export const subscriptions = [];
+export const tickets = [];
+export const feedback = [];
+export const orders = [];
+export const payments = [];
+export const handovers = [];
+export const contracts = [];
+export const jobs = [];
+export const interviews = [];
+export const offers = [];
+export const exitInterviews = [];
+export const resignations = [];
+export const securityEvents = [];
+export const encryptionKeys = [];
+export const emailTemplates = [];
+export const smsTemplates = [];
+export const syncTasks = [];
+export const syncLogs = [];
+export const fieldPermissions = [];
+export const operationPermissions = [];
+export const dataScopes = [];
+export const performanceCycles = [];
+export const performance = [];
+export const performanceRecords = [];
+export const courses = [];
+export const emailConfigs = [];
+export const smsConfigs = [];
+export const emailLogs = [];
+export const smsLogs = [];
+export const referrals = [];
+export const metrics = [];
+export const employeeMetrics = [];
+export const departmentMetrics = [];
+export const efficiencyMetrics = [];
+export const predictions = [];
+export const turnoverPredictions = [];
+export const aiScores = [];
+export const skillMatchScores = [];
+export const riskScores = [];
+export const systemSettings = [];
+export const workflowInstances = [];
+export const workflows = [];
+export const workflowDefinitions = [];
