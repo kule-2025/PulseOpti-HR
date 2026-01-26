@@ -197,6 +197,185 @@ export function useInfiniteScroll<T>(
 }
 
 /**
+ * 数据获取 Hook
+ */
+export function useFetch<T>(
+  url: string,
+  options: {
+    fallback?: T;
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+    body?: any;
+    headers?: HeadersInit;
+  } = {}
+) {
+  const [data, setData] = useState<T | null>(options.fallback ?? null);
+  const [loading, setLoading] = useState(!options.fallback);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (options.fallback) {
+      setLoading(false);
+      setData(options.fallback);
+      return;
+    }
+
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(url, {
+          method: options.method || 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            ...options.headers,
+          },
+          body: options.body ? JSON.stringify(options.body) : undefined,
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        setData(result.data || result);
+      } catch (err) {
+        setError(err as Error);
+        console.error('Fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [url]);
+
+  return { data, loading, error };
+}
+
+/**
+ * 多数据获取 Hook
+ */
+export function useFetchMultiple<T extends Record<string, any>>(
+  requests: Record<keyof T, string>
+) {
+  const [data, setData] = useState<Partial<T>>({});
+  const [loading, setLoading] = useState(true);
+  const [errors, setErrors] = useState<Record<keyof T, Error | null>>({} as any);
+
+  useEffect(() => {
+    const fetchAll = async () => {
+      setLoading(true);
+      const results: Partial<T> = {};
+      const errorResults: Record<keyof T, Error | null> = {} as any;
+
+      await Promise.all(
+        Object.entries(requests).map(async ([key, url]) => {
+          try {
+            const response = await fetch(url);
+            const result = await response.json();
+            results[key as keyof T] = result.data || result;
+            errorResults[key as keyof T] = null;
+          } catch (err) {
+            errorResults[key as keyof T] = err as Error;
+          }
+        })
+      );
+
+      setData(results);
+      setErrors(errorResults);
+      setLoading(false);
+    };
+
+    fetchAll();
+  }, [requests]);
+
+  return { data, loading, errors };
+}
+
+/**
+ * 带依赖的数据获取 Hook
+ */
+export function useFetchWithDeps<T>(
+  url: string,
+  deps: any[],
+  options?: {
+    enabled?: boolean;
+    onSuccess?: (data: T) => void;
+  }
+) {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (options?.enabled === false) return;
+
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(url);
+        const result = await response.json();
+        const responseData = result.data || result;
+        setData(responseData);
+        options?.onSuccess?.(responseData);
+      } catch (err) {
+        setError(err as Error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, deps);
+
+  return { data, loading, error };
+}
+
+/**
+ * 轮询 Hook
+ */
+export function usePolling<T>(
+  url: string,
+  interval: number,
+  options: {
+    enabled?: boolean;
+    onSuccess?: (data: T) => void;
+  } = {}
+) {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (options.enabled === false) return;
+
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(url);
+        const result = await response.json();
+        const responseData = result.data || result;
+        setData(responseData);
+        options?.onSuccess?.(responseData);
+      } catch (err) {
+        setError(err as Error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+    const intervalId = setInterval(fetchData, interval);
+
+    return () => clearInterval(intervalId);
+  }, [url, interval, options.enabled]);
+
+  return { data, loading, error };
+}
+
+/**
  * 可见性 Hook
  */
 export function useOnScreen(ref: React.RefObject<Element>, rootMargin = '0px') {

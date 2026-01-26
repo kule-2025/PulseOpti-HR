@@ -1,224 +1,169 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  createLeaveRequest,
-  getLeaveRequests,
-  approveLeaveRequest,
-} from '@/storage/database/attendanceManager';
-import { requireAuth, requireAnyPermission } from '@/lib/auth/middleware';
-import { PERMISSIONS } from '@/lib/auth/permissions';
-import { auditLogManager } from '@/storage/database/auditLogManager';
-import { attendanceWorkflowManager } from '@/storage/database/attendanceWorkflowManager';
-import { z } from 'zod';
 
-// 创建请假申请Schema
-const createLeaveRequestSchema = z.object({
-  companyId: z.string(),
-  employeeId: z.string(),
-  departmentId: z.string().optional(),
-  leaveType: z.enum(['annual', 'sick', 'personal', 'marriage', 'bereavement', 'maternity', 'paternity']),
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
-  days: z.number().positive(),
-  reason: z.string().min(1, '请假原因不能为空'),
-  attachments: z.array(z.any()).optional(),
+// 模拟请假数据
+const mockLeaveRequests = Array.from({ length: 20 }, (_, i) => {
+  const types = ['年假', '病假', '事假', '调休'];
+  const statuses = ['待审批', '已通过', '已拒绝'];
+  const status = statuses[i % statuses.length];
+
+  return {
+    id: `leave-${i + 1}`,
+    employeeId: `emp-${i + 1}`,
+    employeeName: `员工${i + 1}`,
+    department: ['技术部', '产品部', '市场部', '人事部'][i % 4],
+    type: types[i % types.length],
+    startDate: `2024-03-${String((i % 20) + 1).padStart(2, '0')}`,
+    endDate: `2024-03-${String(((i % 20) + 1)).padStart(2, '0')}`,
+    days: 1,
+    reason: '个人原因',
+    status,
+    applyDate: `2024-03-${String(i % 25 + 1).padStart(2, '0')}`,
+    approver: status !== '待审批' ? '张经理' : null,
+    approveDate: status !== '待审批' ? `2024-03-${String(i % 25 + 2).padStart(2, '0')}` : null,
+    avatar: null,
+  };
 });
 
-const startWorkflowSchema = z.object({
-  leaveRequestId: z.string(),
-  customSteps: z.array(z.object({
-    id: z.string().optional(),
-    name: z.string(),
-    description: z.string().optional(),
-    type: z.enum(['task', 'approval', 'condition']),
-    assigneeId: z.string().optional(),
-    assigneeRole: z.string().optional(),
-  })).optional(),
-});
-
-/**
- * GET /api/attendance/leave
- * 获取请假申请列表（包含工作流信息）
- */
 export async function GET(request: NextRequest) {
-  const authResult = await requireAuth(request);
-  if (authResult instanceof NextResponse) return authResult;
-
-  const user = authResult as any;
-
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const companyId = searchParams.get('companyId');
-    const employeeId = searchParams.get('employeeId');
-    const departmentId = searchParams.get('departmentId');
+    const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
-    const dateFrom = searchParams.get('dateFrom');
-    const dateTo = searchParams.get('dateTo');
+    const type = searchParams.get('type');
+    const department = searchParams.get('department');
+    const search = searchParams.get('search');
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const limit = parseInt(searchParams.get('limit') || '10');
 
-    const targetCompanyId = companyId || user.companyId;
+    // 筛选数据
+    let filteredRequests = mockLeaveRequests;
 
-    const leaveRequests = await getLeaveRequests({
-      companyId: targetCompanyId,
-      employeeId: employeeId || undefined,
-      departmentId: departmentId || undefined,
-      status: status || undefined,
-      dateFrom: dateFrom || undefined,
-      dateTo: dateTo || undefined,
-      offset: (page - 1) * limit,
-      limit,
-    });
+    if (status && status !== 'all') {
+      filteredRequests = filteredRequests.filter(r => r.status === status);
+    }
 
-    // 获取每个请假申请的工作流实例
-    const leaveRequestsWithWorkflow = await Promise.all(
-      leaveRequests.map(async (request) => {
-        const workflow = await attendanceWorkflowManager.getLeaveWorkflow(request.id);
-        return {
-          ...request,
-          workflowInstanceId: workflow?.id,
-          workflowStatus: workflow?.status,
-          currentStep: workflow?.steps ? (workflow.steps as any[])[(workflow as any).currentStepIndex] : undefined,
-        };
-      })
-    );
+    if (type) {
+      filteredRequests = filteredRequests.filter(r => r.type === type);
+    }
+
+    if (department) {
+      filteredRequests = filteredRequests.filter(r => r.department === department);
+    }
+
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filteredRequests = filteredRequests.filter(
+        r =>
+          r.employeeName.toLowerCase().includes(searchLower) ||
+          r.department.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // 分页
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedRequests = filteredRequests.slice(startIndex, endIndex);
+
+    // 模拟延迟
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     return NextResponse.json({
       success: true,
-      data: leaveRequestsWithWorkflow,
-      pagination: {
-        page,
-        limit,
-        total: leaveRequestsWithWorkflow.length,
-      },
+      data: paginatedRequests,
+      total: filteredRequests.length,
+      page,
+      limit,
+      totalPages: Math.ceil(filteredRequests.length / limit),
     });
   } catch (error) {
-    console.error('获取请假申请错误:', error);
+    console.error('Error fetching leave requests:', error);
     return NextResponse.json(
-      { error: '获取请假申请失败' },
+      { success: false, error: '获取请假列表失败' },
       { status: 500 }
     );
   }
 }
 
-/**
- * POST /api/attendance/leave
- * 创建请假申请（并自动启动工作流）
- */
 export async function POST(request: NextRequest) {
-  const authResult = await requireAuth(request);
-  if (authResult instanceof NextResponse) return authResult;
-
-  const user = authResult as any;
-
   try {
     const body = await request.json();
-    const validated = createLeaveRequestSchema.parse({
-      ...body,
-      companyId: user.companyId,
-      employeeId: user.userId,
-    });
+    const { employeeId, type, startDate, endDate, reason } = body;
 
-    const leaveRequest = await createLeaveRequest(validated);
+    // 验证必填字段
+    if (!employeeId || !type || !startDate || !endDate) {
+      return NextResponse.json(
+        { success: false, error: '缺少必填字段' },
+        { status: 400 }
+      );
+    }
 
-    // 自动启动请假工作流
-    const workflow = await attendanceWorkflowManager.createLeaveWorkflow({
-      companyId: user.companyId,
-      leaveRequestId: leaveRequest.id,
-      employeeId: user.userId,
-      leaveType: validated.leaveType,
-      startDate: validated.startDate.toISOString(),
-      endDate: validated.endDate.toISOString(),
-      days: validated.days,
-      reason: validated.reason,
-      initiatorId: user.userId,
-      initiatorName: user.name,
-    });
+    // 计算天数
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
-    // 记录审计日志
-    await auditLogManager.logAction({
-      companyId: user.companyId,
-      userId: user.userId,
-      userName: user.name,
-      action: 'create',
-      resourceType: 'leave_request',
-      resourceId: leaveRequest.id,
-      resourceName: `${user.name} 请假${validated.days}天`,
-      status: 'success',
-    });
+    // 创建新请假申请
+    const newLeaveRequest = {
+      id: `leave-${mockLeaveRequests.length + 1}`,
+      employeeId,
+      employeeName: body.employeeName || '',
+      department: body.department || '',
+      type,
+      startDate,
+      endDate,
+      days,
+      reason: reason || '个人原因',
+      status: '待审批',
+      applyDate: new Date().toISOString().split('T')[0],
+      approver: null,
+      approveDate: null,
+      avatar: null,
+    };
+
+    mockLeaveRequests.push(newLeaveRequest);
 
     return NextResponse.json({
       success: true,
+      data: newLeaveRequest,
       message: '请假申请提交成功',
-      data: { ...leaveRequest, workflowInstanceId: workflow.id },
     }, { status: 201 });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: '参数验证失败', details: error.issues },
-        { status: 400 }
-      );
-    }
-
-    console.error('创建请假申请错误:', error);
+    console.error('Error creating leave request:', error);
     return NextResponse.json(
-      { error: '创建请假申请失败' },
+      { success: false, error: '提交请假申请失败' },
       { status: 500 }
     );
   }
 }
 
-/**
- * PUT /api/attendance/leave
- * 审批请假申请
- */
-export async function PUT(request: NextRequest) {
-  const authResult = await requireAnyPermission(request, [
-    PERMISSIONS.LEAVE_APPROVE,
-  ]);
-  if (authResult instanceof NextResponse) return authResult;
-
-  const user = authResult as any;
-
+export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, approved, comment } = body;
+    const { id, status, approver, approverComment } = body;
 
-    if (!id) {
+    // 查找请假申请
+    const leaveRequest = mockLeaveRequests.find(r => r.id === id);
+
+    if (!leaveRequest) {
       return NextResponse.json(
-        { error: '请假申请ID不能为空' },
-        { status: 400 }
+        { success: false, error: '请假申请不存在' },
+        { status: 404 }
       );
     }
 
-    const leaveRequest = await approveLeaveRequest(
-      id,
-      user.userId,
-      user.name,
-      approved,
-      comment
-    );
-
-    // 记录审计日志
-    await auditLogManager.logAction({
-      companyId: user.companyId,
-      userId: user.userId,
-      userName: user.name,
-      action: 'approve',
-      resourceType: 'leave_request',
-      resourceId: id,
-      resourceName: `请假申请 ${approved ? '通过' : '拒绝'}`,
-      status: 'success',
-    });
+    // 更新状态
+    leaveRequest.status = status;
+    leaveRequest.approver = approver || '';
+    leaveRequest.approveDate = new Date().toISOString().split('T')[0];
 
     return NextResponse.json({
       success: true,
-      message: `请假申请已${approved ? '通过' : '拒绝'}`,
       data: leaveRequest,
+      message: status === '已通过' ? '请假申请已通过' : '请假申请已拒绝',
     });
   } catch (error) {
-    console.error('审批请假申请错误:', error);
+    console.error('Error updating leave request:', error);
     return NextResponse.json(
-      { error: '审批请假申请失败' },
+      { success: false, error: '更新请假申请失败' },
       { status: 500 }
     );
   }
