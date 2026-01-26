@@ -130,7 +130,7 @@ export default function SchedulingPageContent() {
   }, [statusFilter, shiftFilter, fetchSchedules, loadSchedules, loadStats]);
 
   const filteredSchedules = useMemo(() => {
-    return (schedules || []).filter((item: any) => schedule => {
+    return (schedules || []).filter((schedule: any) => {
       const matchesSearch = !debouncedQuery ||
         schedule.employeeName.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
         schedule.employeeId.toLowerCase().includes(debouncedQuery.toLowerCase());

@@ -119,7 +119,7 @@ export default function SalaryCalculationContent() {
   const filteredData = useMemo(() => {
     if (!debouncedKeyword) return salaryData || [];
 
-    return (salaryData || []).filter((item: any) => item =>
+    return (salaryData || []).filter((item: any) =>
       item.employeeName.toLowerCase().includes(debouncedKeyword.toLowerCase()) ||
       item.employeeId.toLowerCase().includes(debouncedKeyword.toLowerCase())
     );
