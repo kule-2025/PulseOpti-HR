@@ -78,10 +78,18 @@ export async function POST(request: NextRequest) {
         .where(eq(subscriptions.id, currentSubscription.id));
     } else {
       // 创建新订阅记录
+      const now = new Date();
       await db.insert(subscriptions).values({
         companyId: user.companyId,
         userId: user.id,
         tier: 'professional',
+        amount: 0, // 试用期间金额为0
+        currency: 'CNY',
+        period: 'monthly',
+        maxEmployees: 200, // 专业版员工上限
+        maxSubAccounts: 5,
+        startDate: now,
+        endDate: trialEndsAt,
         trialEndsAt,
         hasTrialUsed: true,
         isTrial: true,
@@ -89,7 +97,7 @@ export async function POST(request: NextRequest) {
         status: 'active',
         autoRenew: false,
         metadata: {
-          trialStartedAt: new Date(),
+          trialStartedAt: now,
           trialDaysTotal: 7,
         },
       });

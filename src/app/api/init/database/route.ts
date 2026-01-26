@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
         FROM information_schema.tables
         WHERE table_schema = 'public' AND table_name = 'users'
       `);
-      const hasTables = Number(tablesResult.rows[0].count) > 0;
+      const hasTables = Number(tablesResult[0]?.count || 0) > 0;
 
       if (hasTables && !force) {
         return NextResponse.json({
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
       ORDER BY table_name
     `);
 
-    const tables = tablesResult.rows.map((row: any) => row.table_name);
+    const tables = tablesResult.map((row: any) => row.table_name);
 
     return NextResponse.json({
       success: true,
@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
       ORDER BY table_name
     `);
 
-    const tables = tablesResult.rows.map((row: any) => row.table_name);
+    const tables = tablesResult.map((row: any) => row.table_name);
     const initialized = tables.length > 10; // 至少有10个表才算初始化完成
 
     return NextResponse.json({

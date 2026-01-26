@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
         WHERE table_schema = 'public' AND table_name = 'system_settings'
       `);
 
-      if (tableExists.rows.length === 0) {
+      if (tableExists.length === 0) {
         // 表不存在，创建它
         await db.execute(`
           CREATE TABLE IF NOT EXISTS system_settings (
@@ -64,8 +64,8 @@ export async function POST(request: NextRequest) {
         SELECT id, site_name FROM system_settings LIMIT 1
       `);
 
-      if (existingSettings.rows.length === 0 || force) {
-        if (force && existingSettings.rows.length > 0) {
+      if (existingSettings.length === 0 || force) {
+        if (force && existingSettings.length > 0) {
           await db.execute(`DELETE FROM system_settings`);
         }
 
@@ -86,13 +86,13 @@ export async function POST(request: NextRequest) {
         results.push({
           name: '系统设置',
           action: '创建',
-          data: insertResult.rows[0],
+          data: insertResult[0],
         });
       } else {
         results.push({
           name: '系统设置',
           action: '跳过',
-          data: { id: existingSettings.rows[0].id, reason: '已存在' },
+          data: { id: existingSettings[0].id, reason: '已存在' },
         });
       }
     } catch (error: any) {
@@ -110,8 +110,8 @@ export async function POST(request: NextRequest) {
         SELECT id, name FROM companies WHERE code = 'DEFAULT' LIMIT 1
       `);
 
-      if (existingCompany.rows.length === 0 || force) {
-        if (force && existingCompany.rows.length > 0) {
+      if (existingCompany.length === 0 || force) {
+        if (force && existingCompany.length > 0) {
           await db.execute(`DELETE FROM companies WHERE code = 'DEFAULT'`);
         }
 
@@ -124,18 +124,18 @@ export async function POST(request: NextRequest) {
           RETURNING id, name
         `);
 
-        defaultCompanyId = companyResult.rows[0].id as string;
+        defaultCompanyId = companyResult[0].id as string;
         results.push({
           name: '默认公司',
           action: '创建',
-          data: companyResult.rows[0],
+          data: companyResult[0],
         });
       } else {
-        defaultCompanyId = existingCompany.rows[0].id as string;
+        defaultCompanyId = existingCompany[0].id as string;
         results.push({
           name: '默认公司',
           action: '跳过',
-          data: { id: existingCompany.rows[0].id as string, reason: '已存在' },
+          data: { id: existingCompany[0].id as string, reason: '已存在' },
         });
       }
     } catch (error: any) {
@@ -155,10 +155,10 @@ export async function POST(request: NextRequest) {
         `SELECT id, email, name FROM users WHERE email = '${adminEmail}' LIMIT 1`
       );
 
-      if (existingAdmin.rows.length === 0 || force) {
+      if (existingAdmin.length === 0 || force) {
         const hashedPassword = await hash(adminPassword, 10);
 
-        if (existingAdmin.rows.length === 0) {
+        if (existingAdmin.length === 0) {
           const adminResult = await db.execute(`
             INSERT INTO users (
               email, username, password, name, role, is_super_admin,
@@ -173,15 +173,15 @@ export async function POST(request: NextRequest) {
           results.push({
             name: '超级管理员',
             action: '创建',
-            data: adminResult.rows[0],
+            data: adminResult[0],
           });
         } else {
           results.push({
             name: '超级管理员',
             action: '跳过',
             data: {
-              id: existingAdmin.rows[0].id,
-              email: existingAdmin.rows[0].email,
+              id: existingAdmin[0].id,
+              email: existingAdmin[0].email,
               reason: '已存在',
             },
           });
@@ -191,8 +191,8 @@ export async function POST(request: NextRequest) {
           name: '超级管理员',
           action: '跳过',
           data: {
-            id: existingAdmin.rows[0].id,
-            email: existingAdmin.rows[0].email,
+            id: existingAdmin[0].id,
+            email: existingAdmin[0].email,
             reason: '已存在',
           },
         });
@@ -244,18 +244,18 @@ export async function GET(request: NextRequest) {
 
     // 检查系统设置
     const settings = await db.execute(`SELECT id FROM system_settings LIMIT 1`);
-    const hasSettings = settings.rows.length > 0;
+    const hasSettings = settings.length > 0;
 
     // 检查公司
     const companies = await db.execute(`SELECT id, name FROM companies LIMIT 1`);
-    const hasCompanies = companies.rows.length > 0;
+    const hasCompanies = companies.length > 0;
 
     // 检查超级管理员
     const adminEmail = process.env.ADMIN_EMAIL || '208343256@qq.com';
     const admins = await db.execute(
       `SELECT id, email FROM users WHERE email = '${adminEmail}' LIMIT 1`
     );
-    const hasAdmin = admins.rows.length > 0;
+    const hasAdmin = admins.length > 0;
 
     return NextResponse.json({
       success: true,
@@ -266,7 +266,7 @@ export async function GET(request: NextRequest) {
         hasAdmin,
         adminEmail,
         adminExists: hasAdmin,
-        companyName: hasCompanies ? companies.rows[0].name : null,
+        companyName: hasCompanies ? companies[0].name : null,
       },
     });
   } catch (error) {
