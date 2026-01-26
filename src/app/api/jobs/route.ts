@@ -1,156 +1,201 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
-import { jobs, users } from '@/storage/database/shared/schema';
-import { eq, and, desc, like } from 'drizzle-orm';
-import { randomUUID } from 'crypto';
+import { jobs, departments } from '@/storage/database/shared/schema';
+import { eq, and, desc, like, sql } from 'drizzle-orm';
+import { requireAuth } from '@/lib/auth/middleware';
 
 /**
- * 发布职位
- */
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-
-    const userStr = request.headers.get('x-user-id');
-    if (!userStr) {
-      return NextResponse.json(
-        { error: '未授权访问' },
-        { status: 401 }
-      );
-    }
-
-    const user = JSON.parse(userStr);
-
-    // 验证必填字段
-    const requiredFields = ['title', 'departmentId', 'location', 'salaryMin', 'salaryMax', 'description', 'requirements'];
-    for (const field of requiredFields) {
-      if (!body[field]) {
-        return NextResponse.json(
-          { error: `缺少必填字段: ${field}` },
-          { status: 400 }
-        );
-      }
-    }
-
-    const db = await getDb();
-    const jobId = randomUUID();
-
-    await db.insert(jobs).values({
-      companyId: user.companyId,
-      title: body.title,
-      departmentId: body.departmentId,
-      location: body.location,
-      salaryMin: body.salaryMin,
-      salaryMax: body.salaryMax,
-      description: body.description,
-      requirements: body.requirements,
-      benefits: body.benefits || '',
-      hireCount: body.headCount || 1,
-      status: body.status === 'active' ? 'open' : 'draft',
-      publishedAt: body.status === 'active' ? new Date() : null,
-      createdBy: user.id,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: '职位发布成功',
-      data: { id: jobId },
-    });
-
-  } catch (error) {
-    console.error('发布职位失败:', error);
-    return NextResponse.json(
-      { error: '发布职位失败' },
-      { status: 500 }
-    );
-  }
-}
-
-/**
- * 获取职位列表
+ * GET /api/jobs - 获取职位列表
  */
 export async function GET(request: NextRequest) {
+  const authResult = await requireAuth(request);
+  if (authResult instanceof NextResponse) return authResult;
+
+  const user = authResult as any;
+
   try {
     const { searchParams } = new URL(request.url);
     const companyId = searchParams.get('companyId');
-    const departmentId = searchParams.get('departmentId') || '';
-    const status = searchParams.get('status') || '';
+    const status = searchParams.get('status');
+    const departmentId = searchParams.get('departmentId');
+    const search = searchParams.get('search');
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const search = searchParams.get('search') || '';
+    const pageSize = parseInt(searchParams.get('pageSize') || '20');
 
-    if (!companyId) {
+    // 如果没有提供companyId，使用当前用户的companyId
+    const targetCompanyId = companyId || user.companyId;
+
+    if (!targetCompanyId) {
       return NextResponse.json(
-        { error: '缺少企业ID' },
+        { success: false, error: '缺少企业ID' },
         { status: 400 }
       );
     }
 
     const db = await getDb();
+    const conditions = [eq(jobs.companyId, targetCompanyId)];
 
-    // 构建查询条件
-    const conditions = [eq(jobs.companyId, companyId)];
-
-    if (search) {
-      conditions.push(
-        like(jobs.title, `%${search}%`)
-      );
+    if (status && status !== 'all') {
+      conditions.push(eq(jobs.status, status));
     }
 
     if (departmentId) {
       conditions.push(eq(jobs.departmentId, departmentId));
     }
 
-    if (status) {
-      conditions.push(eq(jobs.status, status));
+    if (search) {
+      conditions.push(
+        sql`(${jobs.title} ILIKE ${`%${search}%`} OR ${jobs.description} ILIKE ${`%${search}%`})`
+      );
     }
 
-    // 查询职位列表
+    // 获取职位列表和部门名称
     const jobList = await db
-      .select()
-      .from(jobs)
-      .where(and(...conditions))
-      .orderBy(desc(jobs.publishedAt))
-      .limit(limit)
-      .offset((page - 1) * limit);
-
-    // 查询总数
-    const totalCount = await db
-      .select()
-      .from(jobs)
-      .where(and(...conditions))
-      .then((results) => results.length);
-
-    // 为每个职位添加申请数量统计
-    const jobListWithStats = await Promise.all(
-      jobList.map(async (job) => {
-        // jobApplications表暂未定义，applicationCount设为0
-        const applicationCount = 0;
-
-        return {
-          ...job,
-          applicationCount,
-        };
+      .select({
+        id: jobs.id,
+        title: jobs.title,
+        departmentId: jobs.departmentId,
+        departmentName: departments.name,
+        location: jobs.location,
+        salaryMin: jobs.salaryMin,
+        salaryMax: jobs.salaryMax,
+        description: jobs.description,
+        requirements: jobs.requirements,
+        status: jobs.status,
+        createdAt: jobs.createdAt,
+        updatedAt: jobs.updatedAt,
       })
-    );
+      .from(jobs)
+      .leftJoin(departments, eq(jobs.departmentId, departments.id))
+      .where(and(...conditions))
+      .orderBy(desc(jobs.createdAt))
+      .limit(pageSize)
+      .offset((page - 1) * pageSize);
+
+    // 获取总数
+    const totalResult = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(jobs)
+      .where(and(...conditions));
+
+    const total = totalResult[0]?.count || 0;
+
+    // 获取每个职位的申请数量
+    const jobIds = jobList.map(job => job.id);
+    const applicationsCounts = jobIds.length > 0 ? await db
+      .select({
+        jobId: jobs.id,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(jobs)
+      .where(sql`${jobs.id} = ANY(${jobIds})`)
+      .groupBy(jobs.id) : [];
+
+    const countsMap = new Map(applicationsCounts.map(c => [c.jobId, c.count]));
+
+    const jobsWithCounts = jobList.map(job => ({
+      ...job,
+      applicationsCount: countsMap.get(job.id) || 0,
+    }));
 
     return NextResponse.json({
       success: true,
-      data: jobListWithStats,
+      data: jobsWithCounts,
       pagination: {
         page,
-        limit,
-        total: totalCount,
-        totalPages: Math.ceil(totalCount / limit),
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize),
       },
     });
-
   } catch (error) {
     console.error('获取职位列表失败:', error);
     return NextResponse.json(
-      { error: '获取职位列表失败' },
+      { success: false, error: '获取职位列表失败' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/jobs - 创建职位
+ */
+export async function POST(request: NextRequest) {
+  const authResult = await requireAuth(request);
+  if (authResult instanceof NextResponse) return authResult;
+
+  const user = authResult as any;
+
+  try {
+    const body = await request.json();
+    const {
+      title,
+      departmentId,
+      location,
+      salaryMin,
+      salaryMax,
+      description,
+      requirements,
+      status = 'open',
+    } = body;
+
+    // 验证必填字段
+    if (!title || !departmentId || !description) {
+      return NextResponse.json(
+        { success: false, error: '缺少必填字段' },
+        { status: 400 }
+      );
+    }
+
+    const db = await getDb();
+
+    // 验证部门是否存在
+    const [department] = await db
+      .select()
+      .from(departments)
+      .where(
+        and(
+          eq(departments.id, departmentId),
+          eq(departments.companyId, user.companyId)
+        )
+      )
+      .limit(1);
+
+    if (!department) {
+      return NextResponse.json(
+        { success: false, error: '部门不存在' },
+        { status: 404 }
+      );
+    }
+
+    // 创建职位
+    const [newJob] = await db
+      .insert(jobs)
+      .values({
+        title,
+        departmentId,
+        companyId: user.companyId,
+        location: location || '',
+        salaryMin: salaryMin || 0,
+        salaryMax: salaryMax || 0,
+        description,
+        requirements: requirements || '',
+        status,
+        createdBy: user.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    return NextResponse.json({
+      success: true,
+      data: newJob,
+      message: '职位创建成功',
+    }, { status: 201 });
+  } catch (error) {
+    console.error('创建职位失败:', error);
+    return NextResponse.json(
+      { success: false, error: '创建职位失败' },
       { status: 500 }
     );
   }
