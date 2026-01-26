@@ -4,12 +4,6 @@
   "devCommand": "pnpm dev",
   "installCommand": "pnpm install",
   "framework": "nextjs",
-  "env": {
-    "DATABASE_URL": "@database-url",
-    "COZE_BUCKET_ENDPOINT_URL": "@coze-bucket-endpoint-url",
-    "COZE_BUCKET_NAME": "@coze-bucket-name",
-    "COZE_WORKLOAD_IDENTITY_API_KEY": "@coze-workload-identity-api-key"
-  },
   "build": {
     "env": {
       "NEXT_PUBLIC_API_URL": "https://pulseopti-hr.vercel.app"
