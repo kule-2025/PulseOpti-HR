@@ -94,8 +94,8 @@ export async function POST(request: NextRequest) {
     }
 
     // 提取候选人技能
-    const candidateSkills = Array.isArray(candidate.metadata?.skills)
-      ? candidate.metadata.skills
+    const candidateSkills = Array.isArray((candidate.metadata as any)?.skills)
+      ? (candidate.metadata as any).skills
       : [];
 
     // 构建上下文
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
         education: candidate.education as any || '未提供',
         workExperience: candidate.workExperience as any || '未提供',
         skills: candidateSkills,
-        position: candidate.metadata?.position,
+        position: (candidate.metadata as any)?.position,
       },
       job: {
         title: job.title,
