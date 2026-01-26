@@ -86,7 +86,7 @@ export default function OvertimeContent() {
           `/api/attendance/overtime?${params.toString()}`
         );
 
-        return (response.data as OvertimeRecord[]) || [];
+        return response.data ? (response.data as unknown as OvertimeRecord[]) : [];
       }, 2 * 60 * 1000);
     } catch (err) {
       console.error('加载加班记录失败:', err);
@@ -96,11 +96,11 @@ export default function OvertimeContent() {
   }, [statusFilter, typeFilter]);
 
   const loadStats = useCallback((records: OvertimeRecord[]) => {
-    const approvedRecords = records.filter((item: any) => r => r.status === 'approved');
+    const approvedRecords = records.filter((r: any) => r.status === 'approved');
     setStats({
-      pending: records.filter((item: any) => r => r.status === 'pending').length,
+      pending: records.filter((r: any) => r.status === 'pending').length,
       approved: approvedRecords.length,
-      rejected: records.filter((item: any) => r => r.status === 'rejected').length,
+      rejected: records.filter((r: any) => r.status === 'rejected').length,
       totalHours: approvedRecords.reduce((sum, r) => sum + r.duration, 0) / 60,
     });
   }, []);
@@ -113,7 +113,7 @@ export default function OvertimeContent() {
   }, [statusFilter, typeFilter, fetchOvertimeRecords, loadOvertimeRecords, loadStats]);
 
   const filteredRecords = useMemo(() => {
-    return (overtimeRecords || []).filter((item: any) => record => {
+    return (overtimeRecords || []).filter((record: any) => {
       const matchesSearch = !debouncedQuery ||
         record.employeeName.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
         record.employeeId.toLowerCase().includes(debouncedQuery.toLowerCase());
