@@ -387,7 +387,7 @@ export default function AIResumeParserPage() {
         </div>
 
         {/* 主要内容区域 */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="upload">上传简历</TabsTrigger>
             <TabsTrigger value="result" disabled={!parsedData}>

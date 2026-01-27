@@ -383,7 +383,7 @@ export default function SalaryCalculation() {
                   className="pl-8 w-64"
                 />
               </div>
-              <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+              <Select value={departmentFilter} onValueChange={(v) => setDepartmentFilter(v as any)}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="部门" />
                 </SelectTrigger>
@@ -405,7 +405,7 @@ export default function SalaryCalculation() {
                   <SelectItem value="paid">已发放</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={periodFilter} onValueChange={setPeriodFilter}>
+              <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as any)}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="月份" />
                 </SelectTrigger>

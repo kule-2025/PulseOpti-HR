@@ -539,7 +539,7 @@ const AITrainingRecommendation: React.FC = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Select value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as any)}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue />
                 </SelectTrigger>
@@ -550,7 +550,7 @@ const AITrainingRecommendation: React.FC = () => {
                   <SelectItem value="管理">管理</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
+              <Select value={selectedDifficulty} onValueChange={(v) => setSelectedDifficulty(v as any)}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue />
                 </SelectTrigger>

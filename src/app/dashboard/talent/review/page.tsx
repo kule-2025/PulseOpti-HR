@@ -414,7 +414,7 @@ export default function TalentReviewPage() {
                   className="pl-8"
                 />
               </div>
-              <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+              <Select value={selectedDepartment} onValueChange={(v) => setSelectedDepartment(v as any)}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="部门" />
                 </SelectTrigger>
@@ -425,7 +425,7 @@ export default function TalentReviewPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+              <Select value={selectedLevel} onValueChange={(v) => setSelectedLevel(v as any)}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="级别" />
                 </SelectTrigger>
@@ -436,7 +436,7 @@ export default function TalentReviewPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={selectedRisk} onValueChange={setSelectedRisk}>
+              <Select value={selectedRisk} onValueChange={(v) => setSelectedRisk(v as any)}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="风险" />
                 </SelectTrigger>

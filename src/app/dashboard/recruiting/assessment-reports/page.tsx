@@ -274,7 +274,7 @@ export default function AssessmentReportsPage() {
                 className="pl-10"
               />
             </div>
-            <Select value={selectedTargetType} onValueChange={setSelectedTargetType}>
+            <Select value={selectedTargetType} onValueChange={(v) => setSelectedTargetType(v as any)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="评估对象" />
               </SelectTrigger>
@@ -286,7 +286,7 @@ export default function AssessmentReportsPage() {
                 <SelectItem value="performance">绩效</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+            <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as any)}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="评估结果" />
               </SelectTrigger>

@@ -304,7 +304,7 @@ export default function PerformanceAssessment() {
           <div className="flex items-center justify-between">
             <CardTitle>评估记录</CardTitle>
             <div className="flex gap-2">
-              <Select value={periodFilter} onValueChange={setPeriodFilter}>
+              <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as any)}>
                 <SelectTrigger className="w-40">
                   <SelectValue />
                 </SelectTrigger>

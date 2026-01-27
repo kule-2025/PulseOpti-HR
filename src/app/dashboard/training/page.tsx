@@ -242,7 +242,7 @@ export default function TrainingPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-4">
             <TabsList>
               <TabsTrigger value="courses">培训课程</TabsTrigger>
               <TabsTrigger value="enrollments">报名记录</TabsTrigger>

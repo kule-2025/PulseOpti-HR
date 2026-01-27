@@ -236,7 +236,7 @@ export default function DepartmentEfficiencyPage() {
             className="pl-10"
           />
         </div>
-        <Select value={sortBy} onValueChange={setSortBy}>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="排序方式" />
           </SelectTrigger>

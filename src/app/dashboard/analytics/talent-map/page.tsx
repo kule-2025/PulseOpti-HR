@@ -203,7 +203,7 @@ export default function TalentMapPage() {
                   className="pl-10"
                 />
               </div>
-              <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+              <Select value={filterDepartment} onValueChange={(v) => setFilterDepartment(v as any)}>
                 <SelectTrigger>
                   <SelectValue placeholder="选择部门" />
                 </SelectTrigger>
@@ -215,7 +215,7 @@ export default function TalentMapPage() {
                   <SelectItem value="operations">运营部</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={filterLevel} onValueChange={setFilterLevel}>
+              <Select value={filterLevel} onValueChange={(v) => setFilterLevel(v as any)}>
                 <SelectTrigger>
                   <SelectValue placeholder="选择职级" />
                 </SelectTrigger>

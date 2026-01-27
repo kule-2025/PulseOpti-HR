@@ -80,7 +80,7 @@ export default function EfficiencyDashboardPage() {
           <p className="text-muted-foreground mt-1">企业人力资源效率概览</p>
         </div>
         <div className="flex items-center gap-3">
-          <Select value={timeRange} onValueChange={setTimeRange}>
+          <Select value={timeRange} onValueChange={(v) => setTimeRange(v as any)}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="时间范围" />
             </SelectTrigger>

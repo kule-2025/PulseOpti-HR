@@ -273,7 +273,7 @@ export default function TalentPage() {
                 className="pl-10"
               />
             </div>
-            <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+            <Select value={filterDepartment} onValueChange={(v) => setFilterDepartment(v as any)}>
               <SelectTrigger>
                 <SelectValue placeholder="部门" />
               </SelectTrigger>
@@ -285,7 +285,7 @@ export default function TalentPage() {
                 <SelectItem value="市场部">市场部</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={filterRisk} onValueChange={setFilterRisk}>
+            <Select value={filterRisk} onValueChange={(v) => setFilterRisk(v as any)}>
               <SelectTrigger>
                 <SelectValue placeholder="风险" />
               </SelectTrigger>

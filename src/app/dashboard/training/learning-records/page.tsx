@@ -144,7 +144,7 @@ export default function LearningRecordsPage() {
             className="pl-10"
           />
         </div>
-        <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+        <Select value={departmentFilter} onValueChange={(v) => setDepartmentFilter(v as any)}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="部门" />
           </SelectTrigger>
@@ -156,7 +156,7 @@ export default function LearningRecordsPage() {
             <SelectItem value="人力资源部">人力资源部</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="状态" />
           </SelectTrigger>

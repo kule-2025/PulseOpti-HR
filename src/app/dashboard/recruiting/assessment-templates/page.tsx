@@ -311,7 +311,7 @@ export default function AssessmentTemplatesPage() {
                 className="pl-10"
               />
             </div>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <Select value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as any)}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="选择分类" />
               </SelectTrigger>

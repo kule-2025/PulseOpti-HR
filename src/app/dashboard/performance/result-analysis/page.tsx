@@ -468,7 +468,7 @@ export default function ResultAnalysisPage() {
                   className="pl-8 w-64"
                 />
               </div>
-              <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+              <Select value={departmentFilter} onValueChange={(v) => setDepartmentFilter(v as any)}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="部门" />
                 </SelectTrigger>
@@ -479,7 +479,7 @@ export default function ResultAnalysisPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={gradeFilter} onValueChange={setGradeFilter}>
+              <Select value={gradeFilter} onValueChange={(v) => setGradeFilter(v as any)}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="等级" />
                 </SelectTrigger>
@@ -491,7 +491,7 @@ export default function ResultAnalysisPage() {
                   <SelectItem value="D">D等级</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={periodFilter} onValueChange={setPeriodFilter}>
+              <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as any)}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="周期" />
                 </SelectTrigger>

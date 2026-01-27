@@ -247,7 +247,7 @@ export default function EmployeeEfficiencyPage() {
             className="pl-10"
           />
         </div>
-        <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+        <Select value={departmentFilter} onValueChange={(v) => setDepartmentFilter(v as any)}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="部门" />
           </SelectTrigger>
@@ -259,7 +259,7 @@ export default function EmployeeEfficiencyPage() {
             <SelectItem value="运营部">运营部</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={sortBy} onValueChange={setSortBy}>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="排序方式" />
           </SelectTrigger>

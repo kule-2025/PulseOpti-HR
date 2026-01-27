@@ -296,7 +296,7 @@ export default function AITurnoverPredictionPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>选择员工</Label>
-                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                  <Select value={selectedEmployee} onValueChange={(v) => setSelectedEmployee(v as any)}>
                     <SelectTrigger>
                       <SelectValue placeholder="选择员工" />
                     </SelectTrigger>

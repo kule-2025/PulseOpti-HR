@@ -562,7 +562,7 @@ export default function PerformanceAssessmentPage() {
                   className="pl-8 w-64"
                 />
               </div>
-              <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+              <Select value={departmentFilter} onValueChange={(v) => setDepartmentFilter(v as any)}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="部门" />
                 </SelectTrigger>
@@ -573,7 +573,7 @@ export default function PerformanceAssessmentPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={cycleFilter} onValueChange={setCycleFilter}>
+              <Select value={cycleFilter} onValueChange={(v) => setCycleFilter(v as any)}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="周期" />
                 </SelectTrigger>

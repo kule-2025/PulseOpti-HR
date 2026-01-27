@@ -245,7 +245,7 @@ export default function TalentPool() {
             </div>
             <div>
               <Label>行业</Label>
-              <Select value={industryFilter} onValueChange={setIndustryFilter}>
+              <Select value={industryFilter} onValueChange={(v) => setIndustryFilter(v as any)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -261,7 +261,7 @@ export default function TalentPool() {
             </div>
             <div>
               <Label>技能</Label>
-              <Select value={skillFilter} onValueChange={setSkillFilter}>
+              <Select value={skillFilter} onValueChange={(v) => setSkillFilter(v as any)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

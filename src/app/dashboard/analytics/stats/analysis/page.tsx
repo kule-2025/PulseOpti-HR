@@ -158,7 +158,7 @@ export default function StatsAnalysisPage() {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <Select value={period} onValueChange={setPeriod}>
+              <Select value={period} onValueChange={(v) => setPeriod(v as any)}>
                 <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
@@ -169,7 +169,7 @@ export default function StatsAnalysisPage() {
                   <SelectItem value="year">本年度</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={year} onValueChange={setYear}>
+              <Select value={year} onValueChange={(v) => setYear(v as any)}>
                 <SelectTrigger className="w-28">
                   <SelectValue />
                 </SelectTrigger>

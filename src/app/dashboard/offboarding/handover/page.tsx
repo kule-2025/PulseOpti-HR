@@ -242,7 +242,7 @@ export default function HandoverPage() {
             className="pl-10"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="状态" />
           </SelectTrigger>
