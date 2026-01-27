@@ -27,12 +27,55 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VirtualScroll } from '@/components/performance/virtual-scroll';
 import { LazyImage } from '@/components/performance/optimized-image';
-import { useFetch, useDebounce } from '@/hooks/use-performance';
+import { useDebounce, useFetch } from '@/hooks/use-performance';
 import { Target, TrendingUp, Award, Calendar, Plus, Search, Download, Edit, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/theme';
 
-// 模拟数据 - 实际应从 API 获取
-const MOCK_GOALS = [
+// 类型定义
+interface Goal {
+  id: string;
+  title: string;
+  type: string;
+  priority: string;
+  status: string;
+  progress: number;
+  dueDate: string;
+  owner: string;
+  department: string;
+  description: string;
+  createdAt: string;
+  keyResults: Array<{
+    id: string;
+    title: string;
+    progress: number;
+    status: string;
+  }>;
+}
+
+interface Assessment {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  department: string;
+  period: string;
+  overallScore: number;
+  status: string;
+  selfScore: number;
+  managerScore: number;
+  submitDate: string;
+  reviewDate: string | null;
+  dimensions: Record<string, { score: number; weight: number }>;
+}
+
+interface KeyResult {
+  id: string;
+  title: string;
+  progress: number;
+  status: string;
+}
+
+// 模拟数据
+const MOCK_GOALS: Goal[] = [
   {
     id: '1',
     title: '完成Q1产品目标',
@@ -87,7 +130,7 @@ const MOCK_GOALS = [
   },
 ];
 
-const MOCK_ASSESSMENTS = Array.from({ length: 30 }, (_, i) => ({
+const MOCK_ASSESSMENTS: Assessment[] = Array.from({ length: 30 }, (_, i) => ({
   id: `assessment-${i + 1}`,
   employeeId: `emp-${i + 1}`,
   employeeName: `员工${i + 1}`,
@@ -106,41 +149,6 @@ const MOCK_ASSESSMENTS = Array.from({ length: 30 }, (_, i) => ({
     团队协作: { score: 70 + Math.floor(Math.random() * 30), weight: 15 },
   },
 }));
-
-interface Goal {
-  id: string;
-  title: string;
-  type: string;
-  priority: string;
-  status: string;
-  progress: number;
-  dueDate: string;
-  owner: string;
-  department: string;
-  description: string;
-  createdAt: string;
-  keyResults: Array<{
-    id: string;
-    title: string;
-    progress: number;
-    status: string;
-  }>;
-}
-
-interface Assessment {
-  id: string;
-  employeeId: string;
-  employeeName: string;
-  department: string;
-  period: string;
-  overallScore: number;
-  status: string;
-  selfScore: number;
-  managerScore: number;
-  submitDate: string;
-  reviewDate: string | null;
-  dimensions: Record<string, { score: number; weight: number }>;
-}
 
 export default function PerformancePage() {
   const [activeTab, setActiveTab] = useState('goals');
@@ -168,7 +176,7 @@ export default function PerformancePage() {
   const filteredAssessments = useMemo(() => {
     if (!assessments) return [];
 
-    return assessments.filter(assessment => {
+    return assessments.filter((assessment: Assessment) => {
       const matchesSearch =
         assessment.employeeName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         assessment.department.toLowerCase().includes(debouncedSearch.toLowerCase());
@@ -179,27 +187,21 @@ export default function PerformancePage() {
   }, [assessments, debouncedSearch, statusFilter, periodFilter]);
 
   // 虚拟列表项渲染器
-  const AssessmentItem = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const assessment = filteredAssessments[index];
-    if (!assessment) return null;
-
-    const statusColors = {
+  const AssessmentItem = useCallback((assessment: Assessment, index: number) => {
+    const statusColors: Record<string, string> = {
       '待评估': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
       '评估中': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
       '已完成': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
     };
 
-    const statusIcons = {
+    const statusIcons: Record<string, React.ReactNode> = {
       '待评估': <AlertCircle className="w-3 h-3" />,
       '评估中': <Edit className="w-3 h-3" />,
       '已完成': <CheckCircle2 className="w-3 h-3" />,
     };
 
     return (
-      <div
-        style={style}
-        className="flex items-center justify-between p-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-      >
+      <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="shrink-0">
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-medium">
@@ -212,8 +214,8 @@ export default function PerformancePage() {
               <h4 className="font-medium text-gray-900 dark:text-white truncate">
                 {assessment.employeeName}
               </h4>
-              <Badge className={statusColors[assessment.status as keyof typeof statusColors]}>
-                {statusIcons[assessment.status as keyof typeof statusIcons]}
+              <Badge className={statusColors[assessment.status]}>
+                {statusIcons[assessment.status]}
                 <span className="ml-1">{assessment.status}</span>
               </Badge>
             </div>
@@ -256,7 +258,7 @@ export default function PerformancePage() {
         </div>
       </div>
     );
-  }, [filteredAssessments]);
+  }, []);
 
   if (loading || goalsLoading || assessmentsLoading) {
     return (
@@ -314,27 +316,27 @@ export default function PerformancePage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard
           title="进行中目标"
-          value={goals?.filter(g => g.status === 'in-progress').length || 0}
+          value={goals?.filter((g: Goal) => g.status === 'in-progress').length || 0}
           icon={<Target className="w-4 h-4" />}
           color="from-blue-500 to-blue-600"
         />
         <StatCard
           title="待评估员工"
-          value={assessments?.filter(a => a.status === '待评估').length || 0}
+          value={assessments?.filter((a: Assessment) => a.status === '待评估').length || 0}
           icon={<Calendar className="w-4 h-4" />}
           color="from-yellow-500 to-orange-500"
         />
         <StatCard
           title="平均绩效分"
           value={assessments && assessments.length > 0
-            ? Math.round(assessments.reduce((sum, a) => sum + a.overallScore, 0) / assessments.length)
+            ? Math.round(assessments.reduce((sum: number, a: Assessment) => sum + a.overallScore, 0) / assessments.length)
             : 0}
           icon={<TrendingUp className="w-4 h-4" />}
           color="from-purple-500 to-purple-600"
         />
         <StatCard
           title="优秀员工"
-          value={assessments?.filter(a => a.status === '已完成' && a.overallScore >= 90).length || 0}
+          value={assessments?.filter((a: Assessment) => a.status === '已完成' && a.overallScore >= 90).length || 0}
           icon={<Award className="w-4 h-4" />}
           color="from-green-500 to-green-600"
         />
@@ -408,19 +410,19 @@ function StatCard({
 function GoalsList({ goals }: { goals: Goal[] }) {
   const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
 
-  const priorityColors = {
+  const priorityColors: Record<string, string> = {
     high: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
     medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
     low: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
   };
 
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     'not-started': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
     'in-progress': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
     completed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
   };
 
-  const statusLabels = {
+  const statusLabels: Record<string, string> = {
     'not-started': '未开始',
     'in-progress': '进行中',
     completed: '已完成',
@@ -451,11 +453,11 @@ function GoalsList({ goals }: { goals: Goal[] }) {
                       <h3 className="font-semibold text-gray-900 dark:text-white">
                         {goal.title}
                       </h3>
-                      <Badge className={priorityColors[goal.priority as keyof typeof priorityColors]}>
+                      <Badge className={priorityColors[goal.priority]}>
                         {goal.priority === 'high' ? '高' : goal.priority === 'medium' ? '中' : '低'}
                       </Badge>
-                      <Badge className={statusColors[goal.status as keyof typeof statusColors]}>
-                        {statusLabels[goal.status as keyof typeof statusLabels]}
+                      <Badge className={statusColors[goal.status]}>
+                        {statusLabels[goal.status]}
                       </Badge>
                     </div>
                     <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
@@ -534,7 +536,7 @@ function AssessmentsList({
   onStatusFilterChange: (value: string) => void;
   periodFilter: string;
   onPeriodFilterChange: (value: string) => void;
-  AssessmentItem: React.FC<{ index: number; style: React.CSSProperties }>;
+  AssessmentItem: (assessment: Assessment, index: number) => React.ReactNode;
 }) {
   return (
     <Card>
@@ -585,9 +587,9 @@ function AssessmentsList({
         <div className="h-[600px]">
           <VirtualScroll
             items={assessments}
+            renderItem={AssessmentItem}
             itemHeight={100}
             height={600}
-            renderItem={AssessmentItem}
           />
         </div>
       </CardContent>

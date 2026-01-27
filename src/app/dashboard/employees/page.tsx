@@ -11,10 +11,29 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { VirtualScroll } from '@/components/performance/virtual-scroll';
 import { LazyImage } from '@/components/performance/optimized-image';
 import { useDebounce, useFetch } from '@/hooks/use-performance';
-import { Users, Plus, Search, Building2, Mail, Phone, Calendar, Edit, Trash2 } from 'lucide-react';
+import { Users, Plus, Search, Building2, Edit, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/theme';
 
-const MOCK_EMPLOYEES = Array.from({ length: 100 }, (_, i) => ({
+// 类型定义
+interface Employee {
+  id: string;
+  name: string;
+  employeeId: string;
+  department: string;
+  position: string;
+  level: string;
+  email: string;
+  phone: string;
+  hireDate: string;
+  status: string;
+  manager: string;
+  avatar: string | null;
+  education: string;
+  university: string;
+}
+
+// 模拟数据
+const MOCK_EMPLOYEES: Employee[] = Array.from({ length: 100 }, (_, i) => ({
   id: `emp-${i + 1}`,
   name: `员工${i + 1}`,
   employeeId: `E${String(i + 1).padStart(4, '0')}`,
@@ -40,11 +59,11 @@ export default function EmployeesPage() {
 
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const { data: employees, loading: employeesLoading } = useFetch('/api/employees', { fallback: MOCK_EMPLOYEES });
+  const { data: employees, loading: employeesLoading } = useFetch<Employee[]>('/api/employees', { fallback: MOCK_EMPLOYEES });
 
   const filteredEmployees = useMemo(() => {
     if (!employees) return [];
-    return employees.filter(emp => {
+    return employees.filter((emp: Employee) => {
       const matchesSearch = emp.name.toLowerCase().includes(debouncedSearch.toLowerCase()) || emp.employeeId.toLowerCase().includes(debouncedSearch.toLowerCase());
       const matchesDept = departmentFilter === 'all' || emp.department === departmentFilter;
       const matchesStatus = statusFilter === 'all' || emp.status === statusFilter;
@@ -52,18 +71,15 @@ export default function EmployeesPage() {
     });
   }, [employees, debouncedSearch, departmentFilter, statusFilter]);
 
-  const EmployeeItem = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const employee = filteredEmployees[index];
-    if (!employee) return null;
-
-    const statusColors = {
+  const EmployeeItem = useCallback((employee: Employee, index: number) => {
+    const statusColors: Record<string, string> = {
       '正式': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
       '试用期': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
       '离职': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
     };
 
     return (
-      <div style={style} className="flex items-center justify-between p-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+      <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="shrink-0">
             {employee.avatar ? (
@@ -79,7 +95,7 @@ export default function EmployeesPage() {
             <div className="flex items-center gap-2 mb-1">
               <h4 className="font-semibold text-gray-900 dark:text-white">{employee.name}</h4>
               <Badge variant="outline">{employee.employeeId}</Badge>
-              <Badge className={statusColors[employee.status as keyof typeof statusColors]}>{employee.status}</Badge>
+              <Badge className={statusColors[employee.status]}>{employee.status}</Badge>
             </div>
             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
               <span className="flex items-center gap-1"><Building2 className="w-3 h-3" />{employee.department}</span>
@@ -103,7 +119,7 @@ export default function EmployeesPage() {
         </div>
       </div>
     );
-  }, [filteredEmployees]);
+  }, []);
 
   if (loading || employeesLoading) {
     return (
@@ -129,9 +145,9 @@ export default function EmployeesPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard title="总员工数" value={employees?.length || 0} icon={<Users className="w-4 h-4" />} color="from-blue-500 to-blue-600" />
-        <StatCard title="正式员工" value={employees?.filter(e => e.status === '正式').length || 0} icon={<Building2 className="w-4 h-4" />} color="from-green-500 to-green-600" />
-        <StatCard title="试用期" value={employees?.filter(e => e.status === '试用期').length || 0} icon={<Calendar className="w-4 h-4" />} color="from-yellow-500 to-orange-500" />
-        <StatCard title="本月入职" value={employees?.filter(e => e.hireDate.startsWith('2024-03')).length || 0} icon={<Calendar className="w-4 h-4" />} color="from-purple-500 to-purple-600" />
+        <StatCard title="正式员工" value={employees?.filter((e: Employee) => e.status === '正式').length || 0} icon={<Building2 className="w-4 h-4" />} color="from-green-500 to-green-600" />
+        <StatCard title="试用期" value={employees?.filter((e: Employee) => e.status === '试用期').length || 0} icon={<Search className="w-4 h-4" />} color="from-yellow-500 to-orange-500" />
+        <StatCard title="本月入职" value={employees?.filter((e: Employee) => e.hireDate.startsWith('2024-03')).length || 0} icon={<Users className="w-4 h-4" />} color="from-purple-500 to-purple-600" />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -176,7 +192,7 @@ export default function EmployeesPage() {
             </CardHeader>
             <CardContent className="p-0">
               <div className="h-[600px]">
-                <VirtualScroll items={filteredEmployees} itemHeight={100} height={600} renderItem={EmployeeItem} />
+                <VirtualScroll items={filteredEmployees} renderItem={EmployeeItem} itemHeight={100} height={600} />
               </div>
             </CardContent>
           </Card>
@@ -187,7 +203,7 @@ export default function EmployeesPage() {
         </TabsContent>
 
         <TabsContent value="onboarding">
-          <Card><CardContent className="py-12 text-center text-gray-500"><Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" /><p>入职流程功能开发中</p></CardContent></Card>
+          <Card><CardContent className="py-12 text-center text-gray-500"><Users className="w-12 h-12 mx-auto mb-4 opacity-50" /><p>入职流程功能开发中</p></CardContent></Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -38,11 +38,11 @@ export async function GET(request: NextRequest) {
     let filteredPositions = mockPositions;
 
     if (status && status !== 'all') {
-      filteredPositions = filteredPositions.filter(p => p.status === status);
+      filteredPositions = filteredPositions.filter((p: any) => p.status === status);
     }
 
     if (department) {
-      filteredPositions = filteredPositions.filter(p => p.department === department);
+      filteredPositions = filteredPositions.filter((p: any) => p.department === department);
     }
 
     // 模拟延迟
@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
       status: '招聘中',
       createdAt: new Date().toISOString().split('T')[0],
       applicants: 0,
-      requirements: requirements?.split('\n').filter(r => r.trim()) || [],
-      responsibilities: responsibilities?.split('\n').filter(r => r.trim()) || [],
+      requirements: requirements?.split('\n').filter((r: string) => r.trim()) || [],
+      responsibilities: responsibilities?.split('\n').filter((r: string) => r.trim()) || [],
     };
 
     mockPositions.push(newPosition);

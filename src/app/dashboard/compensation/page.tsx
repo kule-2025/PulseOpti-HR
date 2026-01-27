@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VirtualScroll } from '@/components/performance/virtual-scroll';
 import { LazyImage } from '@/components/performance/optimized-image';
@@ -14,8 +13,25 @@ import { useDebounce, useFetch } from '@/hooks/use-performance';
 import { DollarSign, Download, Search, TrendingUp, Calendar, Users } from 'lucide-react';
 import { cn } from '@/lib/theme';
 
+// 类型定义
+interface Salary {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  department: string;
+  position: string;
+  baseSalary: number;
+  bonus: number;
+  socialInsurance: number;
+  tax: number;
+  netSalary: number;
+  month: string;
+  status: string;
+  payDate: string | null;
+}
+
 // 模拟数据
-const MOCK_SALARIES = Array.from({ length: 60 }, (_, i) => ({
+const MOCK_SALARIES: Salary[] = Array.from({ length: 60 }, (_, i) => ({
   id: `salary-${i + 1}`,
   employeeId: `emp-${i + 1}`,
   employeeName: `员工${i + 1}`,
@@ -39,26 +55,23 @@ export default function CompensationPage() {
 
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const { data: salaries, loading: salariesLoading } = useFetch(
+  const { data: salaries, loading: salariesLoading } = useFetch<Salary[]>(
     '/api/compensation/salaries',
     { fallback: MOCK_SALARIES }
   );
 
   const filteredSalaries = useMemo(() => {
     if (!salaries) return [];
-    return salaries.filter(s => {
+    return salaries.filter((s: Salary) => {
       const matchesSearch = s.employeeName.toLowerCase().includes(debouncedSearch.toLowerCase());
       const matchesMonth = s.month === monthFilter;
       return matchesSearch && matchesMonth;
     });
   }, [salaries, debouncedSearch, monthFilter]);
 
-  const SalaryItem = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const salary = filteredSalaries[index];
-    if (!salary) return null;
-
+  const SalaryItem = useCallback((salary: Salary, index: number) => {
     return (
-      <div style={style} className="flex items-center justify-between p-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+      <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="shrink-0">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-medium text-sm">
@@ -83,7 +96,7 @@ export default function CompensationPage() {
         </div>
       </div>
     );
-  }, [filteredSalaries]);
+  }, []);
 
   if (loading || salariesLoading) {
     return (
@@ -111,9 +124,9 @@ export default function CompensationPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard title="本月发放总额" value={`¥${salaries?.reduce((sum, s) => sum + (s.status === '已发放' ? s.netSalary : 0), 0).toLocaleString() || 0}`} icon={<DollarSign className="w-4 h-4" />} color="from-green-500 to-green-600" />
-        <StatCard title="待发放" value={`${salaries?.filter(s => s.status === '待发放').length || 0}人`} icon={<Users className="w-4 h-4" />} color="from-yellow-500 to-orange-500" />
-        <StatCard title="平均薪酬" value={`¥${salaries && salaries.length > 0 ? Math.round(salaries.reduce((sum, s) => sum + s.netSalary, 0) / salaries.length).toLocaleString() : 0}`} icon={<TrendingUp className="w-4 h-4" />} color="from-blue-500 to-blue-600" />
+        <StatCard title="本月发放总额" value={`¥${salaries?.reduce((sum: number, s: Salary) => sum + (s.status === '已发放' ? s.netSalary : 0), 0).toLocaleString() || 0}`} icon={<DollarSign className="w-4 h-4" />} color="from-green-500 to-green-600" />
+        <StatCard title="待发放" value={`${salaries?.filter((s: Salary) => s.status === '待发放').length || 0}人`} icon={<Users className="w-4 h-4" />} color="from-yellow-500 to-orange-500" />
+        <StatCard title="平均薪酬" value={`¥${salaries && salaries.length > 0 ? Math.round(salaries.reduce((sum: number, s: Salary) => sum + s.netSalary, 0) / salaries.length).toLocaleString() : 0}`} icon={<TrendingUp className="w-4 h-4" />} color="from-blue-500 to-blue-600" />
         <StatCard title="统计月份" value={monthFilter} icon={<Calendar className="w-4 h-4" />} color="from-purple-500 to-purple-600" />
       </div>
 
@@ -139,7 +152,7 @@ export default function CompensationPage() {
             </CardHeader>
             <CardContent className="p-0">
               <div className="h-[600px]">
-                <VirtualScroll items={filteredSalaries} itemHeight={90} height={600} renderItem={SalaryItem} />
+                <VirtualScroll items={filteredSalaries} renderItem={SalaryItem} itemHeight={90} height={600} />
               </div>
             </CardContent>
           </Card>

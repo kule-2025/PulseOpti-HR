@@ -27,11 +27,39 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { VirtualScroll } from '@/components/performance/virtual-scroll';
 import { LazyImage } from '@/components/performance/optimized-image';
 import { useDebounce, useFetch } from '@/hooks/use-performance';
-import { Building2, Briefcase, Mail, Phone, MapPin, Calendar, Filter, Plus, Download, Search } from 'lucide-react';
+import { Building2, Briefcase, Calendar, Filter, Plus, Download, Search } from 'lucide-react';
 import { cn } from '@/lib/theme';
 
-// 模拟数据 - 实际应从 API 获取
-const MOCK_POSITIONS = [
+// 类型定义
+interface Position {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  salary: string;
+  status: string;
+  createdAt: string;
+  applicants: number;
+  requirements: string[];
+  responsibilities: string[];
+}
+
+interface Candidate {
+  id: string;
+  name: string;
+  position: string;
+  status: string;
+  experience: string;
+  phone: string;
+  email: string;
+  appliedDate: string;
+  avatar: string | null;
+  education: string;
+  university: string;
+}
+
+// 模拟数据
+const MOCK_POSITIONS: Position[] = [
   {
     id: '1',
     title: '高级前端工程师',
@@ -82,7 +110,7 @@ const MOCK_POSITIONS = [
   },
 ];
 
-const MOCK_CANDIDATES = Array.from({ length: 50 }, (_, i) => ({
+const MOCK_CANDIDATES: Candidate[] = Array.from({ length: 50 }, (_, i) => ({
   id: `cand-${i + 1}`,
   name: `候选人${i + 1}`,
   position: i % 3 === 0 ? '高级前端工程师' : i % 3 === 1 ? '产品经理' : '数据分析师',
@@ -95,33 +123,6 @@ const MOCK_CANDIDATES = Array.from({ length: 50 }, (_, i) => ({
   education: i % 2 === 0 ? '本科' : '硕士',
   university: ['清华大学', '北京大学', '复旦大学', '上海交大'][i % 4],
 }));
-
-interface Position {
-  id: string;
-  title: string;
-  department: string;
-  location: string;
-  salary: string;
-  status: string;
-  createdAt: string;
-  applicants: number;
-  requirements: string[];
-  responsibilities: string[];
-}
-
-interface Candidate {
-  id: string;
-  name: string;
-  position: string;
-  status: string;
-  experience: string;
-  phone: string;
-  email: string;
-  appliedDate: string;
-  avatar: string | null;
-  education: string;
-  university: string;
-}
 
 export default function RecruitingPage() {
   const [activeTab, setActiveTab] = useState('positions');
@@ -148,7 +149,7 @@ export default function RecruitingPage() {
   const filteredCandidates = useMemo(() => {
     if (!candidates) return [];
 
-    return candidates.filter(cand => {
+    return candidates.filter((cand: Candidate) => {
       const matchesSearch =
         cand.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         cand.position.toLowerCase().includes(debouncedSearch.toLowerCase());
@@ -161,7 +162,7 @@ export default function RecruitingPage() {
   const CandidateItem = useCallback((candidate: Candidate, index: number) => {
     if (!candidate) return null;
 
-    const statusColors = {
+    const statusColors: Record<string, string> = {
       '待筛选': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
       '面试中': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
       '已通过': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
@@ -169,9 +170,7 @@ export default function RecruitingPage() {
     };
 
     return (
-      <div
-        className="flex items-center justify-between p-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-      >
+      <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="shrink-0">
             {candidate.avatar ? (
@@ -205,7 +204,7 @@ export default function RecruitingPage() {
         </div>
 
         <div className="flex items-center gap-4 shrink-0 ml-4">
-          <Badge className={statusColors[candidate.status as keyof typeof statusColors]}>
+          <Badge className={statusColors[candidate.status]}>
             {candidate.status}
           </Badge>
           <Button variant="outline" size="sm">
@@ -272,19 +271,19 @@ export default function RecruitingPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard
           title="招聘中职位"
-          value={positions?.filter(p => p.status === '招聘中').length || 0}
+          value={positions?.filter((p: Position) => p.status === '招聘中').length || 0}
           icon={<Briefcase className="w-4 h-4" />}
           color="from-blue-500 to-blue-600"
         />
         <StatCard
           title="待处理简历"
-          value={candidates?.filter(c => c.status === '待筛选').length || 0}
+          value={candidates?.filter((c: Candidate) => c.status === '待筛选').length || 0}
           icon={<Filter className="w-4 h-4" />}
           color="from-yellow-500 to-orange-500"
         />
         <StatCard
           title="面试中"
-          value={candidates?.filter(c => c.status === '面试中').length || 0}
+          value={candidates?.filter((c: Candidate) => c.status === '面试中').length || 0}
           icon={<Calendar className="w-4 h-4" />}
           color="from-purple-500 to-purple-600"
         />
@@ -391,11 +390,7 @@ function PositionsTable({ positions }: { positions: Position[] }) {
                       {position.department}
                     </span>
                     <span className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
-                      {position.location}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Briefcase className="w-4 h-4" />
+                      <Calendar className="w-4 h-4" />
                       {position.salary}
                     </span>
                     <span className="flex items-center gap-1">
@@ -444,7 +439,7 @@ function CandidatesList({
   onSearchChange: (value: string) => void;
   statusFilter: string;
   onStatusFilterChange: (value: string) => void;
-  CandidateItem: React.FC<{ index: number; style: React.CSSProperties }>;
+  CandidateItem: (candidate: Candidate, index: number) => React.ReactNode;
 }) {
   return (
     <Card>
@@ -483,9 +478,9 @@ function CandidatesList({
         <div className="h-[600px]">
           <VirtualScroll
             items={candidates}
+            renderItem={CandidateItem}
             itemHeight={80}
             height={600}
-            renderItem={CandidateItem}
           />
         </div>
       </CardContent>

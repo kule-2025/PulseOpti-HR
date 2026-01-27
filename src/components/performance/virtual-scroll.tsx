@@ -12,21 +12,10 @@ interface VirtualScrollProps<T> {
   style?: CSSProperties;
 }
 
-interface VirtualScrollPropsWithIndex<T> {
-  items: T[];
-  renderItem: (props: { index: number; style: CSSProperties; item: T }) => ReactNode;
-  itemHeight: number;
-  height: number;
-  overscan?: number;
-  className?: string;
-  style?: CSSProperties;
-  useIndexStyle?: boolean;
-}
-
 /**
  * 虚拟滚动组件 - 高性能渲染长列表
  */
-export function VirtualScroll<T extends any>({
+export function VirtualScroll<T>({
   items,
   renderItem,
   itemHeight,
@@ -34,8 +23,7 @@ export function VirtualScroll<T extends any>({
   overscan = 5,
   className = '',
   style,
-  useIndexStyle = false,
-}: VirtualScrollProps<T> | VirtualScrollPropsWithIndex<T>) {
+}: VirtualScrollProps<T>) {
   const [scrollTop, setScrollTop] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -122,69 +110,46 @@ export function DynamicVirtualScroll<T>({
     setItemPositions(positions);
   }, [items, estimateItemHeight]);
 
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    setScrollTop(e.currentTarget.scrollTop);
-  }, []);
-
-  // 查找起始索引
-  const startIndex = useCallback(() => {
-    let low = 0;
-    let high = items.length - 1;
-
-    while (low <= high) {
-      const mid = Math.floor((low + high) / 2);
-      const position = itemPositions[mid] || 0;
-
-      if (position < scrollTop) {
-        low = mid + 1;
-      } else {
-        high = mid - 1;
-      }
-    }
-
-    return Math.max(0, Math.max(0, high - overscan));
-  }, [scrollTop, itemPositions, items.length, overscan]);
-
   const totalHeight = itemPositions[itemPositions.length - 1] || 0;
-  const start = startIndex();
-  let end = start + overscan;
 
-  // 查找结束索引
-  for (let i = start; i < items.length; i++) {
-    if (itemPositions[i] > scrollTop + height) {
-      end = Math.min(i + overscan, items.length - 1);
-      break;
-    }
-  }
+  // 找到第一个可见项
+  const startIndex = itemPositions.findIndex((pos, idx) => {
+    const nextPos = itemPositions[idx + 1] || totalHeight;
+    return pos <= scrollTop + overscan * estimateItemHeight(idx) && nextPos > scrollTop;
+  });
 
-  const visibleItems = items.slice(start, end + 1);
-  const offsetY = itemPositions[start] || 0;
+  // 计算可见项的结束索引
+  const endIndex = itemPositions.findIndex(
+    (pos, idx) => pos > scrollTop + height + overscan * estimateItemHeight(idx)
+  );
+
+  const visibleStartIndex = Math.max(0, startIndex);
+  const visibleEndIndex = Math.min(items.length - 1, endIndex === -1 ? items.length - 1 : endIndex - 1);
+
+  const visibleItems = items.slice(visibleStartIndex, visibleEndIndex + 1);
+  const offsetY = itemPositions[visibleStartIndex] || 0;
 
   return (
     <div
       ref={scrollContainerRef}
       className={`overflow-auto ${className}`}
       style={{ height, ...style }}
-      onScroll={handleScroll}
+      onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
     >
       <div style={{ height: totalHeight, position: 'relative' }}>
-        {visibleItems.map((item, index) => {
-          const actualIndex = start + index;
-          const position = itemPositions[actualIndex] || 0;
-          return (
-            <div
-              key={actualIndex}
-              style={{
-                position: 'absolute',
-                top: position,
-                left: 0,
-                right: 0,
-              }}
-            >
-              {renderItem(item, actualIndex)}
-            </div>
-          );
-        })}
+        <div
+          style={{
+            transform: `translateY(${offsetY}px)`,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+          }}
+        >
+          {visibleItems.map((item, index) =>
+            renderItem(item, visibleStartIndex + index)
+          )}
+        </div>
       </div>
     </div>
   );

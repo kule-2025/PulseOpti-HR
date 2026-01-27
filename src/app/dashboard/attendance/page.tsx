@@ -17,53 +17,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { VirtualScroll } from '@/components/performance/virtual-scroll';
 import { LazyImage } from '@/components/performance/optimized-image';
 import { useDebounce, useFetch } from '@/hooks/use-performance';
-import { Clock, Calendar, CheckCircle2, XCircle, AlertCircle, Search, Download, Filter, TrendingUp } from 'lucide-react';
+import { Clock, Calendar, CheckCircle2, AlertCircle, Search, Download, Filter, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/theme';
 
-// 模拟数据 - 实际应从 API 获取
-const MOCK_RECORDS = Array.from({ length: 80 }, (_, i) => {
-  const statuses = ['正常', '迟到', '早退', '旷工', '请假'];
-  const status = statuses[i % statuses.length];
-  const timeIn = status === '迟到' ? '09:15' : status === '旷工' ? '--:--' : '08:55';
-  const timeOut = status === '早退' ? '17:30' : status === '旷工' ? '--:--' : '18:05';
-
-  return {
-    id: `record-${i + 1}`,
-    employeeId: `emp-${i + 1}`,
-    employeeName: `员工${i + 1}`,
-    department: ['技术部', '产品部', '市场部', '人事部'][i % 4],
-    date: `2024-03-${String((i % 30) + 1).padStart(2, '0')}`,
-    timeIn,
-    timeOut,
-    status,
-    workHours: status === '旷工' ? 0 : 8.5 - (status === '迟到' || status === '早退' ? 0.5 : 0),
-    avatar: null,
-  };
-});
-
-const MOCK_LEAVE_REQUESTS = Array.from({ length: 20 }, (_, i) => {
-  const types = ['年假', '病假', '事假', '调休'];
-  const statuses = ['待审批', '已通过', '已拒绝'];
-  const status = statuses[i % statuses.length];
-
-  return {
-    id: `leave-${i + 1}`,
-    employeeId: `emp-${i + 1}`,
-    employeeName: `员工${i + 1}`,
-    department: ['技术部', '产品部', '市场部', '人事部'][i % 4],
-    type: types[i % types.length],
-    startDate: `2024-03-${String((i % 20) + 1).padStart(2, '0')}`,
-    endDate: `2024-03-${String(((i % 20) + 1)).padStart(2, '0')}`,
-    days: 1,
-    reason: '个人原因',
-    status,
-    applyDate: `2024-03-${String(i % 25 + 1).padStart(2, '0')}`,
-    approver: status !== '待审批' ? '张经理' : null,
-    approveDate: status !== '待审批' ? `2024-03-${String(i % 25 + 2).padStart(2, '0')}` : null,
-    avatar: null,
-  };
-});
-
+// 类型定义
 interface AttendanceRecord {
   id: string;
   employeeId: string;
@@ -94,6 +51,50 @@ interface LeaveRequest {
   avatar: string | null;
 }
 
+// 模拟数据
+const MOCK_RECORDS: AttendanceRecord[] = Array.from({ length: 80 }, (_, i) => {
+  const statuses = ['正常', '迟到', '早退', '旷工', '请假'];
+  const status = statuses[i % statuses.length];
+  const timeIn = status === '迟到' ? '09:15' : status === '旷工' ? '--:--' : '08:55';
+  const timeOut = status === '早退' ? '17:30' : status === '旷工' ? '--:--' : '18:05';
+
+  return {
+    id: `record-${i + 1}`,
+    employeeId: `emp-${i + 1}`,
+    employeeName: `员工${i + 1}`,
+    department: ['技术部', '产品部', '市场部', '人事部'][i % 4],
+    date: `2024-03-${String((i % 30) + 1).padStart(2, '0')}`,
+    timeIn,
+    timeOut,
+    status,
+    workHours: status === '旷工' ? 0 : 8.5 - (status === '迟到' || status === '早退' ? 0.5 : 0),
+    avatar: null,
+  };
+});
+
+const MOCK_LEAVE_REQUESTS: LeaveRequest[] = Array.from({ length: 20 }, (_, i) => {
+  const types = ['年假', '病假', '事假', '调休'];
+  const statuses = ['待审批', '已通过', '已拒绝'];
+  const status = statuses[i % statuses.length];
+
+  return {
+    id: `leave-${i + 1}`,
+    employeeId: `emp-${i + 1}`,
+    employeeName: `员工${i + 1}`,
+    department: ['技术部', '产品部', '市场部', '人事部'][i % 4],
+    type: types[i % types.length],
+    startDate: `2024-03-${String((i % 20) + 1).padStart(2, '0')}`,
+    endDate: `2024-03-${String(((i % 20) + 1)).padStart(2, '0')}`,
+    days: 1,
+    reason: '个人原因',
+    status,
+    applyDate: `2024-03-${String(i % 25 + 1).padStart(2, '0')}`,
+    approver: status !== '待审批' ? '张经理' : null,
+    approveDate: status !== '待审批' ? `2024-03-${String(i % 25 + 2).padStart(2, '0')}` : null,
+    avatar: null,
+  };
+});
+
 export default function AttendancePage() {
   const [activeTab, setActiveTab] = useState('records');
   const [searchQuery, setSearchQuery] = useState('');
@@ -120,7 +121,7 @@ export default function AttendancePage() {
   const filteredRecords = useMemo(() => {
     if (!records) return [];
 
-    return records.filter(record => {
+    return records.filter((record: AttendanceRecord) => {
       const matchesSearch =
         record.employeeName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         record.department.toLowerCase().includes(debouncedSearch.toLowerCase());
@@ -134,7 +135,7 @@ export default function AttendancePage() {
   const filteredLeaveRequests = useMemo(() => {
     if (!leaveRequests) return [];
 
-    return leaveRequests.filter(request => {
+    return leaveRequests.filter((request: LeaveRequest) => {
       const matchesSearch =
         request.employeeName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         request.department.toLowerCase().includes(debouncedSearch.toLowerCase());
@@ -144,11 +145,8 @@ export default function AttendancePage() {
   }, [leaveRequests, debouncedSearch, leaveStatusFilter]);
 
   // 虚拟列表项渲染器 - 考勤记录
-  const RecordItem = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const record = filteredRecords[index];
-    if (!record) return null;
-
-    const statusColors = {
+  const RecordItem = useCallback((record: AttendanceRecord, index: number) => {
+    const statusColors: Record<string, string> = {
       '正常': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
       '迟到': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
       '早退': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
@@ -157,10 +155,7 @@ export default function AttendancePage() {
     };
 
     return (
-      <div
-        style={style}
-        className="flex items-center justify-between p-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-      >
+      <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="shrink-0">
             {record.avatar ? (
@@ -206,7 +201,7 @@ export default function AttendancePage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0 ml-4">
-          <Badge className={statusColors[record.status as keyof typeof statusColors]}>
+          <Badge className={statusColors[record.status]}>
             {record.status}
           </Badge>
           <Button variant="ghost" size="icon">
@@ -215,24 +210,18 @@ export default function AttendancePage() {
         </div>
       </div>
     );
-  }, [filteredRecords]);
+  }, []);
 
   // 虚拟列表项渲染器 - 请假申请
-  const LeaveItem = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const request = filteredLeaveRequests[index];
-    if (!request) return null;
-
-    const statusColors = {
+  const LeaveItem = useCallback((request: LeaveRequest, index: number) => {
+    const statusColors: Record<string, string> = {
       '待审批': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
       '已通过': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
       '已拒绝': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
     };
 
     return (
-      <div
-        style={style}
-        className="flex items-center justify-between p-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-      >
+      <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="shrink-0">
             {request.avatar ? (
@@ -282,7 +271,7 @@ export default function AttendancePage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0 ml-4">
-          <Badge className={statusColors[request.status as keyof typeof statusColors]}>
+          <Badge className={statusColors[request.status]}>
             {request.status}
           </Badge>
           {request.status === '待审批' && (
@@ -298,7 +287,7 @@ export default function AttendancePage() {
         </div>
       </div>
     );
-  }, [filteredLeaveRequests]);
+  }, []);
 
   if (loading || recordsLoading || leaveLoading) {
     return (
@@ -343,25 +332,25 @@ export default function AttendancePage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard
           title="今日出勤"
-          value={`${records?.filter(r => r.status === '正常' && r.date === '2024-03-15').length || 0}人`}
+          value={`${records?.filter((r: AttendanceRecord) => r.status === '正常' && r.date === '2024-03-15').length || 0}人`}
           icon={<CheckCircle2 className="w-4 h-4" />}
           color="from-green-500 to-green-600"
         />
         <StatCard
           title="迟到"
-          value={`${records?.filter(r => r.status === '迟到').length || 0}人`}
+          value={`${records?.filter((r: AttendanceRecord) => r.status === '迟到').length || 0}人`}
           icon={<AlertCircle className="w-4 h-4" />}
           color="from-yellow-500 to-orange-500"
         />
         <StatCard
           title="待审批请假"
-          value={leaveRequests?.filter(r => r.status === '待审批').length || 0}
+          value={leaveRequests?.filter((r: LeaveRequest) => r.status === '待审批').length || 0}
           icon={<Clock className="w-4 h-4" />}
           color="from-blue-500 to-blue-600"
         />
         <StatCard
           title="平均工时"
-          value={`${records?.reduce((sum, r) => sum + r.workHours, 0) / (records?.length || 1) || 0}h`}
+          value={`${(records && records.length > 0 ? records.reduce((sum: number, r: AttendanceRecord) => sum + r.workHours, 0) / records.length : 0)}h`}
           icon={<TrendingUp className="w-4 h-4" />}
           color="from-purple-500 to-purple-600"
         />
@@ -456,7 +445,7 @@ function RecordsList({
   onStatusFilterChange: (value: string) => void;
   dateFilter: string;
   onDateFilterChange: (value: string) => void;
-  RecordItem: React.FC<{ index: number; style: React.CSSProperties }>;
+  RecordItem: (record: AttendanceRecord, index: number) => React.ReactNode;
 }) {
   return (
     <Card>
@@ -503,9 +492,9 @@ function RecordsList({
         <div className="h-[600px]">
           <VirtualScroll
             items={records}
+            renderItem={RecordItem}
             itemHeight={80}
             height={600}
-            renderItem={RecordItem}
           />
         </div>
       </CardContent>
@@ -527,7 +516,7 @@ function LeaveList({
   onSearchChange: (value: string) => void;
   leaveStatusFilter: string;
   onLeaveStatusFilterChange: (value: string) => void;
-  LeaveItem: React.FC<{ index: number; style: React.CSSProperties }>;
+  LeaveItem: (request: LeaveRequest, index: number) => React.ReactNode;
 }) {
   return (
     <Card>
@@ -565,9 +554,9 @@ function LeaveList({
         <div className="h-[600px]">
           <VirtualScroll
             items={leaveRequests}
+            renderItem={LeaveItem}
             itemHeight={100}
             height={600}
-            renderItem={LeaveItem}
           />
         </div>
       </CardContent>

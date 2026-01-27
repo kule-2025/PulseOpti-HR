@@ -13,7 +13,35 @@ import { useDebounce, useFetch } from '@/hooks/use-performance';
 import { GraduationCap, Plus, Search, Calendar, Users, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/theme';
 
-const MOCK_TRAININGS = Array.from({ length: 30 }, (_, i) => ({
+// 类型定义
+interface Training {
+  id: string;
+  title: string;
+  type: string;
+  instructor: string;
+  startDate: string;
+  endDate: string;
+  duration: string;
+  capacity: number;
+  enrolled: number;
+  status: string;
+  description: string;
+}
+
+interface Enrollment {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  department: string;
+  trainingId: string;
+  trainingTitle: string;
+  enrollDate: string;
+  status: string;
+  progress: number;
+}
+
+// 模拟数据
+const MOCK_TRAININGS: Training[] = Array.from({ length: 30 }, (_, i) => ({
   id: `training-${i + 1}`,
   title: `培训课程${i + 1}`,
   type: ['新员工培训', '技能培训', '管理培训', '安全培训'][i % 4],
@@ -27,7 +55,7 @@ const MOCK_TRAININGS = Array.from({ length: 30 }, (_, i) => ({
   description: '提升员工专业技能和管理能力',
 }));
 
-const MOCK_ENROLLMENTS = Array.from({ length: 50 }, (_, i) => ({
+const MOCK_ENROLLMENTS: Enrollment[] = Array.from({ length: 50 }, (_, i) => ({
   id: `enroll-${i + 1}`,
   employeeId: `emp-${i + 1}`,
   employeeName: `员工${i + 1}`,
@@ -46,32 +74,24 @@ export default function TrainingPage() {
 
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const { data: trainings, loading: trainingsLoading } = useFetch('/api/training/courses', { fallback: MOCK_TRAININGS });
-  const { data: enrollments, loading: enrollmentsLoading } = useFetch('/api/training/enrollments', { fallback: MOCK_ENROLLMENTS });
+  const { data: trainings, loading: trainingsLoading } = useFetch<Training[]>('/api/training/courses', { fallback: MOCK_TRAININGS });
+  const { data: enrollments, loading: enrollmentsLoading } = useFetch<Enrollment[]>('/api/training/enrollments', { fallback: MOCK_ENROLLMENTS });
 
   const filteredTrainings = useMemo(() => {
     if (!trainings) return [];
-    return trainings.filter(t => t.title.toLowerCase().includes(debouncedSearch.toLowerCase()));
+    return trainings.filter((t: Training) => t.title.toLowerCase().includes(debouncedSearch.toLowerCase()));
   }, [trainings, debouncedSearch]);
 
-  const filteredEnrollments = useMemo(() => {
-    if (!enrollments) return [];
-    return enrollments.filter(e => e.employeeName.toLowerCase().includes(debouncedSearch.toLowerCase()));
-  }, [enrollments, debouncedSearch]);
-
-  const TrainingItem = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const training = filteredTrainings[index];
-    if (!training) return null;
-
-    const statusColors = { '报名中': 'bg-blue-100 text-blue-800', '进行中': 'bg-green-100 text-green-800', '已结束': 'bg-gray-100 text-gray-800' };
+  const TrainingItem = useCallback((training: Training, index: number) => {
+    const statusColors: Record<string, string> = { '报名中': 'bg-blue-100 text-blue-800', '进行中': 'bg-green-100 text-green-800', '已结束': 'bg-gray-100 text-gray-800' };
 
     return (
-      <div style={style} className="p-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+      <div className="p-4 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
         <div className="flex items-start justify-between mb-2">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h4 className="font-semibold text-gray-900 dark:text-white">{training.title}</h4>
-              <Badge className={statusColors[training.status as keyof typeof statusColors]}>{training.status}</Badge>
+              <Badge className={statusColors[training.status]}>{training.status}</Badge>
             </div>
             <div className="flex flex-wrap gap-3 text-sm text-gray-500">
               <span>{training.type}</span>
@@ -87,7 +107,7 @@ export default function TrainingPage() {
         </div>
       </div>
     );
-  }, [filteredTrainings]);
+  }, []);
 
   if (loading || trainingsLoading || enrollmentsLoading) {
     return (
@@ -113,9 +133,9 @@ export default function TrainingPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard title="全部课程" value={trainings?.length || 0} icon={<GraduationCap className="w-4 h-4" />} color="from-blue-500 to-blue-600" />
-        <StatCard title="报名中" value={trainings?.filter(t => t.status === '报名中').length || 0} icon={<Users className="w-4 h-4" />} color="from-green-500 to-green-600" />
-        <StatCard title="进行中" value={trainings?.filter(t => t.status === '进行中').length || 0} icon={<Calendar className="w-4 h-4" />} color="from-purple-500 to-purple-600" />
-        <StatCard title="已完成培训" value={enrollments?.filter(e => e.status === '已完成').length || 0} icon={<CheckCircle2 className="w-4 h-4" />} color="from-orange-500 to-orange-500" />
+        <StatCard title="报名中" value={trainings?.filter((t: Training) => t.status === '报名中').length || 0} icon={<Users className="w-4 h-4" />} color="from-green-500 to-green-600" />
+        <StatCard title="进行中" value={trainings?.filter((t: Training) => t.status === '进行中').length || 0} icon={<Calendar className="w-4 h-4" />} color="from-purple-500 to-purple-600" />
+        <StatCard title="已完成培训" value={enrollments?.filter((e: Enrollment) => e.status === '已完成').length || 0} icon={<CheckCircle2 className="w-4 h-4" />} color="from-orange-500 to-orange-500" />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -136,7 +156,7 @@ export default function TrainingPage() {
             </CardHeader>
             <CardContent className="p-0">
               <div className="h-[600px]">
-                <VirtualScroll items={filteredTrainings} itemHeight={100} height={600} renderItem={TrainingItem} />
+                <VirtualScroll items={filteredTrainings} renderItem={TrainingItem} itemHeight={100} height={600} />
               </div>
             </CardContent>
           </Card>
