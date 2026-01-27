@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback, memo } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Users,
   TrendingUp,
@@ -98,34 +99,198 @@ interface DashboardStats {
   };
 }
 
+interface QuickAction {
+  title: string;
+  description: string;
+  icon: any;
+  href: string;
+  color: string;
+}
+
+interface RecentAlert {
+  type: string;
+  title: string;
+  time: string;
+  icon: any;
+}
+
+// 默认数据常量
+const DEFAULT_STATS: DashboardStats = {
+  employees: { total: 0, active: 0, probation: 0, newHires: 0 },
+  recruitment: { activeJobs: 0, totalCandidates: 0, hired: 0 },
+  performance: null,
+  efficiency: { avgRevenuePerEmployee: 0, growth: '0%', turnoverRate: '0%' },
+  subscription: { tier: 'free', maxEmployees: 0, aiQuota: 0 },
+  analytics: {
+    departmentStats: [],
+    recruitmentTrend: [],
+    performanceDistribution: null,
+    aiUsage: { used: 0, total: 0, percentage: 0 },
+    monthlyTrend: [],
+    talentDistribution: [],
+  },
+};
+
+const QUICK_ACTIONS: QuickAction[] = [
+  {
+    title: '发布新职位',
+    description: '快速创建招聘需求',
+    icon: Briefcase,
+    href: '/dashboard/recruitment/job-posting',
+    color: 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400',
+  },
+  {
+    title: '发起绩效评估',
+    description: '设定目标与KPI',
+    icon: Target,
+    href: '/dashboard/performance/goal-setting',
+    color: 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400',
+  },
+  {
+    title: '员工入职',
+    description: '快速办理入职手续',
+    icon: Users,
+    href: '/dashboard/workflows/onboarding',
+    color: 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400',
+  },
+  {
+    title: 'AI岗位画像',
+    description: '智能生成岗位描述',
+    icon: Sparkles,
+    href: '/dashboard/ai-assistant/job-profile',
+    color: 'bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-400',
+  },
+];
+
+const RECENT_ALERTS: RecentAlert[] = [
+  {
+    type: 'warning',
+    title: '3名员工即将转正',
+    time: '今天',
+    icon: Clock,
+  },
+  {
+    type: 'info',
+    title: 'Q4绩效评估即将开始',
+    time: '明天',
+    icon: Calendar,
+  },
+  {
+    type: 'success',
+    title: '2个职位已成功招聘',
+    time: '昨天',
+    icon: CheckCircle,
+  },
+];
+
+// 统计卡片组件（使用React.memo优化性能）
+const StatCard = memo(function StatCard({
+  title,
+  value,
+  description,
+  icon: Icon,
+  color,
+  extra,
+}: {
+  title: string;
+  value: string | number;
+  description: string;
+  icon: any;
+  color: string;
+  extra?: React.ReactNode;
+}) {
+  return (
+    <Card className="hover:shadow-lg transition-shadow duration-300">
+      <CardHeader className="pb-3">
+        <CardDescription className="flex items-center justify-between">
+          <span>{title}</span>
+          <Icon className={`h-4 w-4 ${color}`} />
+        </CardDescription>
+        <CardTitle className="text-3xl">{value}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-4 text-sm">
+          {extra}
+          <div className="text-gray-600">{description}</div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+});
+
+// 骨架屏组件
+const StatsSkeleton = () => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    {[1, 2, 3, 4].map((i) => (
+      <Card key={i}>
+        <CardHeader className="pb-3">
+          <Skeleton className="h-4 w-24 mb-2" />
+          <Skeleton className="h-8 w-16" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-4 w-full" />
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+);
+
 export default function DashboardOverviewPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
 
-  useEffect(() => {
-    fetchDashboardStats();
+  // 获取当前用户信息
+  const getCurrentUser = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('user');
+      return userStr ? JSON.parse(userStr) : null;
+    }
+    return null;
   }, []);
 
-  const fetchDashboardStats = async () => {
+  // 获取告警颜色
+  const getAlertColor = useCallback((type: string) => {
+    const colors: Record<string, string> = {
+      warning: 'bg-amber-50 border-amber-200 text-amber-800',
+      info: 'bg-blue-50 border-blue-200 text-blue-800',
+      success: 'bg-green-50 border-green-200 text-green-800',
+    };
+    return colors[type] || 'bg-gray-50 border-gray-200 text-gray-800';
+  }, []);
+
+  // 判断是否是新用户
+  const isNewUser = useMemo(() => {
+    const user = getCurrentUser();
+    if (!user) return false;
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    return new Date(user.createdAt) > sevenDaysAgo;
+  }, [getCurrentUser]);
+
+  // 优化的数据获取函数
+  const fetchDashboardStats = useCallback(async () => {
     try {
-      // 获取当前用户信息
-      let companyId = '';
-      if (typeof window !== 'undefined') {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          companyId = user.companyId;
-        }
+      setLoading(true);
+      setError(null);
+
+      const user = getCurrentUser();
+      const companyId = user?.companyId || '';
+
+      const response = await fetch(`/api/dashboard/stats?companyId=${companyId}`, {
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        throw new Error('获取数据失败');
       }
 
-      const response = await fetch(`/api/dashboard/stats?companyId=${companyId}`);
       const text = await response.text();
       const data = text ? JSON.parse(text) : {};
 
       if (data.success && data.data) {
         // 确保所有数组字段都有默认值
-        const safeStats = {
+        const safeStats: DashboardStats = {
           ...data.data,
           analytics: {
             ...data.data.analytics,
@@ -138,152 +303,63 @@ export default function DashboardOverviewPage() {
         };
         setStats(safeStats);
       } else {
-        // 如果API返回失败，使用默认空数据
-        setStats({
-          employees: { total: 0, active: 0, probation: 0, newHires: 0 },
-          recruitment: { activeJobs: 0, totalCandidates: 0, hired: 0 },
-          performance: null,
-          efficiency: { avgRevenuePerEmployee: 0, growth: '0%', turnoverRate: '0%' },
-          subscription: { tier: 'free', maxEmployees: 0, aiQuota: 0 },
-          analytics: {
-            departmentStats: [],
-            recruitmentTrend: [],
-            performanceDistribution: null,
-            aiUsage: { used: 0, total: 0, percentage: 0 },
-            monthlyTrend: [],
-            talentDistribution: [],
-          },
-        });
+        throw new Error('数据格式错误');
       }
-    } catch (error) {
-      console.error('获取仪表盘数据失败:', error);
-      // 错误时也设置默认空数据
-      setStats({
-        employees: { total: 0, active: 0, probation: 0, newHires: 0 },
-        recruitment: { activeJobs: 0, totalCandidates: 0, hired: 0 },
-        performance: null,
-        efficiency: { avgRevenuePerEmployee: 0, growth: '0%', turnoverRate: '0%' },
-        subscription: { tier: 'free', maxEmployees: 0, aiQuota: 0 },
-        analytics: {
-          departmentStats: [],
-          recruitmentTrend: [],
-          performanceDistribution: null,
-          aiUsage: { used: 0, total: 0, percentage: 0 },
-          monthlyTrend: [],
-          talentDistribution: [],
-        },
-      });
+    } catch (err) {
+      console.error('获取仪表盘数据失败:', err);
+      setError('加载数据失败，请检查网络连接后重试');
+      setStats(DEFAULT_STATS);
     } finally {
       setLoading(false);
     }
-  };
+  }, [getCurrentUser]);
 
-  if (loading) {
+  useEffect(() => {
+    fetchDashboardStats();
+  }, [fetchDashboardStats]);
+
+  // 优化的快捷操作卡片
+  const quickActions = useMemo(() => QUICK_ACTIONS, []);
+
+  // 优化的告警列表
+  const recentAlerts = useMemo(() => RECENT_ALERTS, []);
+
+  // 加载状态
+  if (loading && !stats) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <RefreshCw className="h-12 w-12 text-blue-600 mx-auto mb-4 animate-spin" />
-          <p className="text-gray-600">数据加载中...</p>
-        </div>
+      <div className="space-y-6 p-6">
+        <Skeleton className="h-32 w-full" />
+        <StatsSkeleton />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
 
-  if (!stats) {
+  // 错误状态
+  if (error && !stats) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen p-6">
         <Alert className="max-w-md">
           <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            加载数据失败，请检查网络连接后重试
+          <AlertDescription className="flex items-center justify-between">
+            {error}
+            <Button size="sm" variant="outline" onClick={fetchDashboardStats}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              重试
+            </Button>
           </AlertDescription>
         </Alert>
       </div>
     );
   }
 
-  const quickActions = [
-    {
-      title: '发布新职位',
-      description: '快速创建招聘需求',
-      icon: Briefcase,
-      href: '/recruitment/new',
-      color: 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400',
-    },
-    {
-      title: '发起绩效评估',
-      description: '设定目标与KPI',
-      icon: Target,
-      href: '/performance/new',
-      color: 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400',
-    },
-    {
-      title: '员工入职',
-      description: '快速办理入职手续',
-      icon: Users,
-      href: '/workflows/onboarding',
-      color: 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400',
-    },
-    {
-      title: 'AI岗位画像',
-      description: '智能生成岗位描述',
-      icon: Sparkles,
-      href: '/ai-assistant/job-profile',
-      color: 'bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-400',
-    },
-  ];
-
-  const recentAlerts = [
-    {
-      type: 'warning',
-      title: '3名员工即将转正',
-      time: '今天',
-      icon: Clock,
-    },
-    {
-      type: 'info',
-      title: 'Q4绩效评估即将开始',
-      time: '明天',
-      icon: Calendar,
-    },
-    {
-      type: 'success',
-      title: '2个职位已成功招聘',
-      time: '昨天',
-      icon: CheckCircle,
-    },
-  ];
-
-  // 获取当前用户信息
-  const getCurrentUser = () => {
-    if (typeof window !== 'undefined') {
-      const userStr = localStorage.getItem('user');
-      return userStr ? JSON.parse(userStr) : null;
-    }
-    return null;
-  };
-
-  const user = getCurrentUser();
-  const isNewUser = user && new Date(user.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 7天内注册
-
-  const getAlertColor = (type: string) => {
-    switch (type) {
-      case 'warning':
-        return 'bg-amber-50 border-amber-200 text-amber-800';
-      case 'info':
-        return 'bg-blue-50 border-blue-200 text-blue-800';
-      case 'success':
-        return 'bg-green-50 border-green-200 text-green-800';
-      default:
-        return 'bg-gray-50 border-gray-200 text-gray-800';
-    }
-  };
+  if (!stats) return null;
 
   return (
     <div className="space-y-6 p-6">
-      {/* New User Welcome Banner */}
+      {/* 新用户欢迎横幅 */}
       {isNewUser && (
-        <Alert className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+        <Alert className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 transition-all hover:shadow-md">
           <Sparkles className="h-4 w-4 text-blue-600" />
           <AlertDescription className="flex items-center justify-between">
             <div>
@@ -291,7 +367,7 @@ export default function DashboardOverviewPage() {
               <span className="text-blue-700 ml-2">我们为您准备了5分钟快速上手指南</span>
             </div>
             <Link href="/docs">
-              <Button size="sm" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100">
+              <Button size="sm" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100 transition-colors">
                 开始探索
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
@@ -300,123 +376,95 @@ export default function DashboardOverviewPage() {
         </Alert>
       )}
 
-      {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-8 text-white shadow-lg">
-        <div className="relative z-10">
-          <h1 className="mb-2 text-3xl font-bold">早安，李明 👋</h1>
-          <p className="mb-6 text-lg text-blue-50">
-            今天有 <span className="font-semibold">{stats.employees.newHires}</span> 位新同事入职，
-            <span className="font-semibold"> {stats.recruitment.activeJobs}</span> 个职位正在招聘中
-          </p>
-          <div className="flex gap-3">
-            <Button
-              variant="secondary"
-              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white border-white/20"
-            >
-              查看今日任务
-            </Button>
-            <Button
-              variant="outline"
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border-white/20"
-            >
-              查看团队概况
-            </Button>
+      {/* 欢迎横幅 */}
+      <Card className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <CardContent className="p-8">
+          <div className="relative z-10">
+            <h1 className="mb-2 text-3xl font-bold tracking-tight">早安，李明 👋</h1>
+            <p className="mb-6 text-lg text-blue-50">
+              今天有 <span className="font-semibold">{stats.employees.newHires}</span> 位新同事入职，
+              <span className="font-semibold"> {stats.recruitment.activeJobs}</span> 个职位正在招聘中
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="secondary"
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white border-white/20 transition-all hover:scale-105"
+              >
+                查看今日任务
+              </Button>
+              <Button
+                variant="outline"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border-white/20 transition-all hover:scale-105"
+              >
+                查看团队概况
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Quick Stats - 飞书风格卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="pb-3">
-            <CardDescription className="flex items-center justify-between">
-              <span>员工总数</span>
-              <Users className="h-4 w-4 text-blue-600" />
-            </CardDescription>
-            <CardTitle className="text-3xl">{stats.employees.total}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4 text-sm">
+      {/* 快速统计 - 飞书风格卡片 */}
+      {loading ? (
+        <StatsSkeleton />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            title="员工总数"
+            value={stats.employees.total}
+            description={`在职 ${stats.employees.active}`}
+            icon={Users}
+            color="text-blue-600"
+            extra={
               <div className="flex items-center gap-1 text-green-600">
                 <ArrowUp className="h-3 w-3" />
                 <span>+{stats.employees.newHires} 本月</span>
               </div>
-              <div className="text-gray-600">
-                在职 {stats.employees.active}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="pb-3">
-            <CardDescription className="flex items-center justify-between">
-              <span>招聘中职位</span>
-              <Briefcase className="h-4 w-4 text-purple-600" />
-            </CardDescription>
-            <CardTitle className="text-3xl">{stats.recruitment.activeJobs}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4 text-sm">
-              <div className="text-gray-600">
-                候选人 {stats.recruitment.totalCandidates}
-              </div>
+            }
+          />
+          <StatCard
+            title="招聘中职位"
+            value={stats.recruitment.activeJobs}
+            description={`候选人 ${stats.recruitment.totalCandidates}`}
+            icon={Briefcase}
+            color="text-purple-600"
+            extra={
               <div className="flex items-center gap-1 text-green-600">
                 <UserCheck className="h-3 w-3" />
                 <span>{stats.recruitment.hired} 已入职</span>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="pb-3">
-            <CardDescription className="flex items-center justify-between">
-              <span>绩效完成率</span>
-              <Target className="h-4 w-4 text-green-600" />
-            </CardDescription>
-            <CardTitle className="text-3xl">
-              {stats.performance ? stats.performance.completionRate : '0%'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {stats.performance && (
-              <>
-                <div className="mb-2">
-                  <Progress value={parseInt(stats.performance.completionRate)} />
+            }
+          />
+          <StatCard
+            title="绩效完成率"
+            value={stats.performance ? stats.performance.completionRate : '0%'}
+            description={stats.performance ? `平均分 ${stats.performance.avgScore}` : ''}
+            icon={Target}
+            color="text-green-600"
+            extra={
+              stats.performance && (
+                <div className="w-24">
+                  <Progress value={parseInt(stats.performance.completionRate)} className="h-2" />
                 </div>
-                <div className="text-sm text-gray-600">
-                  平均分 {stats.performance.avgScore}
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="pb-3">
-            <CardDescription className="flex items-center justify-between">
-              <span>人均营收</span>
-              <DollarSign className="h-4 w-4 text-orange-600" />
-            </CardDescription>
-            <CardTitle className="text-3xl">
-              ¥{(stats.efficiency.avgRevenuePerEmployee / 10000).toFixed(1)}万
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4 text-sm">
+              )
+            }
+          />
+          <StatCard
+            title="人均营收"
+            value={`¥${(stats.efficiency.avgRevenuePerEmployee / 10000).toFixed(1)}万`}
+            description={`离职率 ${stats.efficiency.turnoverRate}`}
+            icon={DollarSign}
+            color="text-orange-600"
+            extra={
               <div className="flex items-center gap-1 text-green-600">
                 <ArrowUp className="h-3 w-3" />
                 <span>{stats.efficiency.growth}</span>
               </div>
-              <div className="text-gray-600">
-                离职率 {stats.efficiency.turnoverRate}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            }
+          />
+        </div>
+      )}
 
+      {/* 标签页 */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
           <TabsTrigger value="overview">总览</TabsTrigger>
@@ -425,10 +473,10 @@ export default function DashboardOverviewPage() {
           <TabsTrigger value="actions">快捷操作</TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab */}
+        {/* 总览标签页 */}
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Department Distribution */}
+            {/* 部门人员分布 */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -454,7 +502,7 @@ export default function DashboardOverviewPage() {
               </CardContent>
             </Card>
 
-            {/* AI Usage */}
+            {/* AI使用情况 */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -480,10 +528,10 @@ export default function DashboardOverviewPage() {
           </div>
         </TabsContent>
 
-        {/* Analytics Tab */}
+        {/* 数据分析标签页 */}
         <TabsContent value="analytics" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Monthly Trend */}
+            {/* 月度趋势分析 */}
             <Card className="col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -498,7 +546,7 @@ export default function DashboardOverviewPage() {
                     <div key={item.month} className="flex-1 flex flex-col items-center gap-2">
                       <div className="w-full space-y-1">
                         <div
-                          className="w-full bg-blue-500 rounded-t transition-all hover:bg-blue-600"
+                          className="w-full bg-blue-500 rounded-t transition-all hover:bg-blue-600 cursor-pointer"
                           style={{
                             height: `${Math.min((item.revenue / 500000) * 100, 100)}%`,
                             minHeight: '4px',
@@ -506,7 +554,7 @@ export default function DashboardOverviewPage() {
                           title={`营收: ¥${(item.revenue / 10000).toFixed(0)}万`}
                         />
                         <div
-                          className="w-full bg-green-500 rounded transition-all hover:bg-green-600"
+                          className="w-full bg-green-500 rounded transition-all hover:bg-green-600 cursor-pointer"
                           style={{
                             height: `${Math.min((item.employees / 100) * 100, 100)}%`,
                             minHeight: '4px',
@@ -514,7 +562,7 @@ export default function DashboardOverviewPage() {
                           title={`员工: ${item.employees}人`}
                         />
                         <div
-                          className="w-full bg-purple-500 rounded-b transition-all hover:bg-purple-600"
+                          className="w-full bg-purple-500 rounded-b transition-all hover:bg-purple-600 cursor-pointer"
                           style={{
                             height: `${Math.min((item.hiring / 20) * 100, 100)}%`,
                             minHeight: '4px',
@@ -543,7 +591,7 @@ export default function DashboardOverviewPage() {
               </CardContent>
             </Card>
 
-            {/* Performance Distribution */}
+            {/* 绩效分布 */}
             {stats.performance && stats.analytics.performanceDistribution && (
               <Card>
                 <CardHeader>
@@ -554,62 +602,29 @@ export default function DashboardOverviewPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">优秀</span>
-                        <span className="text-sm text-green-600">
-                          {stats.analytics.performanceDistribution.excellent}人
-                        </span>
+                    {[
+                      { label: '优秀', value: stats.analytics.performanceDistribution.excellent, color: 'text-green-600' },
+                      { label: '良好', value: stats.analytics.performanceDistribution.good, color: 'text-blue-600' },
+                      { label: '一般', value: stats.analytics.performanceDistribution.average, color: 'text-gray-600' },
+                      { label: '需改进', value: stats.analytics.performanceDistribution.needsImprovement, color: 'text-red-600' },
+                    ].map((item) => (
+                      <div key={item.label}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium">{item.label}</span>
+                          <span className={`text-sm ${item.color}`}>{item.value}人</span>
+                        </div>
+                        <Progress
+                          value={(item.value / stats.employees.total) * 100}
+                          className="h-2"
+                        />
                       </div>
-                      <Progress
-                        value={(stats.analytics.performanceDistribution.excellent / stats.employees.total) * 100}
-                        className="h-2"
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">良好</span>
-                        <span className="text-sm text-blue-600">
-                          {stats.analytics.performanceDistribution.good}人
-                        </span>
-                      </div>
-                      <Progress
-                        value={(stats.analytics.performanceDistribution.good / stats.employees.total) * 100}
-                        className="h-2"
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">一般</span>
-                        <span className="text-sm text-gray-600">
-                          {stats.analytics.performanceDistribution.average}人
-                        </span>
-                      </div>
-                      <Progress
-                        value={(stats.analytics.performanceDistribution.average / stats.employees.total) * 100}
-                        className="h-2"
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">需改进</span>
-                        <span className="text-sm text-red-600">
-                          {stats.analytics.performanceDistribution.needsImprovement}人
-                        </span>
-                      </div>
-                      <Progress
-                        value={
-                          (stats.analytics.performanceDistribution.needsImprovement / stats.employees.total) * 100
-                        }
-                        className="h-2"
-                      />
-                    </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* Talent Distribution */}
+            {/* 人才分布 */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -627,10 +642,7 @@ export default function DashboardOverviewPage() {
                           {item.count}人 · {item.avgScore}分
                         </span>
                       </div>
-                      <Progress
-                        value={Math.min((item.avgScore / 100) * 100, 100)}
-                        className="h-2"
-                      />
+                      <Progress value={Math.min((item.avgScore / 100) * 100, 100)} className="h-2" />
                     </div>
                   ))}
                 </div>
@@ -639,7 +651,7 @@ export default function DashboardOverviewPage() {
           </div>
         </TabsContent>
 
-        {/* Alerts Tab */}
+        {/* 提醒事项标签页 */}
         <TabsContent value="alerts" className="space-y-4">
           <Card>
             <CardHeader>
@@ -654,7 +666,7 @@ export default function DashboardOverviewPage() {
                 {recentAlerts.map((alert, index) => (
                   <div
                     key={index}
-                    className={`flex items-start gap-3 p-4 rounded-lg border ${getAlertColor(alert.type)}`}
+                    className={`flex items-start gap-3 p-4 rounded-lg border transition-all hover:shadow-md cursor-pointer ${getAlertColor(alert.type)}`}
                   >
                     <alert.icon className="h-5 w-5 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
@@ -669,7 +681,7 @@ export default function DashboardOverviewPage() {
           </Card>
         </TabsContent>
 
-        {/* Actions Tab */}
+        {/* 快捷操作标签页 */}
         <TabsContent value="actions" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {quickActions.map((action) => (

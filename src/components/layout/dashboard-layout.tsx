@@ -1,13 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo, lazy, Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Logo } from '@/components/branding/Logo';
-import FeedbackWidget from '@/components/feedback/feedback-widget';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// 懒加载FeedbackWidget以提升性能
+const FeedbackWidget = lazy(() => import('@/components/feedback/feedback-widget'));
 import {
   DropdownMenu,
   DropdownMenuContent,
