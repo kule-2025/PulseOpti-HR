@@ -26,7 +26,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VirtualScroll } from '@/components/performance/virtual-scroll';
-import { LazyImage } from '@/components/performance/optimized-image';
+import { ResponsiveImage } from '@/components/performance/optimized-image';
 import { useDebounce, useFetch } from '@/hooks/use-performance';
 import { Target, TrendingUp, Award, Calendar, Plus, Search, Download, Edit, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/theme';

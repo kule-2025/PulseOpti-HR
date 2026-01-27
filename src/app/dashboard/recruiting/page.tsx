@@ -25,7 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VirtualScroll } from '@/components/performance/virtual-scroll';
-import { LazyImage } from '@/components/performance/optimized-image';
+import { ResponsiveImage } from '@/components/performance/optimized-image';
 import { useDebounce, useFetch } from '@/hooks/use-performance';
 import { Building2, Briefcase, Calendar, Filter, Plus, Download, Search } from 'lucide-react';
 import { cn } from '@/lib/theme';
@@ -174,7 +174,7 @@ export default function RecruitingPage() {
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="shrink-0">
             {candidate.avatar ? (
-              <LazyImage
+              <ResponsiveImage
                 src={candidate.avatar}
                 alt={candidate.name}
                 className="w-12 h-12 rounded-full object-cover"

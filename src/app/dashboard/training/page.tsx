@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VirtualScroll } from '@/components/performance/virtual-scroll';
-import { LazyImage } from '@/components/performance/optimized-image';
+import { ResponsiveImage } from '@/components/performance/optimized-image';
 import { useDebounce, useFetch } from '@/hooks/use-performance';
 import { GraduationCap, Plus, Search, Calendar, Users, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/theme';

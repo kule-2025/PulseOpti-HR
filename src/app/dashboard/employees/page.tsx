@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VirtualScroll } from '@/components/performance/virtual-scroll';
-import { LazyImage } from '@/components/performance/optimized-image';
+import { ResponsiveImage } from '@/components/performance/optimized-image';
 import { useDebounce, useFetch } from '@/hooks/use-performance';
 import { Users, Plus, Search, Building2, Edit, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/theme';
@@ -83,7 +83,7 @@ export default function EmployeesPage() {
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="shrink-0">
             {employee.avatar ? (
-              <LazyImage src={employee.avatar} alt={employee.name} className="w-12 h-12 rounded-full object-cover" />
+              <ResponsiveImage src={employee.avatar} alt={employee.name} className="w-12 h-12 rounded-full object-cover" />
             ) : (
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-medium">
                 {employee.name.charAt(0)}

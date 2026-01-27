@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VirtualScroll } from '@/components/performance/virtual-scroll';
-import { LazyImage } from '@/components/performance/optimized-image';
+import { ResponsiveImage } from '@/components/performance/optimized-image';
 import { useDebounce, useFetch } from '@/hooks/use-performance';
 import { Clock, Calendar, CheckCircle2, AlertCircle, Search, Download, Filter, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/theme';
@@ -159,7 +159,7 @@ export default function AttendancePage() {
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="shrink-0">
             {record.avatar ? (
-              <LazyImage
+              <ResponsiveImage
                 src={record.avatar}
                 alt={record.employeeName}
                 className="w-10 h-10 rounded-full object-cover"
@@ -225,7 +225,7 @@ export default function AttendancePage() {
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="shrink-0">
             {request.avatar ? (
-              <LazyImage
+              <ResponsiveImage
                 src={request.avatar}
                 alt={request.employeeName}
                 className="w-10 h-10 rounded-full object-cover"
