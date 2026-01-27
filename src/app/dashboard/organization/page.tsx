@@ -196,7 +196,7 @@ export default function OrganizationPage() {
     return count(departments);
   }, [departments]);
 
-  const renderDepartment = (dept: Department, level: number = 0): JSX.Element => {
+  const renderDepartment = (dept: Department, level: number = 0) => {
     const hasChildren = dept.children && dept.children.length > 0;
     
     return (
