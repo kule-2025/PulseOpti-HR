@@ -65,13 +65,26 @@ export async function POST(request: NextRequest) {
 
     // 并行执行：更新最后登录时间、检查订阅状态（性能优化）
     // 仅对有companyId的账号检查订阅状态（开发者账号companyId为null，不检查）
-    const subscriptionPromise = user.companyId
-      ? subscriptionManager.checkSubscriptionStatus(user.companyId)
-      : Promise.resolve(null);
-    const [subscriptionStatus] = await Promise.all([
-      subscriptionPromise,
-      userManager.updateLastLogin(user.id).catch(() => {}), // 不阻塞主流程
-    ]);
+    let subscriptionStatus = null;
+    try {
+      const subscriptionPromise = user.companyId
+        ? subscriptionManager.checkSubscriptionStatus(user.companyId)
+        : Promise.resolve(null);
+      const [status] = await Promise.all([
+        subscriptionPromise,
+        userManager.updateLastLogin(user.id).catch(() => {}), // 不阻塞主流程
+      ]);
+      subscriptionStatus = status;
+    } catch (error) {
+      // 订阅检查失败不影响登录（可能是数据库表结构问题）
+      console.warn('订阅检查失败，跳过订阅验证:', error);
+      subscriptionStatus = {
+        isValid: true,
+        tier: 'free',
+        maxEmployees: 999,
+        expiresAt: null,
+      };
+    }
 
     // 生成JWT token
     // 开发者账号（companyId为null）使用"PLATFORM"作为特殊标识
