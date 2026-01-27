@@ -27,7 +27,7 @@ import { VirtualScroll } from '@/components/performance/virtual-scroll';
 import { ResponsiveImage } from '@/components/performance/optimized-image';
 import { useForm } from '@/hooks/use-form';
 import { useDebounce } from '@/hooks/use-debounce';
-import { PageWrapper, usePageData } from '@/hooks/use-page';
+import { usePageData } from '@/hooks/use-page';
 import {
   Building2,
   Briefcase,
@@ -394,9 +394,19 @@ export default function RecruitingPage() {
     );
   }, []);
 
+  if (positionsLoading || candidatesLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+          <p className="mt-4 text-gray-600 dark:text-gray-400">加载中...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <PageWrapper loading={positionsLoading || candidatesLoading}>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">招聘管理</h1>
@@ -673,6 +683,6 @@ export default function RecruitingPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </PageWrapper>
+    </div>
   );
 }
