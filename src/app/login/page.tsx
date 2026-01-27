@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -8,13 +8,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, ArrowLeft, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Users, ArrowLeft, Loader2, Bug } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
   const [loginMethod, setLoginMethod] = useState<'password' | 'sms' | 'email'>('password');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isDevMode, setIsDevMode] = useState(false);
+
+  // 检测是否是开发模式
+  useEffect(() => {
+    setIsDevMode(process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  }, []);
 
   // 密码登录表单状态
   const [passwordForm, setPasswordForm] = useState({
@@ -36,6 +43,46 @@ export default function LoginPage() {
   });
   const [emailCountdown, setEmailCountdown] = useState(0);
   const [devCode, setDevCode] = useState(''); // 开发环境验证码
+
+  // 开发模式快速登录
+  const handleDevLogin = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          account: 'admin',
+          password: 'admin123',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || '开发模式登录失败');
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || '开发模式登录失败');
+      }
+
+      // 保存用户信息
+      localStorage.setItem('user', JSON.stringify(data.data.user));
+      localStorage.setItem('token', data.data.token);
+
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message || '开发模式登录失败');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -293,6 +340,27 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent>
+            {/* 开发模式快速登录 */}
+            {isDevMode && (
+              <Alert className="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
+                <Bug className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                <AlertDescription className="flex items-center justify-between">
+                  <span className="text-sm text-yellow-800 dark:text-yellow-200">
+                    开发模式：使用 admin / admin123 快速登录
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 text-xs border-yellow-300 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-900/30"
+                    onClick={handleDevLogin}
+                    disabled={loading}
+                  >
+                    {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : '一键登录'}
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
             <Tabs defaultValue="password" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="password" onClick={() => setLoginMethod('password')}>
