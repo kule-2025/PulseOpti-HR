@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Users, ArrowLeft, Loader2, Bug } from 'lucide-react';
+import { Users, ArrowLeft, Loader2, Bug, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,6 +17,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isDevMode, setIsDevMode] = useState(false);
+
+  // 密码显示状态
+  const [showPassword, setShowPassword] = useState(false);
 
   // 检测是否是开发模式
   useEffect(() => {
@@ -402,14 +405,24 @@ export default function LoginPage() {
                         忘记密码?
                       </Link>
                     </div>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="请输入密码"
-                      value={passwordForm.password}
-                      onChange={(e) => setPasswordForm({ ...passwordForm, password: e.target.value })}
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="请输入密码"
+                        value={passwordForm.password}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, password: e.target.value })}
+                        required
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
                   {error && <p className="text-sm text-red-600">{error}</p>}
                   <Button

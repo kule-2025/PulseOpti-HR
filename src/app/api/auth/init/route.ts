@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { userManager } from '@/storage/database';
+import { companies } from '@/storage/database/shared/schema';
+import { getDb } from '@/lib/db';
 import { hashPassword } from '@/lib/auth/password';
 import { addCorsHeaders, corsResponse } from '@/lib/cors';
+import { eq } from 'drizzle-orm';
 
 /**
  * 初始化开发环境的默认用户
@@ -17,6 +20,27 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const db = await getDb();
+
+    // 检查或创建开发者企业
+    let [devCompany] = await db.select().from(companies).where(eq(companies.code, 'DEV-PLATFORM'));
+    
+    if (!devCompany) {
+      const [newCompany] = await db.insert(companies).values({
+        name: '开发者平台',
+        code: 'DEV-PLATFORM',
+        industry: 'Technology',
+        size: '1-10',
+        subscriptionTier: 'enterprise',
+        maxEmployees: 99999,
+        isActive: true,
+      }).returning();
+      devCompany = newCompany;
+      console.log('✅ 创建开发者企业成功');
+    }
+
+    const devCompanyId = devCompany.id;
+
     // 检查是否已存在admin用户
     let adminUser = await userManager.getUserByUsername('admin');
 
@@ -30,6 +54,7 @@ export async function GET(request: NextRequest) {
           email: 'admin@pulseopti-dev.com',
           password: hashedPassword,
           name: '管理员',
+          companyId: devCompanyId,
           role: 'admin',
           userType: 'developer',
           isSuperAdmin: true,
@@ -60,6 +85,7 @@ export async function GET(request: NextRequest) {
           email: 'test@pulseopti-dev.com',
           password: hashedPassword,
           name: '测试用户',
+          companyId: devCompanyId,
           role: 'admin',
           userType: 'developer',
           isSuperAdmin: true,
