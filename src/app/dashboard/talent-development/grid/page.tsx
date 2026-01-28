@@ -30,7 +30,13 @@ import { toast } from 'sonner';
 
 type GridBox =
   | 'star' // 高潜高绩效 - 明星员工
-  | 'potential'; // 高潜中绩效 - 潜力人才
+  | 'expert' // 高绩效低潜 - 业务专家
+  | 'potential' // 高潜中绩效 - 潜力人才
+  | 'contributor' // 中绩效中潜 - 核心贡献者
+  | 'solid' // 中绩效低潜 - 稳定骨干
+  | 'inconsistent' // 低绩效高潜 - 不稳定表现
+  | 'future' // 中潜低绩效 - 未来可期
+  | 'problem'; // 低绩效低潜 - 需要改进
 
 interface TalentGridData {
   id: string;

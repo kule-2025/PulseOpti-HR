@@ -373,7 +373,7 @@ export default function EmployeeFeedbackPage() {
                             <Star
                               key={i}
                               className={`h-4 w-4 ${
-                                i < feedback.rating ? 'text-yellow-500 fill-current' : 'text-gray-300'
+                                i < (feedback.rating || 0) ? 'text-yellow-500 fill-current' : 'text-gray-300'
                               }`}
                             />
                           ))}

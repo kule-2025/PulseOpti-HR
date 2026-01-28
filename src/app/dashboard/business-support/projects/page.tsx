@@ -58,7 +58,7 @@ interface Project {
   description: string;
   status: ProjectStatus;
   priority: ProjectPriority;
-  category: 'recruitment' | 'training' | 'compensation' | 'culture' | 'organization' | 'other';
+  category: 'recruitment' | 'training' | 'compensation' | 'culture' | 'organization' | 'talent' | 'process' | 'other';
   businessUnit: string;
   sponsor: string;
   projectManager: string;

@@ -88,11 +88,11 @@ export default function EmployeeSurveyPage() {
     questions: [
       {
         id: '1',
-        type: 'rating',
+        type: 'rating' as const,
         question: '您对当前工作的满意度如何？',
         required: true,
       },
-    ],
+    ] as SurveyQuestion[],
   });
 
   useEffect(() => {
