@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { UserGuide, shouldShowGuide } from '@/components/layout/user-guide';
 import {
   LayoutDashboard,
   Users,
@@ -232,6 +233,7 @@ const ACTIVITY_TYPE_CONFIG = {
 export default function DashboardPageOptimized() {
   const [showAllTasks, setShowAllTasks] = useState(false);
   const [showProBanner, setShowProBanner] = useState(true);
+  const [showGuide, setShowGuide] = useState(false);
 
   // 显示的待办事项
   const displayTasks = showAllTasks ? dashboardData.tasks : dashboardData.tasks.slice(0, 3);
@@ -243,6 +245,13 @@ export default function DashboardPageOptimized() {
     }, 30000); // 30秒后隐藏
 
     return () => clearTimeout(timer);
+  }, []);
+
+  // 检查是否需要显示引导
+  useEffect(() => {
+    if (shouldShowGuide()) {
+      setShowGuide(true);
+    }
   }, []);
 
   return (
@@ -660,6 +669,13 @@ export default function DashboardPageOptimized() {
           </Card>
         </div>
       </div>
+
+      {/* 用户引导 */}
+      <UserGuide
+        isOpen={showGuide}
+        onClose={() => setShowGuide(false)}
+        onComplete={() => setShowGuide(false)}
+      />
     </div>
   );
 }

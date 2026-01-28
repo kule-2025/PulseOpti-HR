@@ -1,6 +1,8 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
+import { PageHeader, createProPageHeader } from '@/components/layout/page-header';
+import { QuickActions, createProQuickActions } from '@/components/layout/quick-actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -239,56 +241,51 @@ export default function DataDashboardPage() {
   return (
     <div className="space-y-6">
       {/* 页面标题 */}
-      <div className="flex items-center justify-between">
-        <div>
+      <PageHeader
+        title="企业数据大屏"
+        description="实时监控企业人力资源关键指标，30秒自动刷新"
+        breadcrumbs={[
+          { name: '高级功能', href: '/premium' },
+          { name: '数据大屏', href: '/admin/data-dashboard' },
+        ]}
+        proBadge={true}
+        actions={
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              企业数据大屏
-            </h1>
-            <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-              <Crown className="h-3 w-3 mr-1" />
-              ENT
-            </Badge>
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mr-4">
+              <Activity className="h-4 w-4" />
+              <span>更新时间：{lastUpdateTime.toLocaleTimeString('zh-CN')}</span>
+            </div>
+            <Select value={timeRange} onValueChange={(value: TimeRange) => setTimeRange(value)}>
+              <SelectTrigger className="w-[120px]">
+                <Calendar className="h-4 w-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">今日</SelectItem>
+                <SelectItem value="week">本周</SelectItem>
+                <SelectItem value="month">本月</SelectItem>
+                <SelectItem value="quarter">本季</SelectItem>
+                <SelectItem value="year">本年</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              title="刷新数据"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button variant="outline" size="icon" title="导出数据">
+              <Download className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" title="全屏显示">
+              <Maximize2 className="h-4 w-4" />
+            </Button>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            实时监控企业人力资源关键指标
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-            <Activity className="h-4 w-4" />
-            <span>更新时间：{lastUpdateTime.toLocaleTimeString('zh-CN')}</span>
-          </div>
-          <Select value={timeRange} onValueChange={(value: TimeRange) => setTimeRange(value)}>
-            <SelectTrigger className="w-[120px]">
-              <Calendar className="h-4 w-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">今日</SelectItem>
-              <SelectItem value="week">本周</SelectItem>
-              <SelectItem value="month">本月</SelectItem>
-              <SelectItem value="quarter">本季</SelectItem>
-              <SelectItem value="year">本年</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            title="刷新数据"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </Button>
-          <Button variant="outline" size="icon" title="导出数据">
-            <Download className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" title="全屏显示">
-            <Maximize2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+        }
+      />
 
       {/* 预警信息 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -771,5 +768,12 @@ export default function DataDashboardPage() {
         </Card>
       </div>
     </div>
+
+    {/* 快捷操作 */}
+    <QuickActions
+      showBackToHome
+      showActions
+      isProPage
+    />
   );
 }

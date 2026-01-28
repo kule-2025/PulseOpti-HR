@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PageHeader } from '@/components/layout/page-header';
+import { QuickActions, createProPageHeader } from '@/components/layout/quick-actions';
 import {
   Code2,
   Copy,
@@ -203,26 +205,17 @@ export default function APIPlatformPage() {
   return (
     <div className="space-y-6">
       {/* 页面标题 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              API开放平台
-            </h1>
-            <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-              <Zap className="h-3 w-3 mr-1" />
-              PRO
-            </Badge>
-          </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            通过API集成PulseOpti HR到您的应用
-          </p>
-        </div>
-        <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-          <Plus className="h-4 w-4 mr-2" />
-          创建API密钥
-        </Button>
-      </div>
+      <PageHeader {...createProPageHeader({
+        icon: Globe,
+        title: 'API开放平台',
+        description: '通过API集成PulseOpti HR到您的应用',
+        extraActions: (
+          <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+            <Plus className="h-4 w-4 mr-2" />
+            创建API密钥
+          </Button>
+        )
+      })} />
 
       {/* 统计卡片 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -548,6 +541,25 @@ export default function APIPlatformPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* 快捷操作 */}
+      <QuickActions
+        showBackToHome
+        showActions
+        isProPage
+        customActions={[
+          {
+            icon: RefreshCw,
+            label: '刷新API密钥',
+            onClick: () => console.log('刷新API密钥')
+          },
+          {
+            icon: BookOpen,
+            label: '查看文档',
+            onClick: () => console.log('查看文档')
+          }
+        ]}
+      />
     </div>
   );
 }

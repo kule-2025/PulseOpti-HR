@@ -16,6 +16,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { PageHeader } from '@/components/layout/page-header';
+import { QuickActions, createProPageHeader } from '@/components/layout/quick-actions';
 import {
   BarChart3,
   Plus,
@@ -260,29 +262,17 @@ export default function CustomReportsPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* 页面标题 */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg">
-                <BarChart3 className="h-7 w-7 text-white" />
-              </div>
-              自定义报表
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              拖拽式报表设计器，创建专属数据报表
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge className="bg-gradient-to-r from-red-600 to-pink-600 text-white border-0">
-              <Zap className="h-3 w-3 mr-1" />
-              PRO功能
-            </Badge>
+        <PageHeader {...createProPageHeader({
+          icon: BarChart3,
+          title: '自定义报表',
+          description: '拖拽式报表设计器，创建专属数据报表',
+          extraActions: (
             <Button variant="outline">
               <Download className="h-4 w-4 mr-2" />
               导出报表
             </Button>
-          </div>
-        </div>
+          )
+        })} />
 
         {/* 统计卡片 */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -705,6 +695,25 @@ export default function CustomReportsPage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* 快捷操作 */}
+      <QuickActions
+        showBackToHome
+        showActions
+        isProPage
+        customActions={[
+          {
+            icon: FileText,
+            label: '导出报表',
+            onClick: () => toast.success('导出功能开发中')
+          },
+          {
+            icon: RefreshCw,
+            label: '刷新报表',
+            onClick: () => toast.success('报表已刷新')
+          }
+        ]}
+      />
     </div>
   );
 }
