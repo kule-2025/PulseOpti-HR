@@ -1,146 +1,243 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  BarChart,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
   TrendingUp,
-  Users,
+  Star,
+  MessageSquare,
   Award,
-  Clock,
   Target,
   CheckCircle,
-  ArrowUp,
-  ArrowDown,
+  BarChart3,
   Download,
+  Filter,
   Calendar,
+  DollarSign,
+  Users,
+  ThumbsUp,
+  ThumbsDown,
+  Send,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-type AnalysisPeriod = 'week' | 'month' | 'quarter' | 'year';
-
-interface TrainingEffectiveness {
-  totalTrainings: number;
-  totalParticipants: number;
+interface CourseEvaluation {
+  id: string;
+  courseId: string;
+  courseName: string;
+  courseCategory: string;
+  averageRating: number;
+  totalReviews: number;
   completionRate: number;
-  averageScore: number;
   satisfactionRate: number;
-  skillImprovementRate: number;
-  returnOnInvestment: number;
+  knowledgeGainRate: number;
+  skillImproveRate: number;
+  recommendations: string[];
+  commonFeedback: {
+    positive: string[];
+    negative: string[];
+    suggestions: string[];
+  };
+  roi: {
+    totalInvestment: number;
+    estimatedBenefit: number;
+    benefitParticipants: number;
+    roiPercentage: number;
+  };
 }
 
-interface CourseAnalysis {
+interface Review {
   id: string;
-  name: string;
-  participants: number;
-  completionRate: number;
-  averageScore: number;
-  satisfactionScore: number;
-  skillImprovement: number;
+  employeeId: string;
+  employeeName: string;
+  employeeAvatar?: string;
+  department: string;
+  courseId: string;
+  courseName: string;
+  rating: number;
+  completionDate: string;
+  content: string;
+  pros: string[];
+  cons: string[];
+  suggestions: string;
+  wouldRecommend: boolean;
+  helpfulCount: number;
 }
 
 export default function TrainingEffectivenessPage() {
-  const [period, setPeriod] = useState<AnalysisPeriod>('month');
-  const [effectiveness, setEffectiveness] = useState<TrainingEffectiveness | null>(null);
-  const [courses, setCourses] = useState<CourseAnalysis[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [selectedCourse, setSelectedCourse] = useState('all');
 
-  useEffect(() => {
-    // 模拟获取培训效果数据
-    setTimeout(() => {
-      setEffectiveness({
-        totalTrainings: 24,
-        totalParticipants: 356,
-        completionRate: 87.5,
-        averageScore: 85.3,
-        satisfactionRate: 92.4,
-        skillImprovementRate: 78.6,
-        returnOnInvestment: 3.2,
-      });
+  const [courseEvaluations, setCourseEvaluations] = useState<CourseEvaluation[]>([
+    {
+      id: '1',
+      courseId: '1',
+      courseName: '新员工入职培训',
+      courseCategory: '入职培训',
+      averageRating: 4.7,
+      totalReviews: 45,
+      completionRate: 78,
+      satisfactionRate: 85,
+      knowledgeGainRate: 82,
+      skillImproveRate: 78,
+      recommendations: ['内容清晰实用', '帮助快速融入', '建议增加更多实操'],
+      commonFeedback: {
+        positive: ['内容结构清晰', '讲师专业', '互动性好'],
+        negative: ['部分内容过于简单', '时间安排紧张'],
+        suggestions: ['增加案例分享', '延长答疑时间'],
+      },
+      roi: {
+        totalInvestment: 50000,
+        estimatedBenefit: 150000,
+        benefitParticipants: 98,
+        roiPercentage: 200,
+      },
+    },
+    {
+      id: '2',
+      courseId: '2',
+      courseName: '领导力提升课程',
+      courseCategory: '管理培训',
+      averageRating: 4.9,
+      totalReviews: 32,
+      completionRate: 84,
+      satisfactionRate: 92,
+      knowledgeGainRate: 88,
+      skillImproveRate: 85,
+      recommendations: ['实战性强', '老师经验丰富', '值得推荐'],
+      commonFeedback: {
+        positive: ['实战案例丰富', '老师经验丰富', '互动讨论深入'],
+        negative: ['课程周期较长', '需要更多练习机会'],
+        suggestions: ['增加线上辅导', '提供学习资料'],
+      },
+      roi: {
+        totalInvestment: 120000,
+        estimatedBenefit: 360000,
+        benefitParticipants: 38,
+        roiPercentage: 200,
+      },
+    },
+    {
+      id: '3',
+      courseId: '3',
+      courseName: 'Excel高级应用培训',
+      courseCategory: '技能培训',
+      averageRating: 4.5,
+      totalReviews: 28,
+      completionRate: 67,
+      satisfactionRate: 80,
+      knowledgeGainRate: 85,
+      skillImproveRate: 78,
+      recommendations: ['实用性强', '学到很多技巧', '建议多练习'],
+      commonFeedback: {
+        positive: ['技巧实用', '老师讲解清晰', '案例贴近工作'],
+        negative: ['进度较快', '基础不够扎实的学员吃力'],
+        suggestions: ['增加课后练习', '提供录播回放'],
+      },
+      roi: {
+        totalInvestment: 30000,
+        estimatedBenefit: 90000,
+        benefitParticipants: 52,
+        roiPercentage: 200,
+      },
+    },
+  ]);
 
-      setCourses([
-        {
-          id: '1',
-          name: 'React高级开发',
-          participants: 45,
-          completionRate: 93.3,
-          averageScore: 88.5,
-          satisfactionScore: 94.2,
-          skillImprovement: 82.3,
-        },
-        {
-          id: '2',
-          name: '团队领导力',
-          participants: 32,
-          completionRate: 90.6,
-          averageScore: 86.7,
-          satisfactionScore: 91.5,
-          skillImprovement: 75.8,
-        },
-        {
-          id: '3',
-          name: '销售技巧提升',
-          participants: 58,
-          completionRate: 85.4,
-          averageScore: 83.2,
-          satisfactionScore: 89.3,
-          skillImprovement: 79.1,
-        },
-        {
-          id: '4',
-          name: '项目管理实务',
-          participants: 28,
-          completionRate: 88.9,
-          averageScore: 84.9,
-          satisfactionScore: 90.8,
-          skillImprovement: 76.5,
-        },
-        {
-          id: '5',
-          name: '数据分析入门',
-          participants: 41,
-          completionRate: 82.9,
-          averageScore: 81.5,
-          satisfactionScore: 87.6,
-          skillImprovement: 73.2,
-        },
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, [period]);
+  const [reviews, setReviews] = useState<Review[]>([
+    {
+      id: '1',
+      employeeId: 'EMP001',
+      employeeName: '张三',
+      department: '技术部',
+      courseId: '1',
+      courseName: '新员工入职培训',
+      rating: 5,
+      completionDate: '2024-01-18',
+      content: '课程内容非常实用，帮助我快速了解了公司文化和工作流程。',
+      pros: ['内容结构清晰', '讲师专业', '互动性好'],
+      cons: ['部分内容可以更深入'],
+      suggestions: '建议增加更多实操环节',
+      wouldRecommend: true,
+      helpfulCount: 15,
+    },
+    {
+      id: '2',
+      employeeId: 'EMP002',
+      employeeName: '李四',
+      department: '销售部',
+      courseId: '2',
+      courseName: '领导力提升课程',
+      rating: 5,
+      completionDate: '2024-03-28',
+      content: '通过这个课程，我对团队管理有了全新的认识，实战案例非常精彩。',
+      pros: ['实战案例丰富', '老师经验丰富', '互动讨论深入'],
+      cons: ['课程周期较长'],
+      suggestions: '希望能有后续的进阶课程',
+      wouldRecommend: true,
+      helpfulCount: 20,
+    },
+    {
+      id: '3',
+      employeeId: 'EMP004',
+      employeeName: '赵六',
+      department: '市场部',
+      courseId: '3',
+      courseName: 'Excel高级应用培训',
+      rating: 4,
+      completionDate: '2024-10-15',
+      content: '课程很实用，学到了很多平时没注意的技巧。',
+      pros: ['技巧实用', '老师讲解清晰'],
+      cons: ['进度有点快'],
+      suggestions: '希望能提供录播回放，方便复习',
+      wouldRecommend: true,
+      helpfulCount: 12,
+    },
+  ]);
 
-  const handleExport = () => {
-    toast.success('正在导出培训效果报告...');
-    setTimeout(() => {
-      toast.success('培训效果报告已导出');
-    }, 2000);
+  const stats = {
+    totalCourses: courseEvaluations.length,
+    averageRating: (courseEvaluations.reduce((sum, c) => sum + c.averageRating, 0) / courseEvaluations.length).toFixed(1),
+    totalReviews: courseEvaluations.reduce((sum, c) => sum + c.totalReviews, 0),
+    avgCompletionRate: Math.round(courseEvaluations.reduce((sum, c) => sum + c.completionRate, 0) / courseEvaluations.length),
+    avgSatisfactionRate: Math.round(courseEvaluations.reduce((sum, c) => sum + c.satisfactionRate, 0) / courseEvaluations.length),
+    totalInvestment: courseEvaluations.reduce((sum, c) => sum + c.roi.totalInvestment, 0),
+    estimatedBenefit: courseEvaluations.reduce((sum, c) => sum + c.roi.estimatedBenefit, 0),
+    avgRoi: Math.round(
+      courseEvaluations.reduce((sum, c) => sum + c.roi.roiPercentage, 0) / courseEvaluations.length
+    ),
   };
 
-  if (loading || !effectiveness) {
+  const renderStars = (rating: number) => {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-center h-96">
-          <div className="text-gray-600 dark:text-gray-400">加载中...</div>
-        </div>
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`h-4 w-4 ${
+              star <= Math.round(rating)
+                ? 'text-yellow-500 fill-current'
+                : 'text-gray-300'
+            }`}
+          />
+        ))}
+        <span className="ml-2 text-sm font-medium">{rating.toFixed(1)}</span>
       </div>
     );
-  }
-
-  const periodConfig: Record<AnalysisPeriod, { label: string }> = {
-    week: { label: '本周' },
-    month: { label: '本月' },
-    quarter: { label: '本季度' },
-    year: { label: '本年度' },
   };
 
   return (
@@ -150,298 +247,194 @@ export default function TrainingEffectivenessPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
-              <BarChart className="h-8 w-8 text-blue-600" />
-              培训效果分析
+              <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg">
+                <TrendingUp className="h-7 w-7 text-white" />
+              </div>
+              培训效果评估
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              分析培训项目的成效和ROI
+              全面评估培训效果，持续优化培训质量
             </p>
           </div>
           <div className="flex gap-2">
-            <Select value={period} onValueChange={(v) => setPeriod(v as AnalysisPeriod)}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(periodConfig).map(([value, config]) => (
-                  <SelectItem key={value} value={value}>
-                    {config.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button variant="outline" onClick={handleExport}>
+            <Button variant="outline">
               <Download className="h-4 w-4 mr-2" />
               导出报告
+            </Button>
+            <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              生成分析
             </Button>
           </div>
         </div>
 
-        {/* 核心指标 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {/* 统计卡片 */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card>
-            <CardContent className="p-4">
-              <div className="flex flex-col items-center justify-center">
-                <BarChart className="h-8 w-8 text-blue-600 mb-2" />
-                <p className="text-2xl font-bold">{effectiveness.totalTrainings}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">培训总数</p>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">平均评分</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 flex items-center gap-2">
+                <Star className="h-6 w-6 fill-current" />
+                {stats.averageRating}
+              </div>
+              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <MessageSquare className="h-3 w-3 mr-1" />
+                {stats.totalReviews}条评价
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex flex-col items-center justify-center">
-                <Users className="h-8 w-8 text-green-600 mb-2" />
-                <p className="text-2xl font-bold">{effectiveness.totalParticipants}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">参与人数</p>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">完成率</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.avgCompletionRate}%</div>
+              <div className="flex items-center text-xs text-blue-600 dark:text-blue-400 mt-1">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                平均完成率
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex flex-col items-center justify-center">
-                <CheckCircle className="h-8 w-8 text-purple-600 mb-2" />
-                <p className="text-2xl font-bold">{effectiveness.completionRate}%</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">完成率</p>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">满意度</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.avgSatisfactionRate}%</div>
+              <div className="flex items-center text-xs text-green-600 dark:text-green-400 mt-1">
+                <ThumbsUp className="h-3 w-3 mr-1" />
+                平均满意度
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex flex-col items-center justify-center">
-                <Award className="h-8 w-8 text-orange-600 mb-2" />
-                <p className="text-2xl font-bold">{effectiveness.averageScore}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">平均分数</p>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">知识获取</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {Math.round(courseEvaluations.reduce((sum, c) => sum + c.knowledgeGainRate, 0) / courseEvaluations.length)}%
+              </div>
+              <div className="flex items-center text-xs text-purple-600 dark:text-purple-400 mt-1">
+                <Target className="h-3 w-3 mr-1" />
+                知识掌握度
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex flex-col items-center justify-center">
-                <TrendingUp className="h-8 w-8 text-cyan-600 mb-2" />
-                <p className="text-2xl font-bold">{effectiveness.satisfactionRate}%</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">满意度</p>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">技能提升</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
+                {Math.round(courseEvaluations.reduce((sum, c) => sum + c.skillImproveRate, 0) / courseEvaluations.length)}%
+              </div>
+              <div className="flex items-center text-xs text-cyan-600 dark:text-cyan-400 mt-1">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                技能改善率
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex flex-col items-center justify-center">
-                <Target className="h-8 w-8 text-red-600 mb-2" />
-                <p className="text-2xl font-bold">{effectiveness.skillImprovementRate}%</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">技能提升率</p>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">投资回报</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.avgRoi}%</div>
+              <div className="flex items-center text-xs text-orange-600 dark:text-orange-400 mt-1">
+                <DollarSign className="h-3 w-3 mr-1" />
+                平均ROI
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* 主要分析内容 */}
-        <Tabs defaultValue="overview">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">整体概览</TabsTrigger>
-            <TabsTrigger value="courses">课程分析</TabsTrigger>
-            <TabsTrigger value="trends">趋势分析</TabsTrigger>
-            <TabsTrigger value="roi">ROI分析</TabsTrigger>
+        {/* 功能Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              效果概览
+            </TabsTrigger>
+            <TabsTrigger value="reviews" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              学员评价
+            </TabsTrigger>
+            <TabsTrigger value="roi" className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              ROI分析
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6 mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>培训完成情况</CardTitle>
-                  <CardDescription>
-                    {periodConfig[period].label}培训完成统计
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600 dark:text-gray-400">完成培训</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-green-600">
-                          {Math.round(effectiveness.totalParticipants * effectiveness.completionRate / 100)}
-                        </span>
-                        <Badge className="bg-green-500 text-white border-0">
-                          <ArrowUp className="h-3 w-3 mr-1" />
-                          12.5%
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600 dark:text-gray-400">进行中</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-blue-600">
-                          {Math.round(effectiveness.totalParticipants * (100 - effectiveness.completionRate) / 100 * 0.3)}
-                        </span>
-                        <Badge className="bg-blue-500 text-white border-0">
-                          <ArrowUp className="h-3 w-3 mr-1" />
-                          8.3%
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600 dark:text-gray-400">未开始</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-gray-600">
-                          {Math.round(effectiveness.totalParticipants * (100 - effectiveness.completionRate) / 100 * 0.7)}
-                        </span>
-                        <Badge className="bg-gray-500 text-white border-0">
-                          <ArrowDown className="h-3 w-3 mr-1" />
-                          5.2%
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="pt-4 border-t">
-                      <div className="flex justify-between">
-                        <span className="font-medium">完成率</span>
-                        <span className="font-bold text-xl text-green-600">
-                          {effectiveness.completionRate}%
-                        </span>
-                      </div>
-                      <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                        <div
-                          className="h-3 rounded-full bg-gradient-to-r from-green-500 to-green-400 transition-all"
-                          style={{ width: `${effectiveness.completionRate}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>培训满意度</CardTitle>
-                  <CardDescription>
-                    学员对培训的满意度反馈
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="text-center py-4">
-                      <p className="text-5xl font-bold text-green-600 mb-2">
-                        {effectiveness.satisfactionRate}%
-                      </p>
-                      <p className="text-gray-600 dark:text-gray-400">总体满意度</p>
-                    </div>
-                    <div className="space-y-3">
-                      {['非常满意', '满意', '一般', '不满意'].map((level, index) => {
-                        const percentages = [45, 35, 15, 5];
-                        const colors = ['bg-green-500', 'bg-blue-500', 'bg-yellow-500', 'bg-red-500'];
-                        return (
-                          <div key={level} className="flex items-center gap-3">
-                            <div className="w-20 text-sm text-gray-600 dark:text-gray-400">
-                              {level}
-                            </div>
-                            <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                              <div
-                                className={`h-2 rounded-full ${colors[index]}`}
-                                style={{ width: `${percentages[index]}%` }}
-                              />
-                            </div>
-                            <div className="w-12 text-right text-sm font-medium">
-                              {percentages[index]}%
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>技能提升分析</CardTitle>
-                <CardDescription>
-                  培训前后技能水平对比
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {['技术能力', '沟通能力', '领导力', '问题解决', '团队协作'].map((skill, index) => {
-                    const beforeScores = [65, 72, 58, 70, 75];
-                    const afterScores = [82, 85, 78, 88, 90];
-                    const improvement = afterScores[index] - beforeScores[index];
-                    return (
-                      <div key={skill}>
-                        <div className="flex justify-between mb-2">
-                          <span className="font-medium">{skill}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                              {beforeScores[index]} → {afterScores[index]}
-                            </span>
-                            <Badge className="bg-green-500 text-white border-0">
-                              <ArrowUp className="h-3 w-3 mr-1" />
-                              +{improvement}
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="flex gap-1">
-                          <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-l-lg h-4">
-                            <div
-                              className="h-4 rounded-l-lg bg-blue-400"
-                              style={{ width: `${beforeScores[index]}%` }}
-                            />
-                          </div>
-                          <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-r-lg h-4">
-                            <div
-                              className="h-4 rounded-r-lg bg-green-500"
-                              style={{ width: `${afterScores[index]}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="courses" className="space-y-6 mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.map((course) => (
-                <Card key={course.id} className="hover:shadow-lg transition-shadow">
+          {/* 效果概览 */}
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {courseEvaluations.map((evaluation) => (
+                <Card key={evaluation.id} className="hover:shadow-lg transition-all">
                   <CardHeader>
-                    <CardTitle className="text-lg">{course.name}</CardTitle>
-                    <CardDescription>
-                      {course.participants} 人参与
-                    </CardDescription>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold text-gray-900 dark:text-white">
+                            {evaluation.courseName}
+                          </h3>
+                          <Badge variant="outline">{evaluation.courseCategory}</Badge>
+                        </div>
+                        {renderStars(evaluation.averageRating)}
+                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          {evaluation.totalReviews}条评价
+                        </div>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-gray-600 dark:text-gray-400">完成率</span>
-                          <span className="font-medium">{course.completionRate}%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                          <div
-                            className="h-2 rounded-full bg-green-500 transition-all"
-                            style={{ width: `${course.completionRate}%` }}
-                          />
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                        <div className="text-xs text-gray-600 dark:text-gray-400">完成率</div>
+                        <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                          {evaluation.completionRate}%
                         </div>
                       </div>
-                      <div className="grid grid-cols-3 gap-2 text-center">
-                        <div>
-                          <p className="text-lg font-bold text-orange-600">
-                            {course.averageScore}
-                          </p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">平均分</p>
+                      <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                        <div className="text-xs text-gray-600 dark:text-gray-400">满意度</div>
+                        <div className="text-lg font-bold text-green-600 dark:text-green-400">
+                          {evaluation.satisfactionRate}%
                         </div>
-                        <div>
-                          <p className="text-lg font-bold text-purple-600">
-                            {course.satisfactionScore}%
-                          </p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">满意度</p>
+                      </div>
+                      <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                        <div className="text-xs text-gray-600 dark:text-gray-400">知识获取</div>
+                        <div className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                          {evaluation.knowledgeGainRate}%
                         </div>
-                        <div>
-                          <p className="text-lg font-bold text-cyan-600">
-                            {course.skillImprovement}%
-                          </p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">技能提升</p>
+                      </div>
+                      <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                        <div className="text-xs text-gray-600 dark:text-gray-400">技能提升</div>
+                        <div className="text-lg font-bold text-cyan-600 dark:text-cyan-400">
+                          {evaluation.skillImproveRate}%
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">正面反馈</div>
+                        <div className="flex flex-wrap gap-1">
+                          {evaluation.commonFeedback.positive.slice(0, 2).map((item, idx) => (
+                            <Badge key={idx} variant="secondary" className="text-xs bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-300">
+                              {item}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">改进建议</div>
+                        <div className="flex flex-wrap gap-1">
+                          {evaluation.commonFeedback.suggestions.slice(0, 2).map((item, idx) => (
+                            <Badge key={idx} variant="secondary" className="text-xs bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-300">
+                              {item}
+                            </Badge>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -451,126 +444,197 @@ export default function TrainingEffectivenessPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="trends" className="space-y-6 mt-6">
+          {/* 学员评价 */}
+          <TabsContent value="reviews" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>培训趋势</CardTitle>
-                <CardDescription>
-                  培训参与度和效果的变化趋势
-                </CardDescription>
+                <CardTitle>学员评价详情</CardTitle>
+                <CardDescription>查看所有学员的课程评价和反馈</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="font-medium mb-4">月度培训参与人数</h4>
-                    <div className="flex items-end justify-between h-48 gap-2">
-                      {[45, 52, 48, 65, 72, 58, 80, 75, 82, 78, 90, 85].map((value, index) => (
-                        <div key={index} className="flex-1 flex flex-col items-center">
-                          <div
-                            className="w-full bg-blue-500 rounded-t transition-all hover:bg-blue-600"
-                            style={{ height: `${value * 1.5}px` }}
-                          />
-                          <div className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                            {index + 1}月
+                <div className="space-y-4">
+                  {reviews.map((review) => (
+                    <Card key={review.id}>
+                      <CardContent className="pt-6">
+                        <div className="flex items-start gap-4">
+                          <Avatar className="h-12 w-12">
+                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white">
+                              {review.employeeName.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <div className="font-semibold text-gray-900 dark:text-white">{review.employeeName}</div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                  {review.department} · {review.completionDate}
+                                </div>
+                              </div>
+                              {renderStars(review.rating)}
+                            </div>
+                            <div className="mb-3">
+                              <Badge variant="outline">{review.courseName}</Badge>
+                            </div>
+                            <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+                              {review.content}
+                            </p>
+                            <div className="grid md:grid-cols-2 gap-3 mb-3">
+                              {review.pros.length > 0 && (
+                                <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
+                                  <div className="text-xs text-green-700 dark:text-green-300 font-medium mb-2">
+                                    优点
+                                  </div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {review.pros.map((item, idx) => (
+                                      <Badge key={idx} variant="secondary" className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">
+                                        {item}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {review.cons.length > 0 && (
+                                <div className="p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
+                                  <div className="text-xs text-orange-700 dark:text-orange-300 font-medium mb-2">
+                                    不足
+                                  </div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {review.cons.map((item, idx) => (
+                                      <Badge key={idx} variant="secondary" className="text-xs bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300">
+                                        {item}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            {review.suggestions && (
+                              <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+                                <div className="text-xs text-blue-700 dark:text-blue-300 font-medium mb-2">
+                                  建议
+                                </div>
+                                <p className="text-sm text-blue-700 dark:text-blue-300">{review.suggestions}</p>
+                              </div>
+                            )}
+                            <div className="flex items-center justify-between mt-4 pt-4 border-t dark:border-gray-800">
+                              <div className="flex items-center gap-2">
+                                {review.wouldRecommend ? (
+                                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                    <ThumbsUp className="h-3 w-3 mr-1" />
+                                    推荐
+                                  </Badge>
+                                ) : (
+                                  <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                                    <ThumbsDown className="h-3 w-3 mr-1" />
+                                    不推荐
+                                  </Badge>
+                                )}
+                                <span className="text-sm text-gray-500 dark:text-gray-400">
+                                  {review.helpfulCount}人觉得有帮助
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="font-medium mb-4">培训效果指标趋势</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {[
-                        { name: '完成率', values: [78, 82, 85, 87, 88, 90], color: 'green' },
-                        { name: '满意度', values: [85, 88, 90, 91, 92, 94], color: 'purple' },
-                        { name: '平均分', values: [80, 82, 84, 85, 86, 88], color: 'orange' },
-                      ].map((metric) => (
-                        <div key={metric.name} className="space-y-2">
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            {metric.name}
-                          </div>
-                          <div className="flex items-end justify-between h-24 gap-1">
-                            {metric.values.map((value, index) => (
-                              <div
-                                key={index}
-                                className={`flex-1 bg-${metric.color}-500 rounded-t transition-all`}
-                                style={{ height: `${value * 0.8}px` }}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="roi" className="space-y-6 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>投资回报率分析</CardTitle>
-                <CardDescription>
-                  培训投入与收益分析
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="text-center py-8">
-                    <p className="text-6xl font-bold text-green-600 mb-2">
-                      {effectiveness.returnOnInvestment}x
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-400">培训投资回报率</p>
-                    <Badge className="mt-4 bg-green-500 text-white border-0">
-                      <ArrowUp className="h-3 w-3 mr-1" />
-                      ROI为正，培训效果显著
-                    </Badge>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <h4 className="font-medium">成本投入</h4>
-                      <div className="space-y-3">
-                        {['培训课程费用', '讲师费用', '场地及设备', '员工时间成本'].map((item, index) => {
-                          const costs = [50000, 30000, 10000, 80000];
-                          return (
-                            <div key={item} className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">{item}</span>
-                              <span className="font-medium">¥{costs[index].toLocaleString()}</span>
-                            </div>
-                          );
-                        })}
-                        <div className="pt-3 border-t flex justify-between font-semibold">
-                          <span>总成本</span>
-                          <span className="text-red-600">¥170,000</span>
+          {/* ROI分析 */}
+          <TabsContent value="roi" className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>投资回报概览</CardTitle>
+                  <CardDescription>培训投资与收益分析</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-xl border border-green-200 dark:border-green-900">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">总投资</div>
+                          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                            ¥{(stats.totalInvestment / 10000).toFixed(0)}万
+                          </div>
                         </div>
+                        <DollarSign className="h-12 w-12 text-green-600 dark:text-green-400" />
                       </div>
                     </div>
-
-                    <div className="space-y-4">
-                      <h4 className="font-medium">收益测算</h4>
-                      <div className="space-y-3">
-                        {['绩效提升', '工作效率提高', '员工留存', '其他收益'].map((item, index) => {
-                          const benefits = [200000, 150000, 80000, 60000];
-                          return (
-                            <div key={item} className="flex justify-between">
-                              <span className="text-gray-600 dark:text-gray-400">{item}</span>
-                              <span className="font-medium">¥{benefits[index].toLocaleString()}</span>
-                            </div>
-                          );
-                        })}
-                        <div className="pt-3 border-t flex justify-between font-semibold">
-                          <span>总收益</span>
-                          <span className="text-green-600">¥490,000</span>
+                    <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-xl border border-blue-200 dark:border-blue-900">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">预估收益</div>
+                          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                            ¥{(stats.estimatedBenefit / 10000).toFixed(0)}万
+                          </div>
                         </div>
+                        <TrendingUp className="h-12 w-12 text-blue-600 dark:text-blue-400" />
+                      </div>
+                    </div>
+                    <div className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-xl border border-purple-200 dark:border-purple-900">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">平均ROI</div>
+                          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                            {stats.avgRoi}%
+                          </div>
+                        </div>
+                        <Award className="h-12 w-12 text-purple-600 dark:text-purple-400" />
                       </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>课程ROI详情</CardTitle>
+                  <CardDescription>各课程投资回报分析</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {courseEvaluations.map((evaluation) => (
+                      <div key={evaluation.id} className="p-4 border rounded-lg dark:border-gray-800">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="font-medium text-gray-900 dark:text-white">{evaluation.courseName}</h4>
+                            <Badge variant="outline" className="text-xs mt-1">{evaluation.courseCategory}</Badge>
+                          </div>
+                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                            ROI {evaluation.roi.roiPercentage}%
+                          </Badge>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-sm">
+                          <div>
+                            <span className="text-gray-600 dark:text-gray-400">投资</span>
+                            <div className="font-medium text-gray-900 dark:text-white">
+                              ¥{(evaluation.roi.totalInvestment / 10000).toFixed(1)}万
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-gray-600 dark:text-gray-400">收益</span>
+                            <div className="font-medium text-green-600 dark:text-green-400">
+                              ¥{(evaluation.roi.estimatedBenefit / 10000).toFixed(1)}万
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-gray-600 dark:text-gray-400">受益人数</span>
+                            <div className="font-medium text-blue-600 dark:text-blue-400">
+                              {evaluation.roi.benefitParticipants}人
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

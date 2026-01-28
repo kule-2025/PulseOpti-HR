@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,7 +20,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
@@ -31,514 +32,573 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Switch } from '@/components/ui/switch';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress';
 import {
-  GraduationCap,
-  Plus,
-  Edit,
-  Play,
-  Pause,
-  CheckCircle,
-  Clock,
-  Users,
   BookOpen,
   Video,
   FileText,
-  Search,
-  Filter,
-  Download,
+  Star,
+  Users,
+  Clock,
+  Plus,
+  Edit,
   Eye,
   Trash2,
-  Calendar,
+  Filter,
+  Search,
+  PlayCircle,
+  Upload,
+  Download,
+  Copy,
+  Share2,
+  CheckCircle,
+  XCircle,
   Award,
   TrendingUp,
-  MoreVertical,
-  Save,
-  Star,
 } from 'lucide-react';
 import { toast } from 'sonner';
-
-// 类型定义
-type CourseType = 'online' | 'offline' | 'hybrid';
-type CourseStatus = 'draft' | 'published' | 'in_progress' | 'completed';
-type CourseDifficulty = 'beginner' | 'intermediate' | 'advanced';
 
 interface Course {
   id: string;
   title: string;
-  description: string;
-  type: CourseType;
-  status: CourseStatus;
-  difficulty: CourseDifficulty;
-  duration: number; // 小时
-  instructor: string;
   category: string;
-  enrolledCount: number;
-  maxParticipants: number;
-  rating: number;
+  type: 'video' | 'document' | 'live' | 'mixed';
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  duration: number;
+  description: string;
+  coverImage: string;
+  instructor: string;
+  targetAudience: string;
+  objectives: string[];
+  resources: Resource[];
+  enrollmentCount: number;
+  completionCount: number;
+  averageRating: number;
   reviewCount: number;
-  createdAt: string;
-  startDate?: string;
-  endDate?: string;
+  status: 'draft' | 'published' | 'archived';
+  publishDate: string;
+  lastUpdated: string;
+  tags: string[];
 }
 
-interface LearningRecord {
+interface Resource {
   id: string;
-  courseId: string;
-  courseTitle: string;
-  employeeId: string;
-  employeeName: string;
-  progress: number;
-  status: 'in_progress' | 'completed' | 'dropped';
-  score?: number;
-  completedAt?: string;
+  type: 'video' | 'document' | 'quiz' | 'assignment' | 'live';
+  title: string;
+  url: string;
+  duration?: number;
+  fileSize?: string;
+  order: number;
 }
 
-export default function CourseManagementPage() {
-  const [activeTab, setActiveTab] = useState('courses');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [courseDialogOpen, setCourseDialogOpen] = useState(false);
+export default function CoursesPage() {
+  const [activeTab, setActiveTab] = useState('all');
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // 课程数据
-  const [courses] = useState<Course[]>([
+  const [courses, setCourses] = useState<Course[]>([
     {
       id: '1',
       title: '新员工入职培训',
-      description: '帮助新员工快速了解公司文化、规章制度和业务流程',
-      type: 'hybrid',
-      status: 'published',
-      difficulty: 'beginner',
-      duration: 8,
-      instructor: '张三',
       category: '入职培训',
-      enrolledCount: 45,
-      maxParticipants: 50,
-      rating: 4.8,
-      reviewCount: 32,
-      createdAt: '2025-04-01',
-      startDate: '2025-04-15',
-      endDate: '2025-04-30',
+      type: 'mixed',
+      difficulty: 'beginner',
+      duration: 180,
+      description: '帮助新员工快速了解公司文化、规章制度和业务流程',
+      coverImage: '',
+      instructor: 'HR部门',
+      targetAudience: '新入职员工',
+      objectives: [
+        '了解公司发展历程和文化价值观',
+        '熟悉公司规章制度和流程',
+        '掌握基本工作技能和要求',
+      ],
+      resources: [
+        { id: 'r1', type: 'video', title: '公司介绍', url: '', duration: 30, order: 1 },
+        { id: 'r2', type: 'document', title: '员工手册', url: '', fileSize: '5.2MB', order: 2 },
+        { id: 'r3', type: 'video', title: '业务流程讲解', url: '', duration: 90, order: 3 },
+      ],
+      enrollmentCount: 125,
+      completionCount: 98,
+      averageRating: 4.7,
+      reviewCount: 45,
+      status: 'published',
+      publishDate: '2024-01-15',
+      lastUpdated: '2024-12-10',
+      tags: ['入职', '基础', '必修'],
     },
     {
       id: '2',
       title: '领导力提升课程',
-      description: '提升管理者的领导能力和团队管理技巧',
-      type: 'offline',
-      status: 'in_progress',
-      difficulty: 'advanced',
-      duration: 16,
-      instructor: '李四',
       category: '管理培训',
-      enrolledCount: 15,
-      maxParticipants: 20,
-      rating: 4.9,
-      reviewCount: 18,
-      createdAt: '2025-03-15',
-      startDate: '2025-04-10',
-      endDate: '2025-05-10',
+      type: 'live',
+      difficulty: 'advanced',
+      duration: 360,
+      description: '提升管理者的领导能力和团队管理水平',
+      coverImage: '',
+      instructor: '外部专家',
+      targetAudience: '中层以上管理者',
+      objectives: [
+        '提升领导力核心能力',
+        '掌握团队管理技巧',
+        '增强决策能力和战略思维',
+      ],
+      resources: [
+        { id: 'r4', type: 'live', title: '领导力工作坊', url: '', duration: 360, order: 1 },
+      ],
+      enrollmentCount: 45,
+      completionCount: 38,
+      averageRating: 4.9,
+      reviewCount: 32,
+      status: 'published',
+      publishDate: '2024-03-20',
+      lastUpdated: '2024-11-28',
+      tags: ['领导力', '管理', '高级'],
     },
     {
       id: '3',
-      title: 'Excel高级应用',
-      description: '掌握Excel高级函数和数据分析技巧',
-      type: 'online',
+      title: 'Excel高级应用培训',
+      category: '技能培训',
+      type: 'video',
+      difficulty: 'intermediate',
+      duration: 240,
+      description: 'Excel高级功能和数据分析技巧',
+      coverImage: '',
+      instructor: '技术部',
+      targetAudience: '全体员工',
+      objectives: [
+        '掌握Excel高级函数',
+        '学会数据透视表和数据可视化',
+        '提升数据分析效率',
+      ],
+      resources: [
+        { id: 'r5', type: 'video', title: '函数篇', url: '', duration: 90, order: 1 },
+        { id: 'r6', type: 'video', title: '数据透视表篇', url: '', duration: 75, order: 2 },
+        { id: 'r7', type: 'video', title: '图表与可视化', url: '', duration: 75, order: 3 },
+      ],
+      enrollmentCount: 78,
+      completionCount: 52,
+      averageRating: 4.5,
+      reviewCount: 28,
       status: 'published',
-      difficulty: 'intermediate',
-      duration: 12,
-      instructor: '王五',
-      category: '技能培训',
-      enrolledCount: 28,
-      maxParticipants: 100,
-      rating: 4.7,
-      reviewCount: 45,
-      createdAt: '2025-04-05',
-    },
-    {
-      id: '4',
-      title: '项目管理实战',
-      description: '学习项目管理理论并在实践中应用',
-      type: 'hybrid',
-      status: 'draft',
-      difficulty: 'intermediate',
-      duration: 20,
-      instructor: '赵六',
-      category: '技能培训',
-      enrolledCount: 0,
-      maxParticipants: 30,
-      rating: 0,
-      reviewCount: 0,
-      createdAt: '2025-04-18',
+      publishDate: '2024-05-10',
+      lastUpdated: '2024-12-05',
+      tags: ['Excel', '办公技能', '实用'],
     },
   ]);
 
-  // 学习记录数据
-  const [learningRecords] = useState<LearningRecord[]>([
-    { id: '1', courseId: '1', courseTitle: '新员工入职培训', employeeId: '1', employeeName: '张三', progress: 100, status: 'completed', score: 95, completedAt: '2025-04-20' },
-    { id: '2', courseId: '1', courseTitle: '新员工入职培训', employeeId: '2', employeeName: '李四', progress: 75, status: 'in_progress' },
-    { id: '3', courseId: '2', courseTitle: '领导力提升课程', employeeId: '3', employeeName: '王五', progress: 60, status: 'in_progress' },
-    { id: '4', courseId: '3', courseTitle: 'Excel高级应用', employeeId: '4', employeeName: '赵六', progress: 100, status: 'completed', score: 88, completedAt: '2025-04-25' },
-  ]);
-
-  // 映射
-  const typeMap: Record<CourseType, { label: string; icon: React.ReactNode; color: string }> = {
-    online: { label: '在线', icon: <Video className="h-4 w-4" />, color: 'bg-blue-100 text-blue-800' },
-    offline: { label: '线下', icon: <BookOpen className="h-4 w-4" />, color: 'bg-green-100 text-green-800' },
-    hybrid: { label: '混合', icon: <Users className="h-4 w-4" />, color: 'bg-purple-100 text-purple-800' },
-  };
-
-  const statusMap: Record<CourseStatus, { label: string; icon: React.ReactNode; color: string }> = {
-    draft: { label: '草稿', icon: <FileText className="h-4 w-4" />, color: 'bg-gray-100 text-gray-800' },
-    published: { label: '已发布', icon: <CheckCircle className="h-4 w-4" />, color: 'bg-green-100 text-green-800' },
-    in_progress: { label: '进行中', icon: <Play className="h-4 w-4" />, color: 'bg-blue-100 text-blue-800' },
-    completed: { label: '已完成', icon: <Award className="h-4 w-4" />, color: 'bg-purple-100 text-purple-800' },
-  };
-
-  const difficultyMap: Record<CourseDifficulty, { label: string; color: string }> = {
-    beginner: { label: '初级', color: 'bg-green-100 text-green-800' },
-    intermediate: { label: '中级', color: 'bg-yellow-100 text-yellow-800' },
-    advanced: { label: '高级', color: 'bg-red-100 text-red-800' },
-  };
-
-  // 过滤课程
-  const filteredCourses = courses.filter(course => {
-    const matchSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       course.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchStatus = statusFilter === 'all' || course.status === statusFilter;
-    return matchSearch && matchStatus;
+  const [courseFormData, setCourseFormData] = useState({
+    title: '',
+    category: '',
+    type: 'video',
+    difficulty: 'beginner',
+    duration: '',
+    description: '',
+    instructor: '',
+    targetAudience: '',
   });
 
-  // 统计
-  const totalCourses = courses.length;
-  const publishedCourses = courses.filter(c => c.status === 'published' || c.status === 'in_progress').length;
-  const totalEnrolled = courses.reduce((sum, course) => sum + course.enrolledCount, 0);
-  const avgRating = courses.filter(c => c.rating > 0).reduce((sum, course) => sum + course.rating, 0) / (courses.filter(c => c.rating > 0).length || 1);
+  const stats = {
+    totalCourses: courses.length,
+    publishedCourses: courses.filter(c => c.status === 'published').length,
+    totalEnrollments: courses.reduce((sum, c) => sum + c.enrollmentCount, 0),
+    totalCompletions: courses.reduce((sum, c) => sum + c.completionCount, 0),
+    averageRating: (courses.reduce((sum, c) => sum + c.averageRating, 0) / courses.length).toFixed(1),
+    totalDuration: courses.reduce((sum, c) => sum + c.duration, 0),
+  };
+
+  const getDifficultyBadge = (difficulty: string) => {
+    const variants: Record<string, any> = {
+      beginner: { label: '初级', className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
+      intermediate: { label: '中级', className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
+      advanced: { label: '高级', className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
+    };
+    const variant = variants[difficulty];
+    return <Badge className={variant.className}>{variant.label}</Badge>;
+  };
+
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, any> = {
+      draft: { label: '草稿', className: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200' },
+      published: { label: '已发布', className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
+      archived: { label: '已归档', className: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200' },
+    };
+    const variant = variants[status];
+    return <Badge className={variant.className}>{variant.label}</Badge>;
+  };
+
+  const getTypeIcon = (type: string) => {
+    const icons: Record<string, any> = {
+      video: Video,
+      document: FileText,
+      live: PlayCircle,
+      mixed: BookOpen,
+    };
+    return icons[type] || BookOpen;
+  };
+
+  const handleCreateCourse = () => {
+    if (!courseFormData.title || !courseFormData.category) {
+      toast.error('请填写完整的课程信息');
+      return;
+    }
+
+    const newCourse: Course = {
+      id: Date.now().toString(),
+      title: courseFormData.title,
+      category: courseFormData.category,
+      type: courseFormData.type as any,
+      difficulty: courseFormData.difficulty as any,
+      duration: Number(courseFormData.duration),
+      description: courseFormData.description,
+      coverImage: '',
+      instructor: courseFormData.instructor,
+      targetAudience: courseFormData.targetAudience,
+      objectives: [],
+      resources: [],
+      enrollmentCount: 0,
+      completionCount: 0,
+      averageRating: 0,
+      reviewCount: 0,
+      status: 'draft',
+      publishDate: '',
+      lastUpdated: new Date().toISOString().split('T')[0],
+      tags: [],
+    };
+
+    setCourses([...courses, newCourse]);
+    setShowCreateDialog(false);
+    setCourseFormData({
+      title: '',
+      category: '',
+      type: 'video',
+      difficulty: 'beginner',
+      duration: '',
+      description: '',
+      instructor: '',
+      targetAudience: '',
+    });
+    toast.success('课程创建成功');
+  };
+
+  const handlePublishCourse = (courseId: string) => {
+    setCourses(courses.map(c =>
+      c.id === courseId ? { ...c, status: 'published' as const, publishDate: new Date().toISOString().split('T')[0] } : c
+    ));
+    toast.success('课程已发布');
+  };
+
+  const handleArchiveCourse = (courseId: string) => {
+    setCourses(courses.map(c =>
+      c.id === courseId ? { ...c, status: 'archived' as const } : c
+    ));
+    toast.success('课程已归档');
+  };
+
+  const filteredCourses = courses.filter(course => {
+    const matchesTab = activeTab === 'all' ||
+      (activeTab === 'published' && course.status === 'published') ||
+      (activeTab === 'draft' && course.status === 'draft');
+    const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesTab && matchesSearch;
+  });
 
   return (
-    <div className="space-y-6">
-      {/* 页面标题 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">课程管理</h1>
-          <p className="text-gray-600 mt-2">
-            管理培训课程，跟踪学习进度
-            <Badge variant="secondary" className="ml-2">COE</Badge>
-          </p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* 页面标题 */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+                <BookOpen className="h-7 w-7 text-white" />
+              </div>
+              课程管理
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              创建和管理培训课程，支持视频、文档、直播等多种形式
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              导出课程
+            </Button>
+            <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+              <Plus className="h-4 w-4 mr-2" />
+              创建课程
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            导出报告
-          </Button>
-          <Button onClick={() => setCourseDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            创建课程
-          </Button>
+
+        {/* 统计卡片 */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">课程总数</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalCourses}</div>
+              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <BookOpen className="h-3 w-3 mr-1" />
+                门
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">已发布</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.publishedCourses}</div>
+              <div className="flex items-center text-xs text-green-600 dark:text-green-400 mt-1">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                门
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">学习人数</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.totalEnrollments}</div>
+              <div className="flex items-center text-xs text-blue-600 dark:text-blue-400 mt-1">
+                <Users className="h-3 w-3 mr-1" />
+                人次
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">完成人数</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.totalCompletions}</div>
+              <div className="flex items-center text-xs text-purple-600 dark:text-purple-400 mt-1">
+                <Award className="h-3 w-3 mr-1" />
+                人次
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">平均评分</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
+                <Star className="h-6 w-6 fill-current" />
+                {stats.averageRating}
+              </div>
+              <div className="flex items-center text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                分
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">总时长</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">{Math.floor(stats.totalDuration / 60)}h</div>
+              <div className="flex items-center text-xs text-cyan-600 dark:text-cyan-400 mt-1">
+                <Clock className="h-3 w-3 mr-1" />
+                分钟
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </div>
-
-      {/* 功能介绍 */}
-      <Alert>
-        <GraduationCap className="h-4 w-4" />
-        <AlertDescription>
-          支持在线、线下、混合等多种培训形式，可创建课程、管理学员、跟踪学习进度
-        </AlertDescription>
-      </Alert>
-
-      {/* 统计概览 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">总课程</CardTitle>
-            <BookOpen className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalCourses}</div>
-            <p className="text-xs text-gray-500 mt-1">全部课程</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">进行中</CardTitle>
-            <Play className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{publishedCourses}</div>
-            <p className="text-xs text-gray-500 mt-1">已发布/进行中</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">总学员</CardTitle>
-            <Users className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalEnrolled}</div>
-            <p className="text-xs text-gray-500 mt-1">累计报名</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">平均评分</CardTitle>
-            <Award className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{avgRating.toFixed(1)}</div>
-            <p className="text-xs text-gray-500 mt-1">课程平均分</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="courses">课程列表</TabsTrigger>
-          <TabsTrigger value="learning">学习记录</TabsTrigger>
-          <TabsTrigger value="analytics">数据分析</TabsTrigger>
-        </TabsList>
 
         {/* 课程列表 */}
-        <TabsContent value="courses" className="space-y-6">
-          {/* 筛选栏 */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>所有课程</CardTitle>
-                <div className="flex gap-2">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="搜索课程..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-9 w-64"
-                    />
-                  </div>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="状态" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">全部状态</SelectItem>
-                      <SelectItem value="draft">草稿</SelectItem>
-                      <SelectItem value="published">已发布</SelectItem>
-                      <SelectItem value="in_progress">进行中</SelectItem>
-                      <SelectItem value="completed">已完成</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredCourses.map((course) => (
-                  <Card key={course.id} className="hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                      <div className="flex items-start justify-between mb-2">
-                        <Badge className={typeMap[course.type].color}>
-                          {typeMap[course.type].icon}
-                          {typeMap[course.type].label}
-                        </Badge>
-                        <Badge className={statusMap[course.status].color}>
-                          {statusMap[course.status].label}
-                        </Badge>
-                      </div>
-                      <CardTitle className="text-lg line-clamp-1">{course.title}</CardTitle>
-                      <CardDescription className="line-clamp-2">
-                        {course.description}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">讲师</span>
-                          <span className="font-medium">{course.instructor}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">难度</span>
-                          <Badge className={difficultyMap[course.difficulty].color}>
-                            {difficultyMap[course.difficulty].label}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">时长</span>
-                          <span>{course.duration} 小时</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">报名</span>
-                          <span>{course.enrolledCount}/{course.maxParticipants}</span>
-                        </div>
-                        {course.rating > 0 && (
-                          <div className="flex items-center gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-4 w-4 ${
-                                  i < Math.floor(course.rating)
-                                    ? 'text-yellow-500 fill-yellow-500'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                            <span className="text-sm text-gray-600 ml-1">
-                              {course.rating} ({course.reviewCount})
-                            </span>
-                          </div>
-                        )}
-                        {course.startDate && course.endDate && (
-                          <div className="flex items-center gap-1 text-xs text-gray-600">
-                            <Calendar className="h-3 w-3" />
-                            <span>{course.startDate} ~ {course.endDate}</span>
-                          </div>
-                        )}
-                        <div className="flex gap-2 pt-2">
-                          <Button variant="outline" size="sm" className="flex-1">
-                            <Edit className="h-4 w-4 mr-1" />
-                            编辑
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* 学习记录 */}
-        <TabsContent value="learning">
-          <Card>
-            <CardHeader>
-              <CardTitle>学习记录</CardTitle>
-              <CardDescription>查看员工学习进度</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>员工</TableHead>
-                    <TableHead>课程</TableHead>
-                    <TableHead>进度</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead>分数</TableHead>
-                    <TableHead>完成时间</TableHead>
-                    <TableHead>操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {learningRecords.map((record) => (
-                    <TableRow key={record.id}>
-                      <TableCell className="font-medium">{record.employeeName}</TableCell>
-                      <TableCell>{record.courseTitle}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Progress value={record.progress} className="w-24 h-2" />
-                          <span className="text-sm">{record.progress}%</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={record.status === 'completed' ? 'default' : 'secondary'}
-                        >
-                          {record.status === 'completed' && '已完成'}
-                          {record.status === 'in_progress' && '进行中'}
-                          {record.status === 'dropped' && '已放弃'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {record.score !== undefined ? (
-                          <Badge className="bg-green-100 text-green-800">
-                            {record.score}分
-                          </Badge>
-                        ) : (
-                          '-'
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {record.completedAt || '-'}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* 数据分析 */}
-        <TabsContent value="analytics">
-          <Card>
-            <CardHeader>
-              <CardTitle>培训数据分析</CardTitle>
-              <CardDescription>培训效果分析和统计</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="text-center py-8 text-gray-500">
-                  <TrendingUp className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                  <p>学习趋势分析</p>
-                </div>
-                <div className="text-center py-8 text-gray-500">
-                  <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                  <p>学员活跃度分析</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* 创建课程弹窗 */}
-      <Dialog open={courseDialogOpen} onOpenChange={setCourseDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>创建新课程</DialogTitle>
-            <DialogDescription>
-              填写课程信息，创建新的培训课程
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="title">课程标题 *</Label>
-              <Input id="title" placeholder="输入课程标题" />
-            </div>
-            <div>
-              <Label htmlFor="description">课程描述 *</Label>
-              <Textarea
-                id="description"
-                placeholder="详细描述课程内容"
-                rows={3}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="type">培训方式 *</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择方式" />
+                <CardTitle>课程列表</CardTitle>
+                <CardDescription>管理所有培训课程</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="搜索课程..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 w-64"
+                  />
+                </div>
+                <Button variant="outline" size="sm">
+                  <Filter className="h-4 w-4 mr-2" />
+                  筛选
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="all">全部课程 ({courses.length})</TabsTrigger>
+                <TabsTrigger value="published">已发布 ({courses.filter(c => c.status === 'published').length})</TabsTrigger>
+                <TabsTrigger value="draft">草稿 ({courses.filter(c => c.status === 'draft').length})</TabsTrigger>
+              </TabsList>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCourses.map((course) => {
+                  const TypeIcon = getTypeIcon(course.type);
+                  return (
+                    <Card key={course.id} className="overflow-hidden hover:shadow-lg transition-all cursor-pointer group">
+                      <div className="aspect-video bg-gradient-to-br from-blue-500 to-indigo-600 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-all" />
+                        <div className="absolute top-4 left-4">
+                          {getStatusBadge(course.status)}
+                        </div>
+                        <div className="absolute top-4 right-4 flex gap-2">
+                          {getDifficultyBadge(course.difficulty)}
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <TypeIcon className="h-16 w-16 text-white/80" />
+                        </div>
+                      </div>
+                      <CardHeader>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h3 className="font-semibold text-lg text-gray-900 dark:text-white line-clamp-1">
+                            {course.title}
+                          </h3>
+                          <Badge variant="outline">{course.category}</Badge>
+                        </div>
+                        <CardDescription className="line-clamp-2">{course.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                              <Users className="h-4 w-4" />
+                              <span>{course.enrollmentCount}人学习</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                              <Clock className="h-4 w-4" />
+                              <span>{Math.floor(course.duration / 60)}h {course.duration % 60}m</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  className={`h-4 w-4 ${
+                                    star <= Math.floor(course.averageRating)
+                                      ? 'text-yellow-500 fill-current'
+                                      : 'text-gray-300'
+                                  }`}
+                                />
+                              ))}
+                              <span className="text-gray-600 dark:text-gray-400 ml-1">
+                                {course.averageRating} ({course.reviewCount})
+                              </span>
+                            </div>
+                            <div className="text-green-600 dark:text-green-400 font-medium">
+                              {((course.completionCount / course.enrollmentCount) * 100).toFixed(0)}% 完成
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {course.tags.slice(0, 3).map((tag, idx) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                          <div className="flex gap-2 pt-2">
+                            <Button variant="outline" size="sm" className="flex-1">
+                              <Eye className="h-4 w-4 mr-1" />
+                              查看
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            {course.status === 'draft' && (
+                              <Button
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => handlePublishCourse(course.id)}
+                              >
+                                发布
+                              </Button>
+                            )}
+                            {course.status === 'published' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleArchiveCourse(course.id)}
+                              >
+                                归档
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        {/* 创建课程对话框 */}
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>创建新课程</DialogTitle>
+              <DialogDescription>
+                填写课程基本信息，创建后可以添加课程内容
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="title">课程名称 *</Label>
+                <Input
+                  id="title"
+                  value={courseFormData.title}
+                  onChange={(e) => setCourseFormData({ ...courseFormData, title: e.target.value })}
+                  placeholder="例如：新员工入职培训"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">课程类别 *</Label>
+                <Select value={courseFormData.category} onValueChange={(v) => setCourseFormData({ ...courseFormData, category: v })}>
+                  <SelectTrigger id="category">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="online">在线</SelectItem>
-                    <SelectItem value="offline">线下</SelectItem>
-                    <SelectItem value="hybrid">混合</SelectItem>
+                    <SelectItem value="入职培训">入职培训</SelectItem>
+                    <SelectItem value="管理培训">管理培训</SelectItem>
+                    <SelectItem value="技能培训">技能培训</SelectItem>
+                    <SelectItem value="合规培训">合规培训</SelectItem>
+                    <SelectItem value="安全培训">安全培训</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="difficulty">难度等级 *</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择难度" />
+              <div className="space-y-2">
+                <Label htmlFor="type">课程类型</Label>
+                <Select value={courseFormData.type} onValueChange={(v) => setCourseFormData({ ...courseFormData, type: v })}>
+                  <SelectTrigger id="type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="video">视频课程</SelectItem>
+                    <SelectItem value="document">文档课程</SelectItem>
+                    <SelectItem value="live">直播课程</SelectItem>
+                    <SelectItem value="mixed">混合课程</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="difficulty">难度等级</Label>
+                <Select value={courseFormData.difficulty} onValueChange={(v) => setCourseFormData({ ...courseFormData, difficulty: v })}>
+                  <SelectTrigger id="difficulty">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="beginner">初级</SelectItem>
@@ -547,52 +607,52 @@ export default function CourseManagementPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="duration">课程时长（分钟）</Label>
+                <Input
+                  id="duration"
+                  type="number"
+                  value={courseFormData.duration}
+                  onChange={(e) => setCourseFormData({ ...courseFormData, duration: e.target.value })}
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="instructor">授课讲师</Label>
+                <Input
+                  id="instructor"
+                  value={courseFormData.instructor}
+                  onChange={(e) => setCourseFormData({ ...courseFormData, instructor: e.target.value })}
+                  placeholder="例如：HR部门、外部专家"
+                />
+              </div>
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="targetAudience">目标学员</Label>
+                <Input
+                  id="targetAudience"
+                  value={courseFormData.targetAudience}
+                  onChange={(e) => setCourseFormData({ ...courseFormData, targetAudience: e.target.value })}
+                  placeholder="例如：新入职员工、中层管理者"
+                />
+              </div>
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="description">课程描述</Label>
+                <Textarea
+                  id="description"
+                  value={courseFormData.description}
+                  onChange={(e) => setCourseFormData({ ...courseFormData, description: e.target.value })}
+                  placeholder="请描述课程的主要内容和学习目标..."
+                  rows={4}
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="duration">课程时长 (小时) *</Label>
-                <Input id="duration" type="number" placeholder="8" />
-              </div>
-              <div>
-                <Label htmlFor="maxParticipants">最大人数 *</Label>
-                <Input id="maxParticipants" type="number" placeholder="50" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="instructor">讲师 *</Label>
-                <Input id="instructor" placeholder="讲师姓名" />
-              </div>
-              <div>
-                <Label htmlFor="category">课程分类 *</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择分类" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="onboarding">入职培训</SelectItem>
-                    <SelectItem value="management">管理培训</SelectItem>
-                    <SelectItem value="skill">技能培训</SelectItem>
-                    <SelectItem value="compliance">合规培训</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCourseDialogOpen(false)}>
-              取消
-            </Button>
-            <Button onClick={() => {
-              toast.success('课程创建成功！');
-              setCourseDialogOpen(false);
-            }}>
-              <Save className="mr-2 h-4 w-4" />
-              保存
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCreateDialog(false)}>取消</Button>
+              <Button onClick={handleCreateCourse}>创建课程</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }

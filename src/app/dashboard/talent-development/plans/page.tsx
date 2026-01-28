@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -17,249 +17,314 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogTrigger,
 } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Target,
-  Plus,
-  Search,
-  Calendar,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
   TrendingUp,
-  Award,
+  Target,
+  Calendar,
   CheckCircle,
   Clock,
-  User,
-  Building,
+  Star,
+  Award,
+  Plus,
   Edit,
   Eye,
-  Trash2,
-  FileText,
+  Filter,
+  Download,
+  ArrowRight,
+  BookOpen,
+  Briefcase,
+  Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
-
-type PlanStatus = 'draft' | 'active' | 'completed' | 'paused';
-type PlanType = 'career' | 'skill' | 'leadership' | 'custom';
 
 interface DevelopmentPlan {
   id: string;
   employeeId: string;
   employeeName: string;
+  employeeAvatar?: string;
   department: string;
   position: string;
-  title: string;
-  type: PlanType;
-  status: PlanStatus;
+  level: string;
   startDate: string;
   endDate: string;
-  objectives: string[];
-  currentStage: string;
+  status: 'active' | 'completed' | 'paused' | 'cancelled';
   progress: number;
-  mentor: string;
-  budget: number;
-  description: string;
-  createdBy: string;
-  createdAt: string;
+  goals: DevelopmentGoal[];
+  mentor?: string;
+  mentorId?: string;
+  note: string;
+}
+
+interface DevelopmentGoal {
+  id: string;
+  title: string;
+  category: 'skill' | 'knowledge' | 'behavior' | 'career';
+  priority: 'high' | 'medium' | 'low';
+  targetDate: string;
+  status: 'not-started' | 'in-progress' | 'completed' | 'delayed';
+  progress: number;
+  actions: DevelopmentAction[];
+  resources: string[];
+  competencyGap?: string;
+}
+
+interface DevelopmentAction {
+  id: string;
+  title: string;
+  type: 'training' | 'project' | 'assignment' | 'mentoring' | 'self-study';
+  targetDate: string;
+  status: 'pending' | 'in-progress' | 'completed';
+  completionDate?: string;
+  result?: string;
+}
+
+interface ExtendedAction extends DevelopmentAction {
+  employeeName: string;
+  goalTitle: string;
+  department: string;
 }
 
 export default function DevelopmentPlansPage() {
-  const [plans, setPlans] = useState<DevelopmentPlan[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showCreatePlan, setShowCreatePlan] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<DevelopmentPlan | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState('plans');
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
 
-  const [newPlan, setNewPlan] = useState({
-    employeeName: '',
-    department: '',
-    position: '',
-    title: '',
-    type: 'career' as PlanType,
+  const [developmentPlans, setDevelopmentPlans] = useState<DevelopmentPlan[]>([
+    {
+      id: '1',
+      employeeId: 'EMP001',
+      employeeName: '张三',
+      department: '技术部',
+      position: '高级工程师',
+      level: 'P7',
+      startDate: '2024-01-01',
+      endDate: '2024-12-31',
+      status: 'active',
+      progress: 75,
+      mentor: '李总',
+      mentorId: 'M001',
+      note: '目标晋升为技术专家',
+      goals: [
+        {
+          id: 'g1',
+          title: '提升技术架构能力',
+          category: 'skill',
+          priority: 'high',
+          targetDate: '2024-06-30',
+          status: 'completed',
+          progress: 100,
+          competencyGap: '需要掌握分布式系统设计',
+          actions: [
+            { id: 'a1', title: '参加架构师认证培训', type: 'training', targetDate: '2024-03-31', status: 'completed', completionDate: '2024-04-15', result: '获得认证' },
+            { id: 'a2', title: '负责核心系统重构', type: 'project', targetDate: '2024-06-30', status: 'completed', completionDate: '2024-06-20', result: '系统性能提升50%' },
+          ],
+          resources: ['架构设计课程', '导师辅导'],
+        },
+        {
+          id: 'g2',
+          title: '提升团队管理能力',
+          category: 'behavior',
+          priority: 'medium',
+          targetDate: '2024-09-30',
+          status: 'in-progress',
+          progress: 60,
+          actions: [
+            { id: 'a3', title: '参加管理培训课程', type: 'training', targetDate: '2024-08-31', status: 'in-progress' },
+            { id: 'a4', title: '带领小团队完成项目', type: 'assignment', targetDate: '2024-09-30', status: 'pending' },
+          ],
+          resources: ['管理课程', '导师指导'],
+        },
+        {
+          id: 'g3',
+          title: '拓展业务知识',
+          category: 'knowledge',
+          priority: 'medium',
+          targetDate: '2024-12-31',
+          status: 'not-started',
+          progress: 0,
+          actions: [
+            { id: 'a5', title: '参与产品需求评审', type: 'assignment', targetDate: '2024-12-31', status: 'pending' },
+          ],
+          resources: ['产品文档', '业务培训'],
+        },
+      ],
+    },
+    {
+      id: '2',
+      employeeId: 'EMP002',
+      employeeName: '李四',
+      department: '销售部',
+      position: '销售经理',
+      level: 'M3',
+      startDate: '2024-03-01',
+      endDate: '2024-12-31',
+      status: 'active',
+      progress: 60,
+      mentor: '王总',
+      mentorId: 'M002',
+      note: '准备晋升为销售总监',
+      goals: [
+        {
+          id: 'g4',
+          title: '提升战略规划能力',
+          category: 'career',
+          priority: 'high',
+          targetDate: '2024-08-31',
+          status: 'in-progress',
+          progress: 70,
+          actions: [
+            { id: 'a6', title: '参加战略规划培训', type: 'training', targetDate: '2024-06-30', status: 'completed', completionDate: '2024-07-01', result: '完成培训' },
+            { id: 'a7', title: '制定年度销售战略', type: 'assignment', targetDate: '2024-08-31', status: 'in-progress' },
+          ],
+          resources: ['战略课程', '导师辅导'],
+        },
+      ],
+    },
+    {
+      id: '3',
+      employeeId: 'EMP003',
+      employeeName: '王五',
+      department: '产品部',
+      position: '产品经理',
+      level: 'P5',
+      startDate: '2024-06-01',
+      endDate: '2025-05-31',
+      status: 'active',
+      progress: 30,
+      mentor: '张总',
+      mentorId: 'M003',
+      note: '目标晋升为高级产品经理',
+      goals: [
+        {
+          id: 'g5',
+          title: '提升数据分析能力',
+          category: 'skill',
+          priority: 'high',
+          targetDate: '2024-12-31',
+          status: 'in-progress',
+          progress: 40,
+          actions: [
+            { id: 'a8', title: '学习数据分析课程', type: 'training', targetDate: '2024-09-30', status: 'completed', completionDate: '2024-10-01', result: '完成课程' },
+            { id: 'a9', title: '完成数据驱动产品优化项目', type: 'project', targetDate: '2024-12-31', status: 'in-progress' },
+          ],
+          resources: ['数据分析课程', '导师指导'],
+        },
+      ],
+    },
+  ]);
+
+  const [planFormData, setPlanFormData] = useState({
+    employeeId: '',
     startDate: '',
     endDate: '',
     mentor: '',
-    budget: '',
-    description: '',
-    objectives: [''],
+    note: '',
   });
 
-  useEffect(() => {
-    // 模拟获取发展计划数据
-    setTimeout(() => {
-      setPlans([
-        {
-          id: '1',
-          employeeId: 'E001',
-          employeeName: '张三',
-          department: '技术部',
-          position: '高级前端工程师',
-          title: '前端技术专家培养计划',
-          type: 'skill',
-          status: 'active',
-          startDate: '2024-01-01',
-          endDate: '2024-12-31',
-          objectives: [
-            '掌握React高级特性',
-            '学习性能优化技巧',
-            '完成3个技术分享',
-          ],
-          currentStage: '学习React Server Components',
-          progress: 45,
-          mentor: '李技术总监',
-          budget: 5000,
-          description: '培养成为团队技术骨干',
-          createdBy: 'HR BP',
-          createdAt: '2024-01-01T10:00:00',
-        },
-        {
-          id: '2',
-          employeeId: 'E002',
-          employeeName: '李四',
-          department: '产品部',
-          position: '产品经理',
-          title: '产品负责人发展计划',
-          type: 'leadership',
-          status: 'active',
-          startDate: '2024-02-01',
-          endDate: '2025-01-31',
-          objectives: [
-            '学习战略规划方法',
-            '提升团队管理能力',
-            '成功主导2个大型项目',
-          ],
-          currentStage: '学习战略规划',
-          progress: 35,
-          mentor: '王产品总监',
-          budget: 8000,
-          description: '培养成为产品负责人',
-          createdBy: 'HR Director',
-          createdAt: '2024-02-01T14:30:00',
-        },
-        {
-          id: '3',
-          employeeId: 'E003',
-          employeeName: '王五',
-          department: '销售部',
-          position: '销售代表',
-          title: '销售精英成长计划',
-          type: 'career',
-          status: 'completed',
-          startDate: '2023-06-01',
-          endDate: '2024-05-31',
-          objectives: [
-            '完成销售目标100万',
-            '开发5个大客户',
-            '完成产品知识认证',
-          ],
-          currentStage: '已完成',
-          progress: 100,
-          mentor: '赵销售总监',
-          budget: 3000,
-          description: '培养成为销售精英',
-          createdBy: 'HR BP',
-          createdAt: '2023-06-01T09:00:00',
-        },
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, []);
+  const stats = {
+    totalPlans: developmentPlans.length,
+    activePlans: developmentPlans.filter(p => p.status === 'active').length,
+    completedPlans: developmentPlans.filter(p => p.status === 'completed').length,
+    totalGoals: developmentPlans.reduce((sum, p) => sum + p.goals.length, 0),
+    completedGoals: developmentPlans.reduce(
+      (sum, p) => sum + p.goals.filter(g => g.status === 'completed').length,
+      0
+    ),
+    avgProgress: Math.round(
+      developmentPlans.reduce((sum, p) => sum + p.progress, 0) / developmentPlans.length
+    ),
+  };
+
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, any> = {
+      active: { label: '进行中', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
+      completed: { label: '已完成', className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
+      paused: { label: '已暂停', className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
+      cancelled: { label: '已取消', className: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200' },
+      'not-started': { label: '未开始', className: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200' },
+      'in-progress': { label: '进行中', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
+      delayed: { label: '已延期', className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
+    };
+    const variant = variants[status];
+    return <Badge className={variant.className}>{variant.label}</Badge>;
+  };
+
+  const getPriorityBadge = (priority: string) => {
+    const variants: Record<string, any> = {
+      high: { label: '高', className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
+      medium: { label: '中', className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
+      low: { label: '低', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
+    };
+    const variant = variants[priority];
+    return <Badge className={variant.className}>{variant.label}</Badge>;
+  };
+
+  const getCategoryIcon = (category: string) => {
+    const icons: Record<string, any> = {
+      skill: Zap,
+      knowledge: BookOpen,
+      behavior: Star,
+      career: Briefcase,
+    };
+    return icons[category] || Target;
+  };
 
   const handleCreatePlan = () => {
-    const plan: DevelopmentPlan = {
+    if (!planFormData.employeeId) {
+      toast.error('请选择员工');
+      return;
+    }
+
+    const newPlan: DevelopmentPlan = {
       id: Date.now().toString(),
-      employeeId: 'E' + Date.now().toString().slice(-4),
-      employeeName: newPlan.employeeName,
-      department: newPlan.department,
-      position: newPlan.position,
-      title: newPlan.title,
-      type: newPlan.type,
-      status: 'draft',
-      startDate: newPlan.startDate,
-      endDate: newPlan.endDate,
-      objectives: newPlan.objectives.filter(obj => obj.trim() !== ''),
-      currentStage: '待开始',
-      progress: 0,
-      mentor: newPlan.mentor,
-      budget: parseFloat(newPlan.budget) || 0,
-      description: newPlan.description,
-      createdBy: '当前用户',
-      createdAt: new Date().toISOString(),
-    };
-    setPlans([plan, ...plans]);
-    setShowCreatePlan(false);
-    toast.success('发展计划已创建');
-    setNewPlan({
-      employeeName: '',
+      employeeId: planFormData.employeeId,
+      employeeName: '新员工',
       department: '',
       position: '',
-      title: '',
-      type: 'career',
+      level: '',
+      startDate: planFormData.startDate,
+      endDate: planFormData.endDate,
+      status: 'active',
+      progress: 0,
+      mentor: planFormData.mentor,
+      note: planFormData.note,
+      goals: [],
+    };
+
+    setDevelopmentPlans([...developmentPlans, newPlan]);
+    setShowCreateDialog(false);
+    setPlanFormData({
+      employeeId: '',
       startDate: '',
       endDate: '',
       mentor: '',
-      budget: '',
-      description: '',
-      objectives: [''],
+      note: '',
     });
+    toast.success('发展计划创建成功');
   };
 
-  const filteredPlans = plans.filter((plan) => {
-    const matchesSearch =
-      plan.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      plan.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      plan.department.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || plan.status === statusFilter;
-    const matchesType = typeFilter === 'all' || plan.type === typeFilter;
-    return matchesSearch && matchesStatus && matchesType;
+  const filteredPlans = developmentPlans.filter(plan => {
+    const matchesDepartment = selectedDepartment === 'all' || plan.department === selectedDepartment;
+    const matchesStatus = selectedStatus === 'all' || plan.status === selectedStatus;
+    return matchesDepartment && matchesStatus;
   });
-
-  const typeConfig: Record<PlanType, { label: string; color: string; icon: any }> = {
-    career: { label: '职业发展', color: 'bg-blue-500', icon: Target },
-    skill: { label: '技能提升', color: 'bg-green-500', icon: Award },
-    leadership: { label: '领导力', color: 'bg-purple-500', icon: TrendingUp },
-    custom: { label: '自定义', color: 'bg-gray-500', icon: Target },
-  };
-
-  const statusConfig: Record<PlanStatus, { label: string; color: string; icon: any }> = {
-    draft: { label: '草稿', color: 'bg-gray-500', icon: FileText },
-    active: { label: '进行中', color: 'bg-green-500', icon: Clock },
-    completed: { label: '已完成', color: 'bg-blue-500', icon: CheckCircle },
-    paused: { label: '已暂停', color: 'bg-yellow-500', icon: Clock },
-  };
-
-  const statistics = {
-    total: plans.length,
-    active: plans.filter(p => p.status === 'active').length,
-    completed: plans.filter(p => p.status === 'completed').length,
-    averageProgress: plans.length > 0 ? plans.reduce((sum, p) => sum + p.progress, 0) / plans.length : 0,
-  };
-
-  const addObjective = () => {
-    setNewPlan({
-      ...newPlan,
-      objectives: [...newPlan.objectives, ''],
-    });
-  };
-
-  const updateObjective = (index: number, value: string) => {
-    const updatedObjectives = [...newPlan.objectives];
-    updatedObjectives[index] = value;
-    setNewPlan({
-      ...newPlan,
-      objectives: updatedObjectives,
-    });
-  };
-
-  const removeObjective = (index: number) => {
-    const updatedObjectives = newPlan.objectives.filter((_, i) => i !== index);
-    setNewPlan({
-      ...newPlan,
-      objectives: updatedObjectives.length > 0 ? updatedObjectives : [''],
-    });
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6">
@@ -268,392 +333,458 @@ export default function DevelopmentPlansPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
-              <Target className="h-8 w-8 text-blue-600" />
+              <div className="p-2 bg-gradient-to-br from-teal-500 to-green-600 rounded-lg">
+                <TrendingUp className="h-7 w-7 text-white" />
+              </div>
               发展计划
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              制定和管理员工职业发展计划
+              制定员工个人发展计划，助力人才成长
             </p>
           </div>
-          <Button onClick={() => setShowCreatePlan(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            创建计划
-          </Button>
-        </div>
-
-        {/* 统计卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">总计划数</p>
-                  <p className="text-2xl font-bold">{statistics.total}</p>
-                </div>
-                <Target className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">进行中</p>
-                  <p className="text-2xl font-bold text-green-600">{statistics.active}</p>
-                </div>
-                <Clock className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">已完成</p>
-                  <p className="text-2xl font-bold text-blue-600">{statistics.completed}</p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">平均进度</p>
-                  <p className="text-2xl font-bold">{statistics.averageProgress.toFixed(0)}%</p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 筛选栏 */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="搜索员工姓名或计划名称..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部状态</SelectItem>
-                  {Object.entries(statusConfig).map(([value, config]) => (
-                    <SelectItem key={value} value={value}>
-                      {config.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="类型" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部类型</SelectItem>
-                  {Object.entries(typeConfig).map(([value, config]) => (
-                    <SelectItem key={value} value={value}>
-                      {config.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 计划列表 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {loading ? (
-            <div className="col-span-2 flex items-center justify-center h-64">
-              <div className="text-gray-600 dark:text-gray-400">加载中...</div>
-            </div>
-          ) : filteredPlans.length === 0 ? (
-            <div className="col-span-2 text-center py-12">
-              <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 dark:text-gray-400">暂无发展计划</p>
-              <Button className="mt-4" onClick={() => setShowCreatePlan(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                创建计划
-              </Button>
-            </div>
-          ) : (
-            filteredPlans.map((plan) => {
-              const typeIcon = typeConfig[plan.type].icon;
-              const TypeIcon = typeIcon;
-              return (
-                <Card key={plan.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg">{plan.title}</CardTitle>
-                        <CardDescription className="flex items-center gap-2 mt-2">
-                          <Badge className={`${typeConfig[plan.type].color} text-white border-0 flex items-center gap-1`}>
-                            <TypeIcon className="h-3 w-3" />
-                            {typeConfig[plan.type].label}
-                          </Badge>
-                          <Badge className={statusConfig[plan.status].color + ' text-white border-0'}>
-                            {statusConfig[plan.status].label}
-                          </Badge>
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                          <User className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{plan.employeeName}</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {plan.position} · {plan.department}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">完成进度</span>
-                          <span className="font-medium">{plan.progress}%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                          <div
-                            className={`h-2 rounded-full transition-all ${
-                              plan.progress >= 80 ? 'bg-green-500' :
-                              plan.progress >= 50 ? 'bg-blue-500' :
-                              'bg-yellow-500'
-                            }`}
-                            style={{ width: `${plan.progress}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <span className="text-gray-600 dark:text-gray-400">当前阶段</span>
-                          <p className="font-medium">{plan.currentStage}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-600 dark:text-gray-400">导师</span>
-                          <p className="font-medium">{plan.mentor}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-600 dark:text-gray-400">开始日期</span>
-                          <p className="font-medium">{plan.startDate}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-600 dark:text-gray-400">结束日期</span>
-                          <p className="font-medium">{plan.endDate}</p>
-                        </div>
-                      </div>
-
-                      <div className="pt-2">
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">发展目标</p>
-                        <ul className="space-y-1">
-                          {plan.objectives.slice(0, 3).map((obj, index) => (
-                            <li key={index} className="text-sm flex items-start gap-2">
-                              <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-                              <span>{obj}</span>
-                            </li>
-                          ))}
-                          {plan.objectives.length > 3 && (
-                            <li className="text-sm text-gray-500">
-                              还有 {plan.objectives.length - 3} 个目标...
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-
-                      <div className="flex gap-2 pt-2">
-                        <Button variant="outline" size="sm" className="flex-1">
-                          <Eye className="h-4 w-4 mr-1" />
-                          查看详情
-                        </Button>
-                        <Button variant="outline" size="sm" className="flex-1">
-                          <Edit className="h-4 w-4 mr-1" />
-                          编辑
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
-        </div>
-      </div>
-
-      {/* 创建计划弹窗 */}
-      <Dialog open={showCreatePlan} onOpenChange={setShowCreatePlan}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>创建发展计划</DialogTitle>
-            <DialogDescription>
-              为员工制定个性化发展计划
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>员工姓名 *</Label>
-                <Input
-                  placeholder="输入员工姓名"
-                  value={newPlan.employeeName}
-                  onChange={(e) => setNewPlan({ ...newPlan, employeeName: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>部门 *</Label>
-                <Input
-                  placeholder="输入部门"
-                  value={newPlan.department}
-                  onChange={(e) => setNewPlan({ ...newPlan, department: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>职位 *</Label>
-                <Input
-                  placeholder="输入职位"
-                  value={newPlan.position}
-                  onChange={(e) => setNewPlan({ ...newPlan, position: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>计划类型 *</Label>
-                <Select
-                  value={newPlan.type}
-                  onValueChange={(v) => setNewPlan({ ...newPlan, type: v as PlanType })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(typeConfig).map(([value, config]) => (
-                      <SelectItem key={value} value={value}>
-                        {config.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>计划标题 *</Label>
-              <Input
-                placeholder="输入发展计划标题"
-                value={newPlan.title}
-                onChange={(e) => setNewPlan({ ...newPlan, title: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>计划描述</Label>
-              <textarea
-                className="w-full min-h-[80px] px-3 py-2 text-sm rounded-md border border-input bg-background"
-                placeholder="详细描述发展计划的目标和内容..."
-                value={newPlan.description}
-                onChange={(e) => setNewPlan({ ...newPlan, description: e.target.value })}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>开始日期 *</Label>
-                <Input
-                  type="date"
-                  value={newPlan.startDate}
-                  onChange={(e) => setNewPlan({ ...newPlan, startDate: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>结束日期 *</Label>
-                <Input
-                  type="date"
-                  value={newPlan.endDate}
-                  onChange={(e) => setNewPlan({ ...newPlan, endDate: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>导师</Label>
-                <Input
-                  placeholder="输入导师姓名"
-                  value={newPlan.mentor}
-                  onChange={(e) => setNewPlan({ ...newPlan, mentor: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>预算 (元)</Label>
-                <Input
-                  type="number"
-                  placeholder="输入培训预算"
-                  value={newPlan.budget}
-                  onChange={(e) => setNewPlan({ ...newPlan, budget: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>发展目标</Label>
-                <Button variant="outline" size="sm" onClick={addObjective}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  添加目标
-                </Button>
-              </div>
-              <div className="space-y-2">
-                {newPlan.objectives.map((objective, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      placeholder="输入发展目标"
-                      value={objective}
-                      onChange={(e) => updateObjective(index, e.target.value)}
-                    />
-                    {newPlan.objectives.length > 1 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeObjective(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreatePlan(false)}>
-              取消
+          <div className="flex gap-2">
+            <Button variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              导出计划
             </Button>
-            <Button onClick={handleCreatePlan}>
+            <Button className="bg-gradient-to-r from-teal-600 to-green-600 hover:from-teal-700 hover:to-green-700">
               <Plus className="h-4 w-4 mr-2" />
               创建计划
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+
+        {/* 统计卡片 */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">计划总数</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalPlans}</div>
+              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <Target className="h-3 w-3 mr-1" />
+                个
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">进行中</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.activePlans}</div>
+              <div className="flex items-center text-xs text-blue-600 dark:text-blue-400 mt-1">
+                <Clock className="h-3 w-3 mr-1" />
+                个
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">已完成</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.completedPlans}</div>
+              <div className="flex items-center text-xs text-green-600 dark:text-green-400 mt-1">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                个
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">发展目标</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.totalGoals}</div>
+              <div className="flex items-center text-xs text-purple-600 dark:text-purple-400 mt-1">
+                <Target className="h-3 w-3 mr-1" />
+                个
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">目标完成</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">{stats.completedGoals}</div>
+              <div className="flex items-center text-xs text-cyan-600 dark:text-cyan-400 mt-1">
+                <Award className="h-3 w-3 mr-1" />
+                {((stats.completedGoals / stats.totalGoals) * 100).toFixed(0)}%
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">平均进度</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.avgProgress}%</div>
+              <div className="flex items-center text-xs text-orange-600 dark:text-orange-400 mt-1">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                整体进度
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* 功能Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <TabsTrigger value="plans" className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              发展计划
+            </TabsTrigger>
+            <TabsTrigger value="goals" className="flex items-center gap-2">
+              <Star className="h-4 w-4" />
+              目标管理
+            </TabsTrigger>
+            <TabsTrigger value="actions" className="flex items-center gap-2">
+              <Zap className="h-4 w-4" />
+              行动跟踪
+            </TabsTrigger>
+          </TabsList>
+
+          {/* 发展计划列表 */}
+          <TabsContent value="plans" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>发展计划列表</CardTitle>
+                    <CardDescription>查看和管理所有员工发展计划</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">全部部门</SelectItem>
+                        <SelectItem value="技术部">技术部</SelectItem>
+                        <SelectItem value="产品部">产品部</SelectItem>
+                        <SelectItem value="销售部">销售部</SelectItem>
+                        <SelectItem value="市场部">市场部</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">全部状态</SelectItem>
+                        <SelectItem value="active">进行中</SelectItem>
+                        <SelectItem value="completed">已完成</SelectItem>
+                        <SelectItem value="paused">已暂停</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {filteredPlans.map((plan) => (
+                    <Card key={plan.id} className="hover:shadow-md transition-all">
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-4">
+                            <Avatar className="h-12 w-12">
+                              <AvatarFallback className="bg-gradient-to-br from-teal-500 to-green-500 text-white">
+                                {plan.employeeName.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="flex items-center gap-3 mb-1">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{plan.employeeName}</h3>
+                                {getStatusBadge(plan.status)}
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                <span>{plan.department}</span>
+                                <span>·</span>
+                                <span>{plan.position}</span>
+                                <span>·</span>
+                                <span>{plan.level}</span>
+                              </div>
+                              {plan.mentor && (
+                                <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                  导师：{plan.mentor}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm">
+                              <Eye className="h-4 w-4 mr-1" />
+                              查看
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-4 w-4 mr-1" />
+                              编辑
+                            </Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="mb-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">总体进度</span>
+                            <span className="text-sm font-medium text-gray-900 dark:text-white">{plan.progress}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full transition-all ${
+                                plan.progress === 100 ? 'bg-green-500' : 'bg-blue-500'
+                              }`}
+                              style={{ width: `${plan.progress}%` }}
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                          <div>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">开始时间</span>
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">{plan.startDate}</div>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">结束时间</span>
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">{plan.endDate}</div>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">发展目标</span>
+                            <div className="text-sm font-medium text-purple-600 dark:text-purple-400">{plan.goals.length}个</div>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">已完成</span>
+                            <div className="text-sm font-medium text-green-600 dark:text-green-400">
+                              {plan.goals.filter(g => g.status === 'completed').length}个
+                            </div>
+                          </div>
+                        </div>
+                        {plan.note && (
+                          <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+                            <div className="text-sm text-blue-700 dark:text-blue-300">
+                              <Star className="h-3 w-3 inline mr-1" />
+                              目标：{plan.note}
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* 目标管理 */}
+          <TabsContent value="goals" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>发展目标汇总</CardTitle>
+                <CardDescription>所有发展目标的完成情况</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {developmentPlans.flatMap(plan =>
+                    plan.goals.map(goal => ({
+                      ...goal,
+                      employeeName: plan.employeeName,
+                      department: plan.department,
+                      position: plan.position,
+                    }))
+                  ).map((goal, idx) => {
+                    const CategoryIcon = getCategoryIcon(goal.category);
+                    return (
+                      <Card key={idx}>
+                        <CardContent className="pt-6">
+                          <div className="flex items-start gap-4">
+                            <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800">
+                              <CategoryIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h4 className="font-medium text-gray-900 dark:text-white">{goal.title}</h4>
+                                    {getPriorityBadge(goal.priority)}
+                                  </div>
+                                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                                    {goal.employeeName} · {goal.department}
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  {getStatusBadge(goal.status)}
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                                    {goal.progress}%
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+                                <div
+                                  className={`h-2 rounded-full ${
+                                    goal.progress === 100 ? 'bg-green-500' : 'bg-blue-500'
+                                  }`}
+                                  style={{ width: `${goal.progress}%` }}
+                                />
+                              </div>
+                              <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+                                <span>目标日期: {goal.targetDate}</span>
+                                <span>{goal.actions.length} 个行动项</span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* 行动跟踪 */}
+          <TabsContent value="actions" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>行动项跟踪</CardTitle>
+                <CardDescription>所有发展行动的执行情况</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-lg border dark:border-gray-700">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>员工</TableHead>
+                        <TableHead>发展目标</TableHead>
+                        <TableHead>行动项</TableHead>
+                        <TableHead>类型</TableHead>
+                        <TableHead>目标日期</TableHead>
+                        <TableHead>状态</TableHead>
+                        <TableHead>结果</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(() => {
+                        const allActions: ExtendedAction[] = [];
+                        developmentPlans.forEach(plan => {
+                          plan.goals.forEach(goal => {
+                            goal.actions.forEach(action => {
+                              allActions.push({
+                                ...action,
+                                employeeName: plan.employeeName,
+                                goalTitle: goal.title,
+                                department: plan.department,
+                              });
+                            });
+                          });
+                        });
+                        return allActions.map((action, idx) => {
+                          const typeLabels: Record<string, string> = {
+                            training: '培训',
+                            project: '项目',
+                            assignment: '任务',
+                            mentoring: '辅导',
+                            'self-study': '自学',
+                          };
+                          return (
+                            <TableRow key={idx}>
+                              <TableCell>
+                                <div className="font-medium">{action.employeeName}</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">{action.department}</div>
+                              </TableCell>
+                              <TableCell className="max-w-xs">
+                                <div className="truncate">{action.goalTitle}</div>
+                              </TableCell>
+                              <TableCell>{action.title}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{typeLabels[action.type]}</Badge>
+                              </TableCell>
+                              <TableCell>{action.targetDate}</TableCell>
+                              <TableCell>{getStatusBadge(action.status)}</TableCell>
+                              <TableCell>
+                                {action.result || <span className="text-gray-400">-</span>}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        });
+                      })()}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* 创建计划对话框 */}
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>创建发展计划</DialogTitle>
+              <DialogDescription>
+                为员工制定个人发展计划
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="employeeId">选择员工 *</Label>
+                <Select value={planFormData.employeeId} onValueChange={(v) => setPlanFormData({ ...planFormData, employeeId: v })}>
+                  <SelectTrigger id="employeeId">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EMP001">张三 - 技术部</SelectItem>
+                    <SelectItem value="EMP002">李四 - 销售部</SelectItem>
+                    <SelectItem value="EMP003">王五 - 产品部</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="startDate">开始日期</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={planFormData.startDate}
+                  onChange={(e) => setPlanFormData({ ...planFormData, startDate: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endDate">结束日期</Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={planFormData.endDate}
+                  onChange={(e) => setPlanFormData({ ...planFormData, endDate: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mentor">导师</Label>
+                <Input
+                  id="mentor"
+                  value={planFormData.mentor}
+                  onChange={(e) => setPlanFormData({ ...planFormData, mentor: e.target.value })}
+                  placeholder="选择或输入导师姓名"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="note">计划说明</Label>
+                <Textarea
+                  id="note"
+                  value={planFormData.note}
+                  onChange={(e) => setPlanFormData({ ...planFormData, note: e.target.value })}
+                  placeholder="描述发展目标、职业规划等..."
+                  rows={3}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCreateDialog(false)}>取消</Button>
+              <Button onClick={handleCreatePlan}>创建</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }
