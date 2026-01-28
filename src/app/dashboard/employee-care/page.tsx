@@ -525,8 +525,8 @@ export default function EmployeeCarePage() {
           </Card>
         </TabsContent>
 
-      {/* 智能提醒 Tab */}
-      <TabsContent value="smart-reminders" className="space-y-6">
+        {/* 智能提醒 Tab */}
+        <TabsContent value="smart-reminders" className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -721,8 +721,8 @@ export default function EmployeeCarePage() {
         </Card>
       </TabsContent>
 
-      {/* 满意度分析 Tab */}
-      <TabsContent value="satisfaction-analysis" className="space-y-6">
+        {/* 满意度分析 Tab */}
+        <TabsContent value="satisfaction-analysis" className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

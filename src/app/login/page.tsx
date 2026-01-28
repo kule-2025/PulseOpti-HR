@@ -20,7 +20,7 @@ export default function LoginPage() {
 
   // 检测是否是开发模式
   useEffect(() => {
-    setIsDevMode(process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    setIsDevMode(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
   }, []);
 
   // 密码登录表单状态
