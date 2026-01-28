@@ -76,7 +76,7 @@ interface NavigationItem {
   shortcuts?: string[];
 }
 
-// 基于企业真实用户场景重新设计的导航结构
+// 基于企业真实用户场景重新设计的导航结构（COE/HRBP/SSC三支柱模型）
 const navigation: NavigationItem[] = [
   // ==================== 工作台 ====================
   {
@@ -107,6 +107,12 @@ const navigation: NavigationItem[] = [
         description: '常用功能快速入口',
         shortcuts: ['发起流程', '数据导出', '发送通知'],
       },
+      {
+        name: '我的工作台',
+        href: '/dashboard/my-workspace',
+        icon: User,
+        description: '个性化工作台',
+      },
     ],
   },
 
@@ -120,6 +126,55 @@ const navigation: NavigationItem[] = [
     priority: 2,
     color: 'text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-950',
     subItems: [
+      {
+        name: '人力资源仪表盘',
+        href: '/coe/hr-dashboard',
+        icon: BarChart3,
+        description: '实时人力成本、人效比、流失率预警',
+        subItems: [
+          { name: '人力成本分析', href: '/coe/hr-dashboard/labor-cost', description: '人力成本占比与趋势' },
+          { name: '人效比分析', href: '/coe/hr-dashboard/efficiency-ratio', description: '人均产值与人效分析' },
+          { name: '流失率预警', href: '/coe/hr-dashboard/turnover-warning', description: '员工流失风险预警' },
+          { name: '组织健康度', href: '/coe/hr-dashboard/org-health', description: '组织整体健康评估' },
+          { name: '人力规划建议', href: '/coe/hr-dashboard/planning-suggestion', description: '一键生成人力规划建议', badge: { text: 'NEW', color: 'from-blue-600 to-cyan-600' } },
+        ],
+      },
+      {
+        name: '薪酬体系设计',
+        href: '/coe/salary-design',
+        icon: DollarSign,
+        description: '岗位薪酬对标、调薪模拟计算器',
+        subItems: [
+          { name: '岗位薪酬对标', href: '/coe/salary-design/job-salary', description: '行业薪酬水平对比' },
+          { name: '调薪模拟计算器', href: '/coe/salary-design/salary-calc', description: '调薪方案模拟' },
+          { name: '薪酬结构设计', href: '/coe/salary-design/structure', description: '薪酬结构配置' },
+          { name: '薪酬激励方案', href: '/coe/salary-design/incentive', description: '激励机制设计' },
+        ],
+      },
+      {
+        name: '绩效方案库',
+        href: '/coe/performance-library',
+        icon: Target,
+        description: 'KPI/OKR模板、绩效数据分析',
+        subItems: [
+          { name: 'KPI方案库', href: '/coe/performance-library/kpi', description: 'KPI指标模板' },
+          { name: 'OKR方案库', href: '/coe/performance-library/okr', description: 'OKR目标模板' },
+          { name: '绩效数据分析', href: '/coe/performance-library/analysis', description: '绩效数据统计分析' },
+          { name: '绩效方案定制', href: '/coe/performance-library/custom', description: '自定义绩效方案' },
+        ],
+      },
+      {
+        name: '组织人才诊断',
+        href: '/coe/talent-diagnosis',
+        icon: Trophy,
+        description: '人才九宫格、继任者计划看板',
+        subItems: [
+          { name: '人才九宫格', href: '/coe/talent-diagnosis/nine-grid', description: '人才九宫格分析' },
+          { name: '继任者计划', href: '/coe/talent-diagnosis/succession', description: '关键岗位继任计划' },
+          { name: '人才盘点', href: '/coe/talent-diagnosis/review', description: '人才盘点报告' },
+          { name: '人才画像', href: '/coe/talent-diagnosis/profile', description: '人才能力画像' },
+        ],
+      },
       {
         name: '绩效管理',
         href: '/performance',
@@ -182,6 +237,42 @@ const navigation: NavigationItem[] = [
     priority: 3,
     color: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-950',
     subItems: [
+      {
+        name: '部门人才看板',
+        href: '/hrbp/department-talent',
+        icon: Users,
+        description: '招聘需求跟进、团队绩效追踪',
+        subItems: [
+          { name: '招聘需求跟进', href: '/hrbp/department-talent/recruitment', description: '本部门招聘需求' },
+          { name: '团队绩效追踪', href: '/hrbp/department-talent/performance', description: '团队绩效数据' },
+          { name: '人员盘点', href: '/hrbp/department-talent/review', description: '部门人员盘点' },
+          { name: '流失预警', href: '/hrbp/department-talent/turnover', description: '部门流失预警' },
+        ],
+      },
+      {
+        name: '员工成长路径',
+        href: '/hrbp/employee-growth',
+        icon: Trophy,
+        description: '个性化培训推荐、晋升评审流程',
+        subItems: [
+          { name: '培训推荐', href: '/hrbp/employee-growth/training', description: '个性化培训推荐', badge: { text: 'AI', color: 'from-purple-600 to-pink-600' } },
+          { name: '晋升评审', href: '/hrbp/employee-growth/promotion', description: '晋升评审流程' },
+          { name: '职业发展', href: '/hrbp/employee-growth/career', description: '职业发展规划' },
+          { name: '能力提升', href: '/hrbp/employee-growth/skills', description: '能力提升计划' },
+        ],
+      },
+      {
+        name: '业务复盘助手',
+        href: '/hrbp/business-review',
+        icon: Layers,
+        description: '业务目标与人力匹配度分析',
+        subItems: [
+          { name: '业务目标追踪', href: '/hrbp/business-review/goals', description: '业务目标跟踪' },
+          { name: '人力匹配分析', href: '/hrbp/business-review/matching', description: '人力与业务匹配度' },
+          { name: '复盘报告', href: '/hrbp/business-review/report', description: '业务复盘报告' },
+          { name: '优化建议', href: '/hrbp/business-review/suggestion', description: '优化建议生成', badge: { text: 'AI', color: 'from-purple-600 to-pink-600' } },
+        ],
+      },
       {
         name: '智能招聘',
         href: '/recruitment',
@@ -259,6 +350,58 @@ const navigation: NavigationItem[] = [
     priority: 4,
     color: 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-950',
     subItems: [
+      {
+        name: '员工自助服务',
+        href: '/ssc/self-service',
+        icon: User,
+        description: '入职/离职线上办理、证明一键生成',
+        badge: { text: 'NEW', color: 'from-blue-600 to-cyan-600' },
+        subItems: [
+          { name: '在线入职', href: '/ssc/self-service/onboarding', description: '线上入职办理', shortcuts: ['3步完成'] },
+          { name: '在线离职', href: '/ssc/self-service/offboarding', description: '线上离职办理', shortcuts: ['3步完成'] },
+          { name: '证明生成', href: '/ssc/self-service/certificates', description: '一键生成证明', shortcuts: ['一键生成'] },
+          { name: '信息变更', href: '/ssc/self-service/info-change', description: '个人信息变更', shortcuts: ['快速提交'] },
+        ],
+      },
+      {
+        name: '智能薪酬核算',
+        href: '/ssc/smart-payroll',
+        icon: CreditCard,
+        description: '个税自动计算、工资条加密发放',
+        badge: { text: 'NEW', color: 'from-blue-600 to-cyan-600' },
+        subItems: [
+          { name: '个税计算', href: '/ssc/smart-payroll/tax-calc', description: '自动计算个税' },
+          { name: '工资条', href: '/ssc/smart-payroll/payslip', description: '加密工资条查看' },
+          { name: '社保明细', href: '/ssc/smart-payroll/social-insurance', description: '社保缴纳明细' },
+          { name: '公积金明细', href: '/ssc/smart-payroll/housing-fund', description: '公积金缴纳明细' },
+        ],
+      },
+      {
+        name: '考勤假期管理',
+        href: '/ssc/attendance',
+        icon: Clock,
+        description: '排班优化、假期余额预警',
+        badge: { text: 'NEW', color: 'from-blue-600 to-cyan-600' },
+        subItems: [
+          { name: '排班优化', href: '/ssc/attendance/scheduling', description: '智能排班推荐' },
+          { name: '假期余额', href: '/ssc/attendance/balance', description: '假期余额查看', badge: { text: '预警', color: 'from-orange-600 to-red-600' } },
+          { name: '考勤打卡', href: '/ssc/attendance/clock-in', description: '在线打卡' },
+          { name: '请假申请', href: '/ssc/attendance/leave', description: '在线请假', shortcuts: ['3步完成'] },
+          { name: '加班申请', href: '/ssc/attendance/overtime', description: '在线加班申请', shortcuts: ['3步完成'] },
+        ],
+      },
+      {
+        name: '全员满意度调研',
+        href: '/ssc/satisfaction',
+        icon: MessageSquare,
+        description: '自动生成分析报告',
+        badge: { text: 'NEW', color: 'from-blue-600 to-cyan-600' },
+        subItems: [
+          { name: '发起调研', href: '/ssc/satisfaction/create', description: '创建满意度调研' },
+          { name: '调研报告', href: '/ssc/satisfaction/report', description: '自动生成分析报告' },
+          { name: '历史调研', href: '/ssc/satisfaction/history', description: '历史调研记录' },
+        ],
+      },
       {
         name: '组织人事',
         href: '/employees',
