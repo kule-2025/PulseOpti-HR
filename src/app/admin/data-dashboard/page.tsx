@@ -1,9 +1,13 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Users,
   TrendingUp,
@@ -19,6 +23,14 @@ import {
   BarChart3,
   PieChart,
   LineChart,
+  RefreshCw,
+  Download,
+  Maximize2,
+  Calendar,
+  Activity,
+  Layers,
+  Star,
+  CheckCircle,
 } from 'lucide-react';
 
 interface DashboardMetric {
@@ -136,11 +148,80 @@ const DASHBOARD_DATA = {
     turnoverRate: '3.2%',
     satisfaction: 4.2,
   },
+
+  // 历史数据（用于同比环比）
+  historicalData: {
+    lastMonth: {
+      totalEmployees: 473,
+      turnoverRate: 3.7,
+      avgSalary: 15000,
+      trainingHours: 2100,
+      revenuePerEmployee: 118000,
+      profitPerEmployee: 32000,
+    },
+    lastYear: {
+      totalEmployees: 420,
+      turnoverRate: 4.1,
+      avgSalary: 13500,
+      trainingHours: 1800,
+      revenuePerEmployee: 105000,
+      profitPerEmployee: 28000,
+    },
+  },
+
+  // 趋势数据（用于折线图）
+  trendData: {
+    recruitment: [12, 18, 15, 22, 25, 20, 28, 30, 25, 35, 28, 32],
+    turnover: [4.5, 3.8, 4.2, 3.5, 3.2, 3.8, 4.0, 3.5, 3.2, 3.0, 3.5, 3.2],
+    performance: [82, 85, 84, 86, 88, 85, 87, 89, 88, 90, 87, 87.5],
+    training: [180, 200, 185, 210, 195, 220, 215, 230, 210, 240, 225, 245],
+  },
+
+  // 优秀员工榜单
+  topEmployees: [
+    { id: 1, name: '张三', department: '技术部', score: 98, avatar: 'ZS' },
+    { id: 2, name: '李四', department: '销售部', score: 96, avatar: 'LS' },
+    { id: 3, name: '王五', department: '产品部', score: 95, avatar: 'WW' },
+    { id: 4, name: '赵六', department: '市场部', score: 94, avatar: 'ZL' },
+    { id: 5, name: '钱七', department: '技术部', score: 93, avatar: 'QQ' },
+  ],
+
+  // 预警信息
+  alerts: [
+    { type: 'warning', message: '销售部离职率达到5.2%，超出警戒线', priority: 'high' },
+    { type: 'info', message: '技术部培训完成率低于80%，需关注', priority: 'medium' },
+    { type: 'success', message: '本月招聘目标超额完成120%', priority: 'low' },
+  ],
 };
 
+// 时间范围选项
+type TimeRange = 'today' | 'week' | 'month' | 'quarter' | 'year';
+
 export default function DataDashboardPage() {
-  const { metrics, recruitment, performance, attendance, departments, salaryDistribution, trainingCompletion, efficiency } = DASHBOARD_DATA;
+  const [timeRange, setTimeRange] = useState<TimeRange>('month');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdateTime, setLastUpdateTime] = useState(new Date());
+
+  const { metrics, recruitment, performance, attendance, departments, salaryDistribution, trainingCompletion, efficiency, historicalData, trendData, topEmployees, alerts } = DASHBOARD_DATA;
   const { trainingHours, totalEmployees } = metrics;
+
+  // 自动刷新功能
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLastUpdateTime(new Date());
+    }, 30000); // 30秒刷新一次
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // 手动刷新
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    // 模拟数据刷新
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setLastUpdateTime(new Date());
+    setIsRefreshing(false);
+  };
 
   // 计算招聘漏斗转化率
   const recruitmentFunnel = useMemo(() => {
@@ -173,11 +254,65 @@ export default function DataDashboardPage() {
             实时监控企业人力资源关键指标
           </p>
         </div>
-        <div className="flex gap-2">
-          <Badge variant="outline" className="text-sm">
-            更新时间：2025-01-16 10:30
-          </Badge>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <Activity className="h-4 w-4" />
+            <span>更新时间：{lastUpdateTime.toLocaleTimeString('zh-CN')}</span>
+          </div>
+          <Select value={timeRange} onValueChange={(value: TimeRange) => setTimeRange(value)}>
+            <SelectTrigger className="w-[120px]">
+              <Calendar className="h-4 w-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">今日</SelectItem>
+              <SelectItem value="week">本周</SelectItem>
+              <SelectItem value="month">本月</SelectItem>
+              <SelectItem value="quarter">本季</SelectItem>
+              <SelectItem value="year">本年</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            title="刷新数据"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button variant="outline" size="icon" title="导出数据">
+            <Download className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="icon" title="全屏显示">
+            <Maximize2 className="h-4 w-4" />
+          </Button>
         </div>
+      </div>
+
+      {/* 预警信息 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {alerts.map((alert, index) => (
+          <Card key={index} className={`border-l-4 ${
+            alert.type === 'warning' ? 'border-l-orange-500' :
+            alert.type === 'info' ? 'border-l-blue-500' :
+            'border-l-green-500'
+          }`}>
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                {alert.type === 'warning' && <Activity className="h-5 w-5 text-orange-500 mt-0.5" />}
+                {alert.type === 'info' && <Layers className="h-5 w-5 text-blue-500 mt-0.5" />}
+                {alert.type === 'success' && <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />}
+                <div className="flex-1">
+                  <p className="text-sm text-gray-900 dark:text-white">{alert.message}</p>
+                  <Badge variant="outline" className="mt-2 text-xs">
+                    {alert.priority === 'high' ? '高优先级' : alert.priority === 'medium' ? '中优先级' : '低优先级'}
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* 关键指标卡片 */}
@@ -186,7 +321,7 @@ export default function DataDashboardPage() {
           const Icon = metric.icon;
 
           return (
-            <Card key={metric.label} className="hover:shadow-lg transition-shadow">
+            <Card key={metric.label} className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardDescription>{metric.label}</CardDescription>
@@ -220,6 +355,10 @@ export default function DataDashboardPage() {
           <CardHeader className="pb-3">
             <CardDescription>人均营收</CardDescription>
             <CardTitle className="text-3xl">{efficiency.revenuePerEmployee}</CardTitle>
+            <div className="flex items-center gap-1 text-sm text-green-600">
+              <ArrowUp className="h-3 w-3" />
+              <span>同比 +5.9%</span>
+            </div>
           </CardHeader>
         </Card>
 
@@ -227,6 +366,10 @@ export default function DataDashboardPage() {
           <CardHeader className="pb-3">
             <CardDescription>人均利润</CardDescription>
             <CardTitle className="text-3xl">{efficiency.profitPerEmployee}</CardTitle>
+            <div className="flex items-center gap-1 text-sm text-green-600">
+              <ArrowUp className="h-3 w-3" />
+              <span>同比 +9.4%</span>
+            </div>
           </CardHeader>
         </Card>
 
@@ -234,6 +377,10 @@ export default function DataDashboardPage() {
           <CardHeader className="pb-3">
             <CardDescription>员工满意度</CardDescription>
             <CardTitle className="text-3xl">{efficiency.satisfaction}/5</CardTitle>
+            <div className="flex items-center gap-1 text-sm text-green-600">
+              <Star className="h-3 w-3 fill-current" />
+              <span>+0.2 较上期</span>
+            </div>
           </CardHeader>
         </Card>
 
@@ -243,12 +390,130 @@ export default function DataDashboardPage() {
             <CardTitle className="text-3xl">
               {`${Math.round((parseInt(trainingHours.value.replace(new RegExp(',', 'g'), '')) / parseInt(String(totalEmployees.value))) * 10) / 10}h`}
             </CardTitle>
+            <div className="flex items-center gap-1 text-sm text-green-600">
+              <ArrowUp className="h-3 w-3" />
+              <span>同比 +18.5%</span>
+            </div>
           </CardHeader>
         </Card>
       </div>
 
-      {/* 招聘漏斗和绩效 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* 趋势分析图表 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>趋势分析</CardTitle>
+          <CardDescription>关键指标年度变化趋势</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="recruitment" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="recruitment">招聘趋势</TabsTrigger>
+              <TabsTrigger value="turnover">离职趋势</TabsTrigger>
+              <TabsTrigger value="performance">绩效趋势</TabsTrigger>
+              <TabsTrigger value="training">培训趋势</TabsTrigger>
+            </TabsList>
+            <TabsContent value="recruitment" className="space-y-4">
+              <div className="flex items-center gap-4 mb-4">
+                <Badge variant="outline" className="text-green-600 border-green-600">
+                  <ArrowUp className="h-3 w-3 mr-1" />
+                  同比 +25.5%
+                </Badge>
+                <Badge variant="outline" className="text-blue-600 border-blue-600">
+                  <ArrowUp className="h-3 w-3 mr-1" />
+                  环比 +8.2%
+                </Badge>
+              </div>
+              <div className="grid grid-cols-12 gap-1 h-32 items-end">
+                {trendData.recruitment.map((value, index) => (
+                  <div key={index} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      className="w-full bg-gradient-to-t from-purple-600 to-pink-500 rounded-t-sm transition-all hover:opacity-80"
+                      style={{ height: `${(value / Math.max(...trendData.recruitment)) * 100}%` }}
+                      title={`${value} 人`}
+                    />
+                    <span className="text-xs text-gray-600 dark:text-gray-400">{index + 1}月</span>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+            <TabsContent value="turnover" className="space-y-4">
+              <div className="flex items-center gap-4 mb-4">
+                <Badge variant="outline" className="text-green-600 border-green-600">
+                  <ArrowDown className="h-3 w-3 mr-1" />
+                  同比 -22.0%
+                </Badge>
+                <Badge variant="outline" className="text-blue-600 border-blue-600">
+                  <ArrowDown className="h-3 w-3 mr-1" />
+                  环比 -8.6%
+                </Badge>
+              </div>
+              <div className="grid grid-cols-12 gap-1 h-32 items-end">
+                {trendData.turnover.map((value, index) => (
+                  <div key={index} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      className="w-full bg-gradient-to-t from-red-600 to-orange-500 rounded-t-sm transition-all hover:opacity-80"
+                      style={{ height: `${(value / Math.max(...trendData.turnover)) * 100}%` }}
+                      title={`${value}%`}
+                    />
+                    <span className="text-xs text-gray-600 dark:text-gray-400">{index + 1}月</span>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+            <TabsContent value="performance" className="space-y-4">
+              <div className="flex items-center gap-4 mb-4">
+                <Badge variant="outline" className="text-green-600 border-green-600">
+                  <ArrowUp className="h-3 w-3 mr-1" />
+                  同比 +6.7%
+                </Badge>
+                <Badge variant="outline" className="text-blue-600 border-blue-600">
+                  <ArrowUp className="h-3 w-3 mr-1" />
+                  环比 +0.6%
+                </Badge>
+              </div>
+              <div className="grid grid-cols-12 gap-1 h-32 items-end">
+                {trendData.performance.map((value, index) => (
+                  <div key={index} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      className="w-full bg-gradient-to-t from-green-600 to-teal-500 rounded-t-sm transition-all hover:opacity-80"
+                      style={{ height: `${(value / 100) * 100}%` }}
+                      title={`${value}分`}
+                    />
+                    <span className="text-xs text-gray-600 dark:text-gray-400">{index + 1}月</span>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+            <TabsContent value="training" className="space-y-4">
+              <div className="flex items-center gap-4 mb-4">
+                <Badge variant="outline" className="text-green-600 border-green-600">
+                  <ArrowUp className="h-3 w-3 mr-1" />
+                  同比 +36.1%
+                </Badge>
+                <Badge variant="outline" className="text-blue-600 border-blue-600">
+                  <ArrowUp className="h-3 w-3 mr-1" />
+                  环比 +8.9%
+                </Badge>
+              </div>
+              <div className="grid grid-cols-12 gap-1 h-32 items-end">
+                {trendData.training.map((value, index) => (
+                  <div key={index} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      className="w-full bg-gradient-to-t from-blue-600 to-cyan-500 rounded-t-sm transition-all hover:opacity-80"
+                      style={{ height: `${(value / Math.max(...trendData.training)) * 100}%` }}
+                      title={`${value}小时`}
+                    />
+                    <span className="text-xs text-gray-600 dark:text-gray-400">{index + 1}月</span>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* 招聘漏斗、绩效概览和优秀员工 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 招聘漏斗 */}
         <Card>
           <CardHeader>
@@ -326,6 +591,43 @@ export default function DataDashboardPage() {
                 <span className="font-medium">{performance.goalCompletion}%</span>
               </div>
               <Progress value={performance.goalCompletion} className="h-3" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 优秀员工榜单 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>优秀员工榜</CardTitle>
+            <CardDescription>本月绩效TOP5</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {topEmployees.map((employee, index) => (
+                <div key={employee.id} className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 text-white font-bold text-sm">
+                    {index + 1}
+                  </div>
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback className="bg-gradient-to-br from-purple-600 to-pink-600 text-white">
+                      {employee.avatar}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900 dark:text-white">{employee.name}</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">{employee.department}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-gray-900 dark:text-white">{employee.score}分</div>
+                    <div className="flex items-center gap-1">
+                      <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                        TOP {index + 1}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
