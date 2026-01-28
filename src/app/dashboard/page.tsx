@@ -1,483 +1,494 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { ResponsiveImage } from '@/components/performance/optimized-image';
-import { 
-  Activity, 
-  Users, 
-  Clock, 
-  TrendingUp, 
-  Briefcase, 
-  GraduationCap, 
-  FileText, 
-  Calendar,
-  Zap,
-  Crown,
-  Sparkles,
-  Award,
+import {
+  LayoutDashboard,
+  Users,
+  Briefcase,
   Target,
   DollarSign,
-  ChevronRight,
+  FileText,
+  Clock,
+  TrendingUp,
+  Calendar,
+  Bell,
+  ArrowRight,
   CheckCircle,
   AlertCircle,
-  ArrowUpRight,
   Star,
-  Shield,
-  Download,
-  Building,
+  Award,
+  Zap,
+  Plus,
 } from 'lucide-react';
-import Link from 'next/link';
 
-interface QuickStat {
-  title: string;
-  value: string | number;
-  change: string;
-  icon: any;
-  color: string;
-}
+// 模拟数据
+const dashboardData = {
+  // 关键指标
+  metrics: {
+    totalEmployees: 485,
+    newEmployeesThisMonth: 12,
+    activeRecruitments: 25,
+    pendingApprovals: 8,
+    avgAttendance: 96.8,
+    trainingCompletion: 87.5,
+  },
 
-interface RecentActivity {
-  id: string;
-  type: string;
-  title: string;
-  time: string;
-  user: string;
-  avatar: string | null;
-}
-
-interface Todo {
-  id: string;
-  title: string;
-  priority: 'high' | 'medium' | 'low';
-  deadline: string;
-}
-
-interface PremiumFeature {
-  title: string;
-  description: string;
-  icon: any;
-  href: string;
-}
-
-interface COEModule {
-  name: string;
-  description: string;
-  icon: any;
-  href: string;
-  color: string;
-}
-
-export default function DashboardOverview() {
-  const [time, setTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const quickStats: QuickStat[] = [
-    { title: '员工总数', value: 156, change: '+12%', icon: Users, color: 'text-blue-600 bg-blue-100 dark:bg-blue-900' },
-    { title: '本月入职', value: 8, change: '+3', icon: Briefcase, color: 'text-green-600 bg-green-100 dark:bg-green-900' },
-    { title: '待办事项', value: 24, change: '-5', icon: FileText, color: 'text-purple-600 bg-purple-100 dark:bg-purple-900' },
-    { title: '培训课程', value: 12, change: '+2', icon: GraduationCap, color: 'text-orange-600 bg-orange-100 dark:bg-orange-900' },
-  ];
-
-  const recentActivities: RecentActivity[] = [
-    { id: '1', type: 'recruit', title: '新候选人申请: 张三 - 高级工程师', time: '5分钟前', user: '张三', avatar: null },
-    { id: '2', type: 'leave', title: '李四提交了请假申请', time: '15分钟前', user: '李四', avatar: null },
-    { id: '3', type: 'review', title: '王五完成了绩效自评', time: '30分钟前', user: '王五', avatar: null },
-    { id: '4', type: 'training', title: '新员工培训课程已创建', time: '1小时前', user: 'HR团队', avatar: null },
-    { id: '5', type: 'salary', title: '3月工资发放完成', time: '2小时前', user: '财务部', avatar: null },
-  ];
-
-  const todos: Todo[] = [
-    { id: '1', title: '审核候选人面试结果', priority: 'high', deadline: '今天' },
-    { id: '2', title: '批准李四的请假申请', priority: 'high', deadline: '今天' },
-    { id: '3', title: '完成季度绩效评估', priority: 'medium', deadline: '本周五' },
-    { id: '4', title: '更新员工培训计划', priority: 'medium', deadline: '下周' },
-    { id: '5', title: '准备月度薪酬报告', priority: 'low', deadline: '月底' },
-  ];
-
-  const priorityColors = {
-    high: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    low: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  };
-
-  const premiumFeatures: PremiumFeature[] = [
+  // 待办事项
+  tasks: [
     {
-      title: '高级权限管理',
-      description: '企业级权限控制，角色继承和动态权限分配，精细化管理',
-      icon: Shield,
-      href: '/dashboard/permissions/advanced',
+      id: '1',
+      title: '审批张三的晋升申请',
+      type: 'approval',
+      priority: 'high',
+      deadline: '2025-01-18',
+      status: 'pending',
     },
     {
-      title: '数据导出',
-      description: '支持Excel、CSV、PDF多种格式导出，自定义字段和日期范围',
-      icon: Download,
-      href: '/dashboard/data-export',
+      id: '2',
+      title: '确认本月工资发放',
+      type: 'task',
+      priority: 'high',
+      deadline: '2025-01-20',
+      status: 'pending',
     },
     {
-      title: '企业协作集成',
-      description: '钉钉、飞书、企业微信等主流企业应用无缝对接',
-      icon: Building,
-      href: '/dashboard/integration/dingtalk',
+      id: '3',
+      title: '完成Q1培训计划制定',
+      type: 'task',
+      priority: 'medium',
+      deadline: '2025-01-25',
+      status: 'pending',
     },
     {
-      title: 'API 开放平台',
-      description: '完整的REST API接口，支持自定义开发和二次集成',
-      icon: Zap,
-      href: '/dashboard/settings/api',
+      id: '4',
+      title: '面试候选人李明',
+      type: 'interview',
+      priority: 'medium',
+      deadline: '2025-01-17',
+      status: 'pending',
+    },
+  ],
+
+  // 最新动态
+  activities: [
+    {
+      id: '1',
+      type: 'hire',
+      message: '新员工王六入职技术部',
+      time: '2小时前',
     },
     {
-      title: '自定义报表',
-      description: '拖拽式报表设计器，创建符合企业需求的专属报表',
+      id: '2',
+      type: 'training',
+      message: '《领导力发展》培训课程完成率85%',
+      time: '4小时前',
+    },
+    {
+      id: '3',
+      type: 'performance',
+      message: '12月绩效考核数据已生成',
+      time: '昨天',
+    },
+    {
+      id: '4',
+      type: 'compliance',
+      message: '3份劳动合同即将到期',
+      time: '昨天',
+    },
+  ],
+
+  // 快捷入口
+  shortcuts: [
+    {
+      icon: Users,
+      label: '员工管理',
+      href: '/coe/employees',
+      color: 'from-blue-500 to-cyan-600',
+    },
+    {
+      icon: Briefcase,
+      label: '招聘管理',
+      href: '/recruitment',
+      color: 'from-purple-500 to-pink-600',
+    },
+    {
+      icon: Target,
+      label: '绩效管理',
+      href: '/performance',
+      color: 'from-green-500 to-teal-600',
+    },
+    {
+      icon: DollarSign,
+      label: '薪酬管理',
+      href: '/compensation',
+      color: 'from-orange-500 to-red-600',
+    },
+    {
       icon: FileText,
-      href: '/dashboard/reports/custom',
+      label: '考勤管理',
+      href: '/attendance',
+      color: 'from-indigo-500 to-blue-600',
     },
     {
-      title: '数据大屏',
-      description: '实时数据可视化大屏，关键指标一目了然',
-      icon: TrendingUp,
-      href: '/dashboard/analytics/dashboard',
+      icon: Calendar,
+      label: '培训管理',
+      href: '/training',
+      color: 'from-pink-500 to-rose-600',
     },
-  ];
+  ],
 
-  const coeModules: COEModule[] = [
-    { name: '绩效管理', description: '目标设定、绩效评估、结果分析', icon: Target, href: '/performance', color: 'from-purple-500 to-pink-500' },
-    { name: '薪酬管理', description: '工资核算、薪酬结构、社保公积金', icon: DollarSign, href: '/compensation', color: 'from-green-500 to-emerald-500' },
-    { name: '培训管理', description: '培训计划、课程管理、学习记录', icon: GraduationCap, href: '/training', color: 'from-blue-500 to-cyan-500' },
-    { name: '合规管理', description: '劳动合同、试用期管理、风险控制', icon: FileText, href: '/compliance', color: 'from-orange-500 to-red-500' },
-  ];
+  // 图表数据
+  charts: {
+    monthlyHires: [
+      { month: '8月', value: 8 },
+      { month: '9月', value: 12 },
+      { month: '10月', value: 15 },
+      { month: '11月', value: 10 },
+      { month: '12月', value: 18 },
+      { month: '1月', value: 12 },
+    ],
+    departmentDistribution: [
+      { name: '技术部', value: 120 },
+      { name: '销售部', value: 85 },
+      { name: '市场部', value: 65 },
+      { name: '产品部', value: 75 },
+      { name: '人力资源部', value: 35 },
+      { name: '财务部', value: 30 },
+      { name: '行政部', value: 25 },
+      { name: '运营部', value: 50 },
+    ],
+  },
+};
 
-  const hrbpModules: COEModule[] = [
-    { name: '人效监测', description: '实时监测、归因分析、预测干预', icon: TrendingUp, href: '/efficiency', color: 'from-blue-500 to-indigo-500' },
-    { name: '招聘管理', description: '岗位发布、简历筛选、面试安排', icon: Briefcase, href: '/recruitment', color: 'from-cyan-500 to-blue-500' },
-    { name: '人才盘点', description: '人才库、九宫格、人才地图', icon: Award, href: '/talent', color: 'from-purple-500 to-violet-500' },
-    { name: 'AI助手', description: '岗位画像、人才推荐、离职预测', icon: Sparkles, href: '/ai-assistant', color: 'from-pink-500 to-rose-500' },
-  ];
+const TASK_TYPE_CONFIG = {
+  approval: { label: '审批', icon: CheckCircle, color: 'bg-blue-100 text-blue-600' },
+  task: { label: '任务', icon: FileText, color: 'bg-purple-100 text-purple-600' },
+  interview: { label: '面试', icon: Users, color: 'bg-green-100 text-green-600' },
+};
 
-  const sscModules: COEModule[] = [
-    { name: '组织人事', description: '员工档案、组织架构、职位体系', icon: Users, href: '/employees', color: 'from-green-500 to-teal-500' },
-    { name: '考勤管理', description: '打卡记录、排班管理、请假审批', icon: Clock, href: '/attendance', color: 'from-blue-500 to-sky-500' },
-    { name: '员工自助', description: '个人信息、请假申请、报销管理', icon: Activity, href: '/employee-portal', color: 'from-indigo-500 to-purple-500' },
-    { name: '积分管理', description: '积分系统、规则配置、兑换商城', icon: Star, href: '/points', color: 'from-yellow-500 to-orange-500' },
-  ];
+const PRIORITY_CONFIG = {
+  high: { label: '高', color: 'bg-red-100 text-red-600' },
+  medium: { label: '中', color: 'bg-yellow-100 text-yellow-600' },
+  low: { label: '低', color: 'bg-gray-100 text-gray-600' },
+};
+
+const ACTIVITY_TYPE_CONFIG = {
+  hire: { label: '入职', icon: Users, color: 'bg-green-100 text-green-600' },
+  training: { label: '培训', icon: Calendar, color: 'bg-blue-100 text-blue-600' },
+  performance: { label: '绩效', icon: Target, color: 'bg-purple-100 text-purple-600' },
+  compliance: { label: '合规', icon: AlertCircle, color: 'bg-orange-100 text-orange-600' },
+};
+
+export default function DashboardPage() {
+  const [showAllTasks, setShowAllTasks] = useState(false);
+
+  // 显示的待办事项
+  const displayTasks = showAllTasks ? dashboardData.tasks : dashboardData.tasks.slice(0, 3);
 
   return (
     <div className="space-y-6">
-      {/* 欢迎头部 */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* 页面标题 */}
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             工作台
-            <Badge className="ml-2 bg-gradient-to-r from-blue-600 to-purple-600">企业版</Badge>
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
-            {time.toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            {' · '}
-            {time.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            欢迎回来，张经理！今天是{new Date().toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Activity size={16} className="mr-2" />
-            刷新数据
+          <Button variant="outline">
+            <Bell className="h-4 w-4 mr-2" />
+            消息通知
+            <Badge className="ml-2 bg-red-600">5</Badge>
           </Button>
-          <Button size="sm" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-            <Crown size={16} className="mr-2" />
-            升级企业版
+          <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+            <Plus className="h-4 w-4 mr-2" />
+            快速创建
           </Button>
         </div>
       </div>
 
-      {/* 升级提示 - 更显眼的横幅 */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-red-600 via-pink-600 to-orange-500 shadow-2xl">
-        <div className="absolute inset-0 bg-black/10" />
-        <div className="relative p-6 md:p-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <div className="shrink-0 p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-                <Crown className="h-8 w-8 text-white" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-2">
-                  解锁企业级高级功能
-                </h2>
-                <p className="text-white/90 text-base">
-                  包含<strong className="text-white font-semibold">高级权限管理</strong>、<strong className="text-white font-semibold">数据导出</strong>、<strong className="text-white font-semibold">企业协作集成</strong>、<strong className="text-white font-semibold">API开放平台</strong>等全部功能
-                </p>
+      {/* 关键指标 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardDescription>员工总数</CardDescription>
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white">
+                <Users className="h-5 w-5" />
               </div>
             </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="text-right">
-                <div className="text-white/70 text-sm">限时优惠</div>
-                <div className="text-white font-bold text-2xl">¥999/月</div>
-              </div>
-              <Button className="bg-white text-red-600 hover:bg-white/90 font-semibold px-6 py-6 shadow-xl" asChild>
-                <Link href="/orders/subscription">
-                  立即升级
-                  <ArrowUpRight className="h-5 w-5 ml-2" />
-                </Link>
-              </Button>
+            <CardTitle className="text-3xl">{dashboardData.metrics.totalEmployees}</CardTitle>
+            <div className="flex items-center gap-2 text-sm">
+              <Badge className="bg-green-100 text-green-600">
+                +{dashboardData.metrics.newEmployeesThisMonth}
+              </Badge>
+              <span className="text-gray-600 dark:text-gray-400">本月新增</span>
             </div>
-          </div>
-        </div>
+          </CardHeader>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardDescription>招聘中</CardDescription>
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white">
+                <Briefcase className="h-5 w-5" />
+              </div>
+            </div>
+            <CardTitle className="text-3xl">{dashboardData.metrics.activeRecruitments}</CardTitle>
+            <div className="flex items-center gap-2 text-sm">
+              <Badge className="bg-blue-100 text-blue-600">进行中</Badge>
+              <span className="text-gray-600 dark:text-gray-400">岗位数量</span>
+            </div>
+          </CardHeader>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardDescription>待审批</CardDescription>
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white">
+                <CheckCircle className="h-5 w-5" />
+              </div>
+            </div>
+            <CardTitle className="text-3xl">{dashboardData.metrics.pendingApprovals}</CardTitle>
+            <div className="flex items-center gap-2 text-sm">
+              <Badge className="bg-red-100 text-red-600">紧急</Badge>
+              <span className="text-gray-600 dark:text-gray-400">需处理</span>
+            </div>
+          </CardHeader>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardDescription>出勤率</CardDescription>
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center text-white">
+                <Clock className="h-5 w-5" />
+              </div>
+            </div>
+            <CardTitle className="text-3xl">{dashboardData.metrics.avgAttendance}%</CardTitle>
+            <div className="flex items-center gap-2 text-sm">
+              <TrendingUp className="h-4 w-4 text-green-600" />
+              <span className="text-green-600">↑ 2.3%</span>
+              <span className="text-gray-600 dark:text-gray-400">较上月</span>
+            </div>
+          </CardHeader>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardDescription>培训完成率</CardDescription>
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white">
+                <Calendar className="h-5 w-5" />
+              </div>
+            </div>
+            <CardTitle className="text-3xl">{dashboardData.metrics.trainingCompletion}%</CardTitle>
+            <div className="flex items-center gap-2 text-sm">
+              <Badge className="bg-purple-100 text-purple-600">Q4</Badge>
+              <span className="text-gray-600 dark:text-gray-400">季度</span>
+            </div>
+          </CardHeader>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardDescription>人效指数</CardDescription>
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white">
+                <Zap className="h-5 w-5" />
+              </div>
+            </div>
+            <CardTitle className="text-3xl">95.8</CardTitle>
+            <div className="flex items-center gap-2 text-sm">
+              <TrendingUp className="h-4 w-4 text-green-600" />
+              <span className="text-green-600">↑ 5.2%</span>
+              <span className="text-gray-600 dark:text-gray-400">较上月</span>
+            </div>
+          </CardHeader>
+        </Card>
       </div>
 
-      {/* 快速统计 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {quickStats.map((stat, index) => (
-          <Card key={index} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">{stat.title}</CardTitle>
-              <div className={`p-2 rounded-lg ${stat.color}`}>
-                <stat.icon className="h-4 w-4" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 左侧 - 待办事项和最新动态 */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* 待办事项 */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>待办事项</CardTitle>
+                <Badge className="bg-red-600 text-white">
+                  {dashboardData.tasks.filter(t => t.status === 'pending').length}
+                </Badge>
               </div>
+              <CardDescription>
+                您有 {dashboardData.tasks.filter(t => t.status === 'pending').length} 项待处理任务
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                <TrendingUp size={12} className="inline mr-1" />
-                {stat.change}
-              </p>
+              <div className="space-y-3">
+                {displayTasks.map((task) => {
+                  const typeConfig = TASK_TYPE_CONFIG[task.type as keyof typeof TASK_TYPE_CONFIG];
+                  const priorityConfig = PRIORITY_CONFIG[task.priority as keyof typeof PRIORITY_CONFIG];
+                  const TypeIcon = typeConfig.icon;
+
+                  return (
+                    <Card key={task.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className={`w-10 h-10 rounded-lg ${typeConfig.color} flex items-center justify-center shrink-0`}>
+                            <TypeIcon className="h-5 w-5" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-medium text-gray-900 dark:text-white">
+                                {task.title}
+                              </h4>
+                              <Badge variant="outline" className={priorityConfig.color}>
+                                {priorityConfig.label}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3.5 w-3.5" />
+                                <span>{task.deadline}</span>
+                              </div>
+                              <Badge variant="outline" className="text-xs">
+                                {typeConfig.label}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Button size="sm" variant="outline">
+                            处理
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+              {dashboardData.tasks.length > 3 && (
+                <div className="mt-4 text-center">
+                  <Button variant="ghost" onClick={() => setShowAllTasks(!showAllTasks)}>
+                    {showAllTasks ? '收起' : '查看全部'}
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
-        ))}
-      </div>
 
-      {/* 商业变现功能入口 */}
-      <Card className="border-2 border-gradient-to-r from-red-500 to-pink-500 bg-gradient-to-br from-red-50 via-pink-50 to-orange-50 dark:from-red-950/30 dark:via-pink-950/30 dark:to-orange-950/30 shadow-lg">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <div className="p-2 bg-gradient-to-r from-red-500 to-pink-500 rounded-lg">
-                  <Crown className="h-5 w-5 text-white" />
-                </div>
-                <span className="bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent font-bold">
-                  企业版高级功能
-                </span>
-              </CardTitle>
-              <CardDescription className="mt-2 text-base">
-                解锁全部高级功能，降本增效，助力业绩增长
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-4 py-1.5 text-sm font-semibold shadow-md">
-                PRO 版本
-              </Badge>
-              <Button className="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 shadow-md" asChild>
-                <Link href="/orders/subscription">
-                  立即升级
-                  <ChevronRight className="h-4 w-4 ml-2" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {premiumFeatures.map((feature, index) => (
-              <Link key={index} href={feature.href}>
-                <div className="p-5 rounded-xl border-2 border-red-200 bg-white hover:border-red-400 hover:shadow-xl transition-all cursor-pointer dark:bg-gray-900 dark:border-red-900 dark:hover:border-red-700 group">
-                  <div className="flex items-start gap-3">
-                    <div className="p-3 rounded-xl bg-gradient-to-br from-red-100 to-pink-100 dark:from-red-900/40 dark:to-pink-900/40 group-hover:scale-110 transition-transform">
-                      <feature.icon className="h-6 w-6 text-red-600 dark:text-red-400" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-gray-900 dark:text-white text-base">{feature.title}</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 leading-relaxed">{feature.description}</div>
-                      <div className="mt-3 flex items-center text-red-600 dark:text-red-400 text-sm font-medium">
-                        了解更多
-                        <ArrowUpRight className="h-4 w-4 ml-1 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+          {/* 最新动态 */}
+          <Card>
+            <CardHeader>
+              <CardTitle>最新动态</CardTitle>
+              <CardDescription>实时了解企业运营状态</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {dashboardData.activities.map((activity) => {
+                  const typeConfig = ACTIVITY_TYPE_CONFIG[activity.type as keyof typeof ACTIVITY_TYPE_CONFIG];
+                  const ActivityIcon = typeConfig.icon;
 
-      {/* COE/HRBP/SSC 三支柱功能入口 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* COE */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Award className="h-5 w-5 text-purple-600" />
-              COE 专家中心
-            </CardTitle>
-            <CardDescription>专业功能设计、政策制定、专业支持</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {coeModules.map((module, index) => (
-                <Link key={index} href={module.href}>
-                  <div className="p-3 rounded-lg border hover:shadow-md transition-all cursor-pointer dark:border-gray-700">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg bg-gradient-to-br ${module.color}`}>
-                        <module.icon className="h-4 w-4 text-white" />
+                  return (
+                    <div key={activity.id} className="flex items-start gap-3">
+                      <div className={`w-10 h-10 rounded-lg ${typeConfig.color} flex items-center justify-center shrink-0`}>
+                        <ActivityIcon className="h-5 w-5" />
                       </div>
                       <div className="flex-1">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">{module.name}</div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400">{module.description}</div>
+                        <p className="text-sm text-gray-900 dark:text-white">
+                          {activity.message}
+                        </p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                          {activity.time}
+                        </p>
                       </div>
-                      <ChevronRight className="h-4 w-4 text-gray-400" />
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* HRBP */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-blue-600" />
-              HRBP 业务伙伴
-            </CardTitle>
-            <CardDescription>业务部门的人力资源业务支持</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {hrbpModules.map((module, index) => (
-                <Link key={index} href={module.href}>
-                  <div className="p-3 rounded-lg border hover:shadow-md transition-all cursor-pointer dark:border-gray-700">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg bg-gradient-to-br ${module.color}`}>
-                        <module.icon className="h-4 w-4 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">{module.name}</div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400">{module.description}</div>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-gray-400" />
+        {/* 右侧 - 快捷入口和图表 */}
+        <div className="space-y-6">
+          {/* 快捷入口 */}
+          <Card>
+            <CardHeader>
+              <CardTitle>快捷入口</CardTitle>
+              <CardDescription>常用功能快速访问</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3">
+                {dashboardData.shortcuts.map((shortcut) => {
+                  const Icon = shortcut.icon;
+
+                  return (
+                    <Button
+                      key={shortcut.label}
+                      variant="outline"
+                      className={`h-auto flex-col py-6 gap-2 bg-gradient-to-br ${shortcut.color} text-white border-0 hover:opacity-90`}
+                    >
+                      <Icon className="h-6 w-6" />
+                      <span className="text-sm font-medium">{shortcut.label}</span>
+                    </Button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 入职趋势 */}
+          <Card>
+            <CardHeader>
+              <CardTitle>入职趋势</CardTitle>
+              <CardDescription>近6个月新增员工数量</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {dashboardData.charts.monthlyHires.map((item) => (
+                  <div key={item.month}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-600 dark:text-gray-400">{item.month}</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{item.value}</span>
                     </div>
+                    <Progress value={(item.value / 20) * 100} className="h-2" />
                   </div>
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* SSC */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-green-600" />
-              SSC 共享中心
-            </CardTitle>
-            <CardDescription>事务性工作、员工服务</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {sscModules.map((module, index) => (
-                <Link key={index} href={module.href}>
-                  <div className="p-3 rounded-lg border hover:shadow-md transition-all cursor-pointer dark:border-gray-700">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg bg-gradient-to-br ${module.color}`}>
-                        <module.icon className="h-4 w-4 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">{module.name}</div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400">{module.description}</div>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-gray-400" />
+          {/* 部门分布 */}
+          <Card>
+            <CardHeader>
+              <CardTitle>部门分布</CardTitle>
+              <CardDescription>各部门员工数量</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {dashboardData.charts.departmentDistribution.map((item) => (
+                  <div key={item.name}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-600 dark:text-gray-400">{item.name}</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{item.value}</span>
                     </div>
+                    <Progress value={(item.value / 120) * 100} className="h-2" />
                   </div>
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* 最近动态和待办事项 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>最近动态</CardTitle>
-              <Button variant="ghost" size="sm">
-                查看全部
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
-                  <div className="shrink-0">
-                    {activity.avatar ? (
-                      <ResponsiveImage src={activity.avatar} alt={activity.user} className="w-10 h-10 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-medium text-sm">
-                        {activity.user.charAt(0)}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900 dark:text-white">{activity.title}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activity.time}</p>
-                  </div>
-                  <Badge variant="outline" className="shrink-0">
-                    {activity.type === 'recruit' && '招聘'}
-                    {activity.type === 'leave' && '考勤'}
-                    {activity.type === 'review' && '绩效'}
-                    {activity.type === 'training' && '培训'}
-                    {activity.type === 'salary' && '薪酬'}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>待办事项</CardTitle>
-              <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                {todos.length} 项
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {todos.map((todo) => (
-                <div key={todo.id} className="p-3 rounded-lg border dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-colors cursor-pointer">
-                  <div className="flex items-start justify-between gap-2">
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">{todo.title}</h4>
-                    <Badge className={priorityColors[todo.priority]} variant="secondary">
-                      {todo.priority === 'high' && '高'}
-                      {todo.priority === 'medium' && '中'}
-                      {todo.priority === 'low' && '低'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-1 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    <Calendar size={12} />
-                    <span>{todo.deadline}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Button variant="ghost" className="w-full mt-4 text-sm">
-              查看全部待办事项
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
