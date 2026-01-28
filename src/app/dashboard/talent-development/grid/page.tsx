@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -13,335 +12,248 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
-  Grid3x3,
-  Search,
-  User,
-  Building,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Grid,
+  Users,
   TrendingUp,
-  Star,
+  Award,
+  Target,
   AlertCircle,
-  Plus,
-  RefreshCw,
+  CheckCircle,
+  Filter,
   Download,
-  Calendar,
+  Search,
+  ArrowUp,
+  ArrowDown,
+  ChevronRight,
+  Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-type GridBox =
-  | 'star' // 高潜高绩效 - 明星员工
-  | 'expert' // 高绩效低潜 - 业务专家
-  | 'potential' // 高潜中绩效 - 潜力人才
-  | 'contributor' // 中绩效中潜 - 核心贡献者
-  | 'solid' // 中绩效低潜 - 稳定骨干
-  | 'inconsistent' // 低绩效高潜 - 不稳定表现
-  | 'future' // 中潜低绩效 - 未来可期
-  | 'problem'; // 低绩效低潜 - 需要改进
-
-interface TalentGridData {
+interface Employee {
   id: string;
-  employeeId: string;
-  employeeName: string;
+  name: string;
   department: string;
   position: string;
-  performanceScore: number; // 绩效得分 (0-100)
-  potentialScore: number; // 潜力得分 (0-100)
-  gridBox: GridBox;
-  tenure: number; // 在职年限
-  lastAssessmentDate: string;
-  keyStrengths: string[];
-  developmentNeeds: string[];
-  riskLevel: 'low' | 'medium' | 'high';
+  performance: number;
+  potential: number;
+  quadrant: string;
+  status: 'star' | 'high' | 'core' | 'solid' | 'question' | 'low' | 'high-potential';
+  avatar?: string;
+  skills: string[];
+  recommendations: string[];
 }
 
-export default function NineBoxGridPage() {
-  const [gridData, setGridData] = useState<TalentGridData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
-  const [showRefreshDialog, setShowRefreshDialog] = useState(false);
+const quadrants = [
+  {
+    id: 'top-right',
+    name: '明星人才',
+    color: 'from-green-500 to-emerald-500',
+    bgColor: 'bg-green-50 dark:bg-green-950/30',
+    borderColor: 'border-green-200 dark:border-green-900',
+    description: '高绩效 + 高潜力',
+    icon: Award,
+    count: 8,
+  },
+  {
+    id: 'top-center',
+    name: '核心人才',
+    color: 'from-blue-500 to-cyan-500',
+    bgColor: 'bg-blue-50 dark:bg-blue-950/30',
+    borderColor: 'border-blue-200 dark:border-blue-900',
+    description: '高绩效 + 中潜力',
+    icon: Star,
+    count: 15,
+  },
+  {
+    id: 'top-left',
+    name: '待观察',
+    color: 'from-yellow-500 to-orange-500',
+    bgColor: 'bg-yellow-50 dark:bg-yellow-950/30',
+    borderColor: 'border-yellow-200 dark:border-yellow-900',
+    description: '高绩效 + 低潜力',
+    icon: AlertCircle,
+    count: 6,
+  },
+  {
+    id: 'middle-right',
+    name: '高潜人才',
+    color: 'from-purple-500 to-violet-500',
+    bgColor: 'bg-purple-50 dark:bg-purple-950/30',
+    borderColor: 'border-purple-200 dark:border-purple-900',
+    description: '中绩效 + 高潜力',
+    icon: TrendingUp,
+    count: 12,
+  },
+  {
+    id: 'middle-center',
+    name: '中坚力量',
+    color: 'from-gray-500 to-slate-500',
+    bgColor: 'bg-gray-50 dark:bg-gray-900',
+    borderColor: 'border-gray-200 dark:border-gray-700',
+    description: '中绩效 + 中潜力',
+    icon: Users,
+    count: 45,
+  },
+  {
+    id: 'middle-left',
+    name: '踏实肯干',
+    color: 'from-teal-500 to-cyan-500',
+    bgColor: 'bg-teal-50 dark:bg-teal-950/30',
+    borderColor: 'border-teal-200 dark:border-teal-900',
+    description: '中绩效 + 低潜力',
+    icon: CheckCircle,
+    count: 18,
+  },
+  {
+    id: 'bottom-right',
+    name: '潜力新人',
+    color: 'from-pink-500 to-rose-500',
+    bgColor: 'bg-pink-50 dark:bg-pink-950/30',
+    borderColor: 'border-pink-200 dark:border-pink-900',
+    description: '低绩效 + 高潜力',
+    icon: Sparkles,
+    count: 10,
+  },
+  {
+    id: 'bottom-center',
+    name: '问题员工',
+    color: 'from-orange-500 to-red-500',
+    bgColor: 'bg-orange-50 dark:bg-orange-950/30',
+    borderColor: 'border-orange-200 dark:border-orange-900',
+    description: '低绩效 + 中潜力',
+    icon: AlertTriangle,
+    count: 8,
+  },
+  {
+    id: 'bottom-left',
+    name: '待淘汰',
+    color: 'from-red-500 to-red-600',
+    bgColor: 'bg-red-50 dark:bg-red-950/30',
+    borderColor: 'border-red-200 dark:border-red-900',
+    description: '低绩效 + 低潜力',
+    icon: XCircle,
+    count: 5,
+  },
+];
 
-  const boxConfig = [
-    {
-      id: 'star',
-      label: '明星员工',
-      description: '高绩效高潜力',
-      color: 'bg-blue-500',
-      textColor: 'text-blue-600',
-      bgColor: 'bg-blue-50 dark:bg-blue-950',
-      borderColor: 'border-blue-200 dark:border-blue-800',
-      icon: Star,
-      xRange: [66, 100],
-      yRange: [66, 100],
-      action: '重点培养',
-    },
-    {
-      id: 'potential',
-      label: '潜力人才',
-      description: '中绩效高潜力',
-      color: 'bg-purple-500',
-      textColor: 'text-purple-600',
-      bgColor: 'bg-purple-50 dark:bg-purple-950',
-      borderColor: 'border-purple-200 dark:border-purple-800',
-      icon: TrendingUp,
-      xRange: [33, 65],
-      yRange: [66, 100],
-      action: '强化绩效',
-    },
-    {
-      id: 'expert',
-      label: '核心骨干',
-      description: '高绩效中潜力',
-      color: 'bg-green-500',
-      textColor: 'text-green-600',
-      bgColor: 'bg-green-50 dark:bg-green-950',
-      borderColor: 'border-green-200 dark:border-green-800',
-      icon: TrendingUp,
-      xRange: [66, 100],
-      yRange: [33, 65],
-      action: '深度培养',
-    },
-    {
-      id: 'solid',
-      label: '稳定员工',
-      description: '中绩效中潜力',
-      color: 'bg-yellow-500',
-      textColor: 'text-yellow-600',
-      bgColor: 'bg-yellow-50 dark:bg-yellow-950',
-      borderColor: 'border-yellow-200 dark:border-yellow-800',
-      icon: User,
-      xRange: [33, 65],
-      yRange: [33, 65],
-      action: '稳步发展',
-    },
-    {
-      id: 'inconsistent',
-      label: '待提升',
-      description: '低绩效高潜力',
-      color: 'bg-orange-500',
-      textColor: 'text-orange-600',
-      bgColor: 'bg-orange-50 dark:bg-orange-950',
-      borderColor: 'border-orange-200 dark:border-orange-800',
-      icon: AlertCircle,
-      xRange: [0, 32],
-      yRange: [66, 100],
-      action: '绩效辅导',
-    },
-    {
-      id: 'contributor',
-      label: '贡献者',
-      description: '高绩效低潜力',
-      color: 'bg-teal-500',
-      textColor: 'text-teal-600',
-      bgColor: 'bg-teal-50 dark:bg-teal-950',
-      borderColor: 'border-teal-200 dark:border-teal-800',
-      icon: User,
-      xRange: [66, 100],
-      yRange: [0, 32],
-      action: '专业深耕',
-    },
-    {
-      id: 'future',
-      label: '新人',
-      description: '中绩效低潜力',
-      color: 'bg-gray-500',
-      textColor: 'text-gray-600',
-      bgColor: 'bg-gray-50 dark:bg-gray-950',
-      borderColor: 'border-gray-200 dark:border-gray-800',
-      icon: User,
-      xRange: [33, 65],
-      yRange: [0, 32],
-      action: '观察培养',
-    },
-    {
-      id: 'problem',
-      label: '问题员工',
-      description: '低绩效低潜力',
-      color: 'bg-red-500',
-      textColor: 'text-red-600',
-      bgColor: 'bg-red-50 dark:bg-red-950',
-      borderColor: 'border-red-200 dark:border-red-800',
-      icon: AlertCircle,
-      xRange: [0, 32],
-      yRange: [0, 32],
-      action: '制定计划',
-    },
-  ];
+const actions = {
+  star: ['加速培养', '考虑晋升', '增加挑战', '导师辅导'],
+  high: ['保持激励', '发展辅导', '技能提升'],
+  core: ['关键保留', '绩效提升', '经验分享'],
+  solid: ['保持稳定', '技能培训'],
+  question: ['深入面谈', '重新定位', '绩效改善'],
+  low: ['绩效改进', 'PIP计划', '考虑淘汰'],
+};
 
-  useEffect(() => {
-    // 模拟获取九宫格数据
-    setTimeout(() => {
-      setGridData([
-        {
-          id: '1',
-          employeeId: 'E001',
-          employeeName: '张三',
-          department: '技术部',
-          position: '高级前端工程师',
-          performanceScore: 88,
-          potentialScore: 92,
-          gridBox: 'star',
-          tenure: 3,
-          lastAssessmentDate: '2024-01-15',
-          keyStrengths: ['技术能力强', '学习能力强', '团队协作好'],
-          developmentNeeds: ['项目管理能力'],
-          riskLevel: 'low',
-        },
-        {
-          id: '2',
-          employeeId: 'E002',
-          employeeName: '李四',
-          department: '产品部',
-          position: '产品经理',
-          performanceScore: 85,
-          potentialScore: 90,
-          gridBox: 'star',
-          tenure: 2,
-          lastAssessmentDate: '2024-01-20',
-          keyStrengths: ['产品思维清晰', '沟通能力强'],
-          developmentNeeds: ['数据分析能力'],
-          riskLevel: 'low',
-        },
-        {
-          id: '3',
-          employeeId: 'E003',
-          employeeName: '王五',
-          department: '销售部',
-          position: '销售代表',
-          performanceScore: 78,
-          potentialScore: 88,
-          gridBox: 'potential',
-          tenure: 1.5,
-          lastAssessmentDate: '2024-01-25',
-          keyStrengths: ['客户关系维护', '学习能力强'],
-          developmentNeeds: ['销售技巧', '行业知识'],
-          riskLevel: 'medium',
-        },
-        {
-          id: '4',
-          employeeId: 'E004',
-          employeeName: '赵六',
-          department: '技术部',
-          position: '后端工程师',
-          performanceScore: 92,
-          potentialScore: 58,
-          gridBox: 'expert',
-          tenure: 4,
-          lastAssessmentDate: '2024-01-18',
-          keyStrengths: ['技术专业性强', '问题解决能力'],
-          developmentNeeds: ['技术广度'],
-          riskLevel: 'low',
-        },
-        {
-          id: '5',
-          employeeId: 'E005',
-          employeeName: '孙七',
-          department: '运营部',
-          position: '运营专员',
-          performanceScore: 72,
-          potentialScore: 75,
-          gridBox: 'solid',
-          tenure: 2,
-          lastAssessmentDate: '2024-01-22',
-          keyStrengths: ['执行力强', '工作稳定'],
-          developmentNeeds: ['创新思维', '专业深度'],
-          riskLevel: 'medium',
-        },
-        {
-          id: '6',
-          employeeId: 'E006',
-          employeeName: '周八',
-          department: '市场部',
-          position: '市场专员',
-          performanceScore: 55,
-          potentialScore: 85,
-          gridBox: 'inconsistent',
-          tenure: 0.5,
-          lastAssessmentDate: '2024-01-28',
-          keyStrengths: ['创意能力强', '学习能力强'],
-          developmentNeeds: ['执行能力', '沟通技巧'],
-          riskLevel: 'high',
-        },
-        {
-          id: '7',
-          employeeId: 'E007',
-          employeeName: '吴九',
-          department: '技术部',
-          position: '测试工程师',
-          performanceScore: 90,
-          potentialScore: 35,
-          gridBox: 'contributor',
-          tenure: 5,
-          lastAssessmentDate: '2024-01-12',
-          keyStrengths: ['测试经验丰富', '质量意识强'],
-          developmentNeeds: [],
-          riskLevel: 'medium',
-        },
-        {
-          id: '8',
-          employeeId: 'E008',
-          employeeName: '郑十',
-          department: '行政部',
-          position: '行政专员',
-          performanceScore: 68,
-          potentialScore: 30,
-          gridBox: 'future',
-          tenure: 0.8,
-          lastAssessmentDate: '2024-01-30',
-          keyStrengths: ['工作认真'],
-          developmentNeeds: ['业务理解', '服务意识'],
-          riskLevel: 'low',
-        },
-        {
-          id: '9',
-          employeeId: 'E009',
-          employeeName: '钱十一',
-          department: '销售部',
-          position: '销售代表',
-          performanceScore: 35,
-          potentialScore: 25,
-          gridBox: 'problem',
-          tenure: 1,
-          lastAssessmentDate: '2024-01-25',
-          keyStrengths: [],
-          developmentNeeds: ['销售技能', '工作态度'],
-          riskLevel: 'high',
-        },
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, []);
+export default function TalentGridPage() {
+  const [selectedQuadrant, setSelectedQuadrant] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState('all');
 
-  const filteredData = gridData.filter((item) => {
-    const matchesSearch =
-      item.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.department.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDepartment = departmentFilter === 'all' || item.department === departmentFilter;
-    return matchesSearch && matchesDepartment;
+  const [employees, setEmployees] = useState<Employee[]>([
+    {
+      id: '1',
+      name: '张三',
+      department: '技术部',
+      position: '高级工程师',
+      performance: 9,
+      potential: 8,
+      quadrant: 'top-right',
+      status: 'star',
+      skills: ['架构设计', '团队管理', '技术攻关'],
+      recommendations: ['加速培养', '考虑晋升', '增加挑战'],
+    },
+    {
+      id: '2',
+      name: '李四',
+      department: '产品部',
+      position: '产品经理',
+      performance: 8,
+      potential: 7,
+      quadrant: 'top-center',
+      status: 'high',
+      skills: ['产品规划', '用户研究', '数据分析'],
+      recommendations: ['保持激励', '发展辅导', '技能提升'],
+    },
+    {
+      id: '3',
+      name: '王五',
+      department: '技术部',
+      position: '前端工程师',
+      performance: 7,
+      potential: 9,
+      quadrant: 'middle-right',
+      status: 'high-potential',
+      skills: ['React', 'TypeScript', '工程化'],
+      recommendations: ['加速培养', '技术深耕', '项目历练'],
+    },
+    {
+      id: '4',
+      name: '赵六',
+      department: '销售部',
+      position: '销售代表',
+      performance: 5,
+      potential: 6,
+      quadrant: 'middle-center',
+      status: 'solid',
+      skills: ['客户开发', '谈判技巧', '市场拓展'],
+      recommendations: ['保持稳定', '技能培训', '经验分享'],
+    },
+    {
+      id: '5',
+      name: '孙七',
+      department: '市场部',
+      position: '市场专员',
+      performance: 4,
+      potential: 3,
+      quadrant: 'bottom-center',
+      status: 'question',
+      skills: ['内容策划', '新媒体运营'],
+      recommendations: ['深入面谈', '重新定位', '绩效改善'],
+    },
+  ]);
+
+  const filteredEmployees = employees.filter(emp => {
+    const matchesQuadrant = !selectedQuadrant || emp.quadrant === selectedQuadrant;
+    const matchesDepartment = selectedDepartment === 'all' || emp.department === selectedDepartment;
+    return matchesQuadrant && matchesDepartment;
   });
 
-  const departments = Array.from(new Set(gridData.map((item) => item.department)));
-
-  const getBoxConfig = (gridBox: string) => {
-    return boxConfig.find((box) => box.id === gridBox) || boxConfig[0];
+  const stats = {
+    totalEmployees: employees.length,
+    starTalent: employees.filter(e => e.status === 'star').length,
+    highPotential: employees.filter(e => e.quadrant === 'middle-right').length,
+    questionEmployees: employees.filter(e => e.status === 'question').length,
+    avgPerformance: (employees.reduce((sum, e) => sum + e.performance, 0) / employees.length).toFixed(1),
+    avgPotential: (employees.reduce((sum, e) => sum + e.potential, 0) / employees.length).toFixed(1),
   };
 
-  const handleRefresh = () => {
-    toast.success('九宫格数据已刷新');
-    setShowRefreshDialog(false);
+  const getQuadrantByValues = (performance: number, potential: number) => {
+    if (performance >= 7 && potential >= 7) return 'top-right';
+    if (performance >= 7 && potential >= 5 && potential < 7) return 'top-center';
+    if (performance >= 7 && potential < 5) return 'top-left';
+    if (performance >= 5 && performance < 7 && potential >= 7) return 'middle-right';
+    if (performance >= 5 && performance < 7 && potential >= 5 && potential < 7) return 'middle-center';
+    if (performance >= 5 && performance < 7 && potential < 5) return 'middle-left';
+    if (performance < 5 && potential >= 7) return 'bottom-right';
+    if (performance < 5 && potential >= 5 && potential < 7) return 'bottom-center';
+    return 'bottom-left';
   };
 
-  const statistics = {
-    total: gridData.length,
-    highRisk: gridData.filter((item) => item.riskLevel === 'high').length,
-    mediumRisk: gridData.filter((item) => item.riskLevel === 'medium').length,
-    avgPerformance: gridData.length > 0
-      ? gridData.reduce((sum, item) => sum + item.performanceScore, 0) / gridData.length
-      : 0,
-    avgPotential: gridData.length > 0
-      ? gridData.reduce((sum, item) => sum + item.potentialScore, 0) / gridData.length
-      : 0,
+  const getEmployeePosition = (performance: number, potential: number) => {
+    const x = (potential - 1) / 9 * 100;
+    const y = (performance - 1) / 9 * 100;
+    return { x, y };
   };
 
   return (
@@ -351,348 +263,376 @@ export default function NineBoxGridPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
-              <Grid3x3 className="h-8 w-8 text-blue-600" />
-              九宫格分析
+              <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg">
+                <Grid className="h-7 w-7 text-white" />
+              </div>
+              人才九宫格分析
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              基于绩效和潜力的人才矩阵分析
+              基于绩效和潜力的双维度人才分析，科学制定人才培养策略
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => toast.info('导出中...')}>
+            <Button variant="outline">
               <Download className="h-4 w-4 mr-2" />
               导出报告
             </Button>
-            <Button onClick={() => setShowRefreshDialog(true)}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              刷新数据
+            <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+              <Target className="h-4 w-4 mr-2" />
+              优化建议
             </Button>
           </div>
         </div>
 
-        {/* 统计卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        {/* 统计概览 */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">总人数</p>
-                  <p className="text-2xl font-bold">{statistics.total}</p>
-                </div>
-                <User className="h-8 w-8 text-blue-600" />
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">员工总数</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalEmployees}</div>
+              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <Users className="h-3 w-3 mr-1" />
+                人
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">明星员工</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {gridData.filter((item) => item.gridBox === 'star').length}
-                  </p>
-                </div>
-                <Star className="h-8 w-8 text-blue-600" />
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">明星人才</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.starTalent}</div>
+              <div className="flex items-center text-xs text-green-600 dark:text-green-400 mt-1">
+                <Award className="h-3 w-3 mr-1" />
+                {((stats.starTalent / stats.totalEmployees) * 100).toFixed(0)}%
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">高潜人才</p>
-                  <p className="text-2xl font-bold text-purple-600">
-                    {gridData.filter((item) => item.gridBox === 'potential').length}
-                  </p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-purple-600" />
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">高潜人才</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.highPotential}</div>
+              <div className="flex items-center text-xs text-purple-600 dark:text-purple-400 mt-1">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                {((stats.highPotential / stats.totalEmployees) * 100).toFixed(0)}%
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">问题员工</p>
-                  <p className="text-2xl font-bold text-red-600">
-                    {gridData.filter((item) => item.gridBox === 'problem').length}
-                  </p>
-                </div>
-                <AlertCircle className="h-8 w-8 text-red-600" />
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">待关注</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.questionEmployees}</div>
+              <div className="flex items-center text-xs text-orange-600 dark:text-orange-400 mt-1">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                需干预
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">高风险</p>
-                  <p className="text-2xl font-bold text-orange-600">{statistics.highRisk}</p>
-                </div>
-                <AlertCircle className="h-8 w-8 text-orange-600" />
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">平均绩效</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.avgPerformance}</div>
+              <div className="flex items-center text-xs text-blue-600 dark:text-blue-400 mt-1">
+                <ArrowUp className="h-3 w-3 mr-1" />
+                分
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">平均潜力</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">{stats.avgPotential}</div>
+              <div className="flex items-center text-xs text-cyan-600 dark:text-cyan-400 mt-1">
+                <ArrowUp className="h-3 w-3 mr-1" />
+                分
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* 筛选栏 */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="搜索员工姓名、职位或部门..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="部门" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部部门</SelectItem>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept} value={dept}>
-                      {dept}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 九宫格矩阵 */}
+        {/* 九宫格主视图 */}
         <Card>
           <CardHeader>
-            <CardTitle>人才九宫格矩阵</CardTitle>
-            <CardDescription>
-              横轴：绩效得分 | 纵轴：潜力得分
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>人才分布九宫格</CardTitle>
+                <CardDescription>
+                  横轴：发展潜力 | 纵轴：当前绩效
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">全部部门</SelectItem>
+                    <SelectItem value="技术部">技术部</SelectItem>
+                    <SelectItem value="产品部">产品部</SelectItem>
+                    <SelectItem value="销售部">销售部</SelectItem>
+                    <SelectItem value="市场部">市场部</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              {boxConfig.map((box) => {
-                const BoxIcon = box.icon;
-                const boxData = filteredData.filter((item) => item.gridBox === box.id);
-
+            <div className="grid grid-cols-3 gap-1 aspect-square max-w-4xl mx-auto">
+              {quadrants.map((quadrant) => {
+                const Icon = quadrant.icon;
+                const quadrantEmployees = filteredEmployees.filter(e => e.quadrant === quadrant.id);
                 return (
                   <div
-                    key={box.id}
-                    className={`${box.bgColor} ${box.borderColor} border-2 rounded-lg p-4 transition-all hover:shadow-lg`}
+                    key={quadrant.id}
+                    className={`relative ${quadrant.bgColor} border ${quadrant.borderColor} rounded-lg p-4 cursor-pointer hover:shadow-md transition-all`}
+                    onClick={() => setSelectedQuadrant(quadrant.id === selectedQuadrant ? '' : quadrant.id)}
                   >
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <BoxIcon className={`h-5 w-5 ${box.textColor}`} />
-                        <h3 className={`font-bold ${box.textColor}`}>{box.label}</h3>
+                        <div className={`p-1.5 rounded bg-gradient-to-br ${quadrant.color}`}>
+                          <Icon className="h-4 w-4 text-white" />
+                        </div>
+                        <span className="text-xs font-medium text-gray-900 dark:text-white">{quadrant.name}</span>
                       </div>
-                      <Badge className={`${box.color} text-white border-0`}>
-                        {boxData.length} 人
+                      <Badge variant="secondary" className="text-xs">
+                        {quadrantEmployees.length}
                       </Badge>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{box.description}</p>
-                    <p className={`text-sm font-medium ${box.textColor} mb-3`}>
-                      行动：{box.action}
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                      {quadrant.description}
                     </p>
-
-                    {boxData.length > 0 ? (
-                      <div className="space-y-2 max-h-64 overflow-y-auto">
-                        {boxData.map((item) => (
-                          <div
-                            key={item.id}
-                            className="bg-white dark:bg-gray-800 rounded-lg p-3 hover:shadow-md transition-shadow cursor-pointer"
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <p className="font-medium">{item.employeeName}</p>
-                                <p className="text-xs text-gray-600 dark:text-gray-400">
-                                  {item.position} · {item.department}
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-sm font-bold text-blue-600">
-                                  P:{item.performanceScore}
-                                </p>
-                                <p className="text-sm font-bold text-purple-600">
-                                  T:{item.potentialScore}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-4 text-gray-400 text-sm">
-                        暂无员工
-                      </div>
-                    )}
+                    <div className="flex flex-wrap gap-1">
+                      {quadrantEmployees.slice(0, 3).map((emp) => (
+                        <div
+                          key={emp.id}
+                          className="px-2 py-1 bg-white dark:bg-gray-800 rounded text-xs font-medium text-gray-900 dark:text-white"
+                        >
+                          {emp.name}
+                        </div>
+                      ))}
+                      {quadrantEmployees.length > 3 && (
+                        <div className="px-2 py-1 bg-white dark:bg-gray-800 rounded text-xs text-gray-600 dark:text-gray-400">
+                          +{quadrantEmployees.length - 3}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}
             </div>
+
+            {/* 图例 */}
+            <div className="mt-6 flex flex-wrap gap-4 justify-center">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded bg-gradient-to-r from-green-500 to-emerald-500" />
+                <span className="text-sm text-gray-600 dark:text-gray-400">明星人才</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded bg-gradient-to-r from-blue-500 to-cyan-500" />
+                <span className="text-sm text-gray-600 dark:text-gray-400">核心人才</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded bg-gradient-to-r from-purple-500 to-violet-500" />
+                <span className="text-sm text-gray-600 dark:text-gray-400">高潜人才</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded bg-gradient-to-r from-orange-500 to-red-500" />
+                <span className="text-sm text-gray-600 dark:text-gray-400">待关注</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        {/* 详细列表 */}
+        {/* 员工列表 */}
         <Card>
           <CardHeader>
-            <CardTitle>员工详细数据</CardTitle>
+            <CardTitle>人才明细</CardTitle>
             <CardDescription>
-              所有员工的绩效和潜力详细分析
+              {selectedQuadrant ? quadrants.find(q => q.id === selectedQuadrant)?.name : '全部'}员工列表
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="text-gray-600 dark:text-gray-400">加载中...</div>
-              </div>
-            ) : filteredData.length === 0 ? (
-              <div className="text-center py-12">
-                <Grid3x3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400">暂无数据</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-3">员工</th>
-                      <th className="text-left p-3">部门/职位</th>
-                      <th className="text-center p-3">绩效</th>
-                      <th className="text-center p-3">潜力</th>
-                      <th className="text-left p-3">位置</th>
-                      <th className="text-left p-3">优势</th>
-                      <th className="text-center p-3">风险</th>
-                      <th className="text-center p-3">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredData.map((item) => {
-                      const config = getBoxConfig(item.gridBox);
-                      return (
-                        <tr key={item.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
-                          <td className="p-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                <User className="h-4 w-4 text-blue-600" />
-                              </div>
-                              <div>
-                                <p className="font-medium">{item.employeeName}</p>
-                                <p className="text-xs text-gray-600 dark:text-gray-400">
-                                  {item.employeeId}
-                                </p>
-                              </div>
+            <div className="rounded-lg border dark:border-gray-700">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>员工</TableHead>
+                    <TableHead>部门</TableHead>
+                    <TableHead>职位</TableHead>
+                    <TableHead>绩效</TableHead>
+                    <TableHead>潜力</TableHead>
+                    <TableHead>九宫格定位</TableHead>
+                    <TableHead>核心技能</TableHead>
+                    <TableHead>管理建议</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredEmployees.map((employee) => {
+                    const quadrantInfo = quadrants.find(q => q.id === employee.quadrant);
+                    return (
+                      <TableRow key={employee.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs">
+                                {employee.name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium">{employee.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{employee.department}</TableCell>
+                        <TableCell>{employee.position}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                              <div
+                                className="bg-blue-600 h-2 rounded-full"
+                                style={{ width: `${employee.performance * 10}%` }}
+                              />
                             </div>
-                          </td>
-                          <td className="p-3">
-                            <p>{item.position}</p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">
-                              {item.department}
-                            </p>
-                          </td>
-                          <td className="p-3 text-center">
-                            <Badge
-                              variant="outline"
-                              className={
-                                item.performanceScore >= 80
-                                  ? 'bg-green-50 text-green-600 border-green-200'
-                                  : item.performanceScore >= 60
-                                  ? 'bg-blue-50 text-blue-600 border-blue-200'
-                                  : 'bg-red-50 text-red-600 border-red-200'
-                              }
-                            >
-                              {item.performanceScore}
-                            </Badge>
-                          </td>
-                          <td className="p-3 text-center">
-                            <Badge
-                              variant="outline"
-                              className={
-                                item.potentialScore >= 80
-                                  ? 'bg-purple-50 text-purple-600 border-purple-200'
-                                  : item.potentialScore >= 60
-                                  ? 'bg-blue-50 text-blue-600 border-blue-200'
-                                  : 'bg-gray-50 text-gray-600 border-gray-200'
-                              }
-                            >
-                              {item.potentialScore}
-                            </Badge>
-                          </td>
-                          <td className="p-3">
-                            <Badge className={`${config.color} text-white border-0`}>
-                              {config.label}
-                            </Badge>
-                          </td>
-                          <td className="p-3">
-                            <div className="text-sm">
-                              {item.keyStrengths.slice(0, 2).map((strength, index) => (
-                                <span key={index} className="inline-block mr-1">
-                                  {strength}
-                                  {index < Math.min(2, item.keyStrengths.length) - 1 && ','}
-                                </span>
-                              ))}
-                              {item.keyStrengths.length > 2 && '...'}
+                            <span className="text-sm font-medium">{employee.performance}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                              <div
+                                className="bg-purple-600 h-2 rounded-full"
+                                style={{ width: `${employee.potential * 10}%` }}
+                              />
                             </div>
-                          </td>
-                          <td className="p-3 text-center">
-                            <Badge
-                              variant="outline"
-                              className={
-                                item.riskLevel === 'high'
-                                  ? 'bg-red-50 text-red-600 border-red-200'
-                                  : item.riskLevel === 'medium'
-                                  ? 'bg-yellow-50 text-yellow-600 border-yellow-200'
-                                  : 'bg-green-50 text-green-600 border-green-200'
-                              }
-                            >
-                              {item.riskLevel === 'high' ? '高' : item.riskLevel === 'medium' ? '中' : '低'}
-                            </Badge>
-                          </td>
-                          <td className="p-3 text-center">
-                            <Button variant="outline" size="sm">
-                              查看详情
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                            <span className="text-sm font-medium">{employee.potential}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={quadrantInfo?.bgColor}>
+                            {quadrantInfo?.name}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {employee.skills.slice(0, 2).map((skill, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {skill}
+                              </Badge>
+                            ))}
+                            {employee.skills.length > 2 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{employee.skills.length - 2}
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {employee.recommendations.slice(0, 2).map((rec, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                {rec}
+                              </Badge>
+                            ))}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* 刷新确认弹窗 */}
-      <div
-        className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ${
-          !showRefreshDialog && 'hidden'
-        }`}
-        onClick={() => setShowRefreshDialog(false)}
-      >
-        <div
-          className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <h3 className="text-lg font-bold mb-2">确认刷新数据</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            刷新将重新计算所有员工的绩效和潜力得分，并重新分配九宫格位置。此操作将覆盖当前数据。
-          </p>
-          <div className="flex gap-3 justify-end">
-            <Button variant="outline" onClick={() => setShowRefreshDialog(false)}>
-              取消
-            </Button>
-            <Button onClick={handleRefresh}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              确认刷新
-            </Button>
-          </div>
-        </div>
-      </div>
     </div>
+  );
+}
+
+// 添加缺失的图标组件
+function Star(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}
+
+function Sparkles(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+    </svg>
+  );
+}
+
+function AlertTriangle(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+      <path d="M12 9v4" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+}
+
+function XCircle(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="m15 9-6 6" />
+      <path d="m9 9 6 6" />
+    </svg>
   );
 }
