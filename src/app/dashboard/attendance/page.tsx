@@ -3,10 +3,8 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -21,7 +19,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
@@ -31,641 +31,508 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Switch } from '@/components/ui/switch';
-import { Progress } from '@/components/ui/progress';
 import {
   Clock,
   MapPin,
   Calendar,
-  LogIn,
-  LogOut,
-  Coffee,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
   Search,
   Filter,
   Download,
-  Upload,
-  Save,
-  Eye,
-  Edit,
-  Trash2,
-  MoreVertical,
-  Map,
-  Bell,
-  Settings,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Smartphone,
   TrendingUp,
   Users,
+  ArrowUpRight,
+  ArrowDownRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
-
-// 类型定义
-type AttendanceStatus = 'normal' | 'late' | 'early' | 'absent' | 'leave' | 'overtime';
-type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 interface AttendanceRecord {
   id: string;
   employeeId: string;
   employeeName: string;
+  department: string;
   date: string;
-  checkInTime: string;
-  checkOutTime: string;
-  status: AttendanceStatus;
-  approvalStatus?: ApprovalStatus;
+  checkIn: string;
+  checkOut: string;
   workHours: number;
-  location?: string;
-  note?: string;
+  status: 'normal' | 'late' | 'early' | 'absent' | 'leave';
+  location: string;
 }
 
-interface LeaveRecord {
+interface ShiftRule {
+  id: string;
+  name: string;
+  checkInTime: string;
+  checkOutTime: string;
+  workDays: string[];
+  lateThreshold: number;
+  earlyThreshold: number;
+}
+
+interface OvertimeRequest {
   id: string;
   employeeId: string;
   employeeName: string;
-  type: string;
-  startDate: string;
-  endDate: string;
-  days: number;
+  date: string;
+  startTime: string;
+  endTime: string;
+  hours: number;
   reason: string;
-  status: ApprovalStatus;
-  appliedAt: string;
+  status: 'pending' | 'approved' | 'rejected';
 }
 
-interface WorkSchedule {
-  id: string;
-  name: string;
-  workDays: number[];
-  checkInTime: string;
-  checkOutTime: string;
-  lateTolerance: number; // 分钟
-  description: string;
-}
-
-export default function AttendanceManagementPage() {
+export default function AttendanceManagement() {
   const [activeTab, setActiveTab] = useState('records');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedMonth, setSelectedMonth] = useState('2024-12');
 
-  // 考勤记录
-  const [attendanceRecords] = useState<AttendanceRecord[]>([
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     {
       id: '1',
-      employeeId: '1',
+      employeeId: 'EMP001',
       employeeName: '张三',
-      date: '2025-04-18',
-      checkInTime: '08:55',
-      checkOutTime: '18:10',
+      department: '技术部',
+      date: '2024-12-15',
+      checkIn: '09:00',
+      checkOut: '18:30',
+      workHours: 9.5,
       status: 'normal',
-      workHours: 9.25,
-      location: '公司总部',
+      location: '北京总部',
     },
     {
       id: '2',
-      employeeId: '2',
+      employeeId: 'EMP002',
       employeeName: '李四',
-      date: '2025-04-18',
-      checkInTime: '09:15',
-      checkOutTime: '18:05',
+      department: '产品部',
+      date: '2024-12-15',
+      checkIn: '09:15',
+      checkOut: '18:00',
+      workHours: 8.75,
       status: 'late',
-      workHours: 8.83,
-      location: '公司总部',
+      location: '上海分公司',
     },
     {
       id: '3',
-      employeeId: '3',
+      employeeId: 'EMP003',
       employeeName: '王五',
-      date: '2025-04-18',
-      checkInTime: '08:45',
-      checkOutTime: '17:45',
-      status: 'early',
-      workHours: 9,
-      location: '公司总部',
-    },
-    {
-      id: '4',
-      employeeId: '4',
-      employeeName: '赵六',
-      date: '2025-04-18',
-      checkInTime: '-',
-      checkOutTime: '-',
-      status: 'absent',
+      department: '设计部',
+      date: '2024-12-15',
+      checkIn: '-',
+      checkOut: '-',
       workHours: 0,
-      approvalStatus: 'pending',
+      status: 'leave',
+      location: '-',
     },
   ]);
 
-  // 请假记录
-  const [leaveRecords] = useState<LeaveRecord[]>([
+  const [shiftRules, setShiftRules] = useState<ShiftRule[]>([
     {
       id: '1',
-      employeeId: '4',
-      employeeName: '赵六',
-      type: '事假',
-      startDate: '2025-04-18',
-      endDate: '2025-04-18',
-      days: 1,
-      reason: '个人事务',
-      status: 'pending',
-      appliedAt: '2025-04-17',
-    },
-    {
-      id: '2',
-      employeeId: '5',
-      employeeName: '钱七',
-      type: '年假',
-      startDate: '2025-04-20',
-      endDate: '2025-04-22',
-      days: 3,
-      reason: '旅游',
-      status: 'approved',
-      appliedAt: '2025-04-15',
-    },
-  ]);
-
-  // 工作班次
-  const [workSchedules] = useState<WorkSchedule[]>([
-    {
-      id: '1',
-      name: '标准工时',
-      workDays: [1, 2, 3, 4, 5],
+      name: '标准班次',
       checkInTime: '09:00',
       checkOutTime: '18:00',
-      lateTolerance: 10,
-      description: '周一至周五 9:00-18:00',
+      workDays: ['周一', '周二', '周三', '周四', '周五'],
+      lateThreshold: 15,
+      earlyThreshold: 30,
     },
     {
       id: '2',
-      name: '弹性工时',
-      workDays: [1, 2, 3, 4, 5],
+      name: '弹性班次',
       checkInTime: '10:00',
       checkOutTime: '19:00',
-      lateTolerance: 0,
-      description: '周一至周五 10:00-19:00',
+      workDays: ['周一', '周二', '周三', '周四', '周五'],
+      lateThreshold: 30,
+      earlyThreshold: 30,
     },
   ]);
 
-  // 考勤统计
-  const [attendanceStats] = useState({
-    totalEmployees: 100,
-    present: 95,
-    late: 3,
-    early: 2,
-    absent: 1,
-    leave: 4,
-    avgWorkHours: 8.5,
-    onTimeRate: 92,
-  });
+  const [overtimeRequests, setOvertimeRequests] = useState<OvertimeRequest[]>([
+    {
+      id: '1',
+      employeeId: 'EMP001',
+      employeeName: '张三',
+      date: '2024-12-14',
+      startTime: '18:00',
+      endTime: '21:00',
+      hours: 3,
+      reason: '项目上线',
+      status: 'approved',
+    },
+    {
+      id: '2',
+      employeeId: 'EMP002',
+      employeeName: '李四',
+      date: '2024-12-14',
+      startTime: '18:00',
+      endTime: '20:00',
+      hours: 2,
+      reason: '需求评审',
+      status: 'pending',
+    },
+  ]);
 
-  const statusMap: Record<AttendanceStatus, { label: string; icon: React.ReactNode; color: string }> = {
-    normal: { label: '正常', icon: <CheckCircle className="h-4 w-4" />, color: 'bg-green-100 text-green-800' },
-    late: { label: '迟到', icon: <AlertTriangle className="h-4 w-4" />, color: 'bg-yellow-100 text-yellow-800' },
-    early: { label: '早退', icon: <AlertTriangle className="h-4 w-4" />, color: 'bg-orange-100 text-orange-800' },
-    absent: { label: '缺勤', icon: <XCircle className="h-4 w-4" />, color: 'bg-red-100 text-red-800' },
-    leave: { label: '请假', icon: <Coffee className="h-4 w-4" />, color: 'bg-blue-100 text-blue-800' },
-    overtime: { label: '加班', icon: <Clock className="h-4 w-4" />, color: 'bg-purple-100 text-purple-800' },
+  const stats = {
+    totalEmployees: 156,
+    todayPresent: 142,
+    todayAbsent: 8,
+    todayLate: 6,
+    averageWorkHours: 8.5,
+    monthOvertimeHours: 325,
   };
 
-  const approvalStatusMap: Record<ApprovalStatus, { label: string; color: string }> = {
-    pending: { label: '待审批', color: 'bg-yellow-100 text-yellow-800' },
-    approved: { label: '已批准', color: 'bg-green-100 text-green-800' },
-    rejected: { label: '已拒绝', color: 'bg-red-100 text-red-800' },
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, any> = {
+      normal: { label: '正常', className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
+      late: { label: '迟到', className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
+      early: { label: '早退', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' },
+      absent: { label: '缺勤', className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
+      leave: { label: '请假', className: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200' },
+      pending: { label: '待审批', className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
+      approved: { label: '已批准', className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
+      rejected: { label: '已拒绝', className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
+    };
+    const variant = variants[status];
+    return <Badge className={variant.className}>{variant.label}</Badge>;
   };
 
-  const filteredRecords = attendanceRecords.filter(record => {
-    const matchSearch = record.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       record.date.includes(searchTerm);
-    const matchStatus = statusFilter === 'all' || record.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
+  const handleExport = () => {
+    toast.success('考勤数据导出成功');
+  };
 
   return (
-    <div className="space-y-6">
-      {/* 页面标题 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">考勤管理</h1>
-          <p className="text-gray-600 mt-2">
-            考勤记录、请假审批、排班管理
-            <Badge variant="secondary" className="ml-2">SSC</Badge>
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            导出报表
-          </Button>
-          <Button variant="outline">
-            <Upload className="mr-2 h-4 w-4" />
-            导入考勤
-          </Button>
-        </div>
-      </div>
-
-      {/* 功能介绍 */}
-      <Alert>
-        <Clock className="h-4 w-4" />
-        <AlertDescription>
-          支持多地点打卡、人脸识别、GPS定位，自动计算工时和考勤异常
-        </AlertDescription>
-      </Alert>
-
-      {/* 统计概览 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-gray-600">总员工</CardTitle>
-            <Users className="h-3 w-3 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">{attendanceStats.totalEmployees}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-gray-600">出勤</CardTitle>
-            <CheckCircle className="h-3 w-3 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">{attendanceStats.present}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-gray-600">迟到</CardTitle>
-            <AlertTriangle className="h-3 w-3 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold text-yellow-600">{attendanceStats.late}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-gray-600">早退</CardTitle>
-            <LogOut className="h-3 w-3 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold text-orange-600">{attendanceStats.early}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-gray-600">缺勤</CardTitle>
-            <XCircle className="h-3 w-3 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold text-red-600">{attendanceStats.absent}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-gray-600">请假</CardTitle>
-            <Coffee className="h-3 w-3 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">{attendanceStats.leave}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-gray-600">平均工时</CardTitle>
-            <Clock className="h-3 w-3 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">{attendanceStats.avgWorkHours}h</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-gray-600">准时率</CardTitle>
-            <TrendingUp className="h-3 w-3 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold text-green-600">{attendanceStats.onTimeRate}%</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="records">考勤记录</TabsTrigger>
-          <TabsTrigger value="approval">审批管理</TabsTrigger>
-          <TabsTrigger value="schedule">排班管理</TabsTrigger>
-          <TabsTrigger value="settings">考勤设置</TabsTrigger>
-        </TabsList>
-
-        {/* 考勤记录 */}
-        <TabsContent value="records" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>考勤记录</CardTitle>
-                <div className="flex gap-2">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="搜索员工或日期"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-9 w-64"
-                    />
-                  </div>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="状态" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">全部状态</SelectItem>
-                      <SelectItem value="normal">正常</SelectItem>
-                      <SelectItem value="late">迟到</SelectItem>
-                      <SelectItem value="early">早退</SelectItem>
-                      <SelectItem value="absent">缺勤</SelectItem>
-                      <SelectItem value="leave">请假</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* 页面标题 */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg">
+                <Clock className="h-7 w-7 text-white" />
               </div>
+              考勤管理
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              智能考勤、排班管理、加班审批
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExport}>
+              <Download className="h-4 w-4 mr-2" />
+              导出数据
+            </Button>
+            <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
+              <Smartphone className="h-4 w-4 mr-2" />
+              移动打卡
+            </Button>
+          </div>
+        </div>
+
+        {/* 考勤统计 */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">员工总数</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>日期</TableHead>
-                    <TableHead>员工</TableHead>
-                    <TableHead>上班打卡</TableHead>
-                    <TableHead>下班打卡</TableHead>
-                    <TableHead>工时</TableHead>
-                    <TableHead>地点</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead>操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRecords.map((record) => (
-                    <TableRow key={record.id}>
-                      <TableCell>{record.date}</TableCell>
-                      <TableCell className="font-medium">{record.employeeName}</TableCell>
-                      <TableCell className="flex items-center gap-1">
-                        <LogIn className="h-3 w-3 text-green-600" />
-                        {record.checkInTime}
-                      </TableCell>
-                      <TableCell className="flex items-center gap-1">
-                        <LogOut className="h-3 w-3 text-blue-600" />
-                        {record.checkOutTime}
-                      </TableCell>
-                      <TableCell>{record.workHours.toFixed(2)}h</TableCell>
-                      <TableCell className="flex items-center gap-1 text-sm">
-                        <MapPin className="h-3 w-3 text-gray-400" />
-                        {record.location}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={statusMap[record.status].color}>
-                          {statusMap[record.status].icon}
-                          {statusMap[record.status].label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalEmployees}</div>
+              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <Users className="h-3 w-3 mr-1" />
+                人
+              </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* 审批管理 */}
-        <TabsContent value="approval">
           <Card>
-            <CardHeader>
-              <CardTitle>审批管理</CardTitle>
-              <CardDescription>处理请假和补卡申请</CardDescription>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">今日出勤</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>员工</TableHead>
-                    <TableHead>类型</TableHead>
-                    <TableHead>日期</TableHead>
-                    <TableHead>天数</TableHead>
-                    <TableHead>原因</TableHead>
-                    <TableHead>申请时间</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead>操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {leaveRecords.map((record) => (
-                    <TableRow key={record.id}>
-                      <TableCell className="font-medium">{record.employeeName}</TableCell>
-                      <TableCell>{record.type}</TableCell>
-                      <TableCell>
-                        {record.startDate} ~ {record.endDate}
-                      </TableCell>
-                      <TableCell>{record.days}天</TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {record.reason}
-                      </TableCell>
-                      <TableCell className="text-sm">{record.appliedAt}</TableCell>
-                      <TableCell>
-                        <Badge className={approvalStatusMap[record.status].color}>
-                          {approvalStatusMap[record.status].label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {record.status === 'pending' && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => toast.success('已批准')}
-                              >
-                                <CheckCircle className="h-4 w-4 text-green-600" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => toast.success('已拒绝')}
-                              >
-                                <XCircle className="h-4 w-4 text-red-600" />
-                              </Button>
-                            </>
-                          )}
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.todayPresent}</div>
+              <div className="flex items-center text-xs text-green-600 dark:text-green-400 mt-1">
+                <ArrowUpRight className="h-3 w-3 mr-1" />
+                出勤率 {((stats.todayPresent / stats.totalEmployees) * 100).toFixed(0)}%
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">今日缺勤</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.todayAbsent}</div>
+              <div className="flex items-center text-xs text-red-600 dark:text-red-400 mt-1">
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                需关注
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">今日迟到</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.todayLate}</div>
+              <div className="flex items-center text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                <Clock className="h-3 w-3 mr-1" />
+                人
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">平均工时</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.averageWorkHours}h</div>
+              <div className="flex items-center text-xs text-blue-600 dark:text-blue-400 mt-1">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                正常范围
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">本月加班</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.monthOvertimeHours}h</div>
+              <div className="flex items-center text-xs text-purple-600 dark:text-purple-400 mt-1">
+                <ArrowDownRight className="h-3 w-3 mr-1" />
+                环比下降
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* 功能Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <TabsTrigger value="records" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              打卡记录
+            </TabsTrigger>
+            <TabsTrigger value="shift" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              排班管理
+            </TabsTrigger>
+            <TabsTrigger value="overtime" className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              加班管理
+            </TabsTrigger>
+            <TabsTrigger value="approval" className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              审批管理
+            </TabsTrigger>
+          </TabsList>
+
+          {/* 打卡记录 */}
+          <TabsContent value="records" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>打卡记录</CardTitle>
+                    <CardDescription>查看员工的每日打卡详情</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2024-12">2024年12月</SelectItem>
+                        <SelectItem value="2024-11">2024年11月</SelectItem>
+                        <SelectItem value="2024-10">2024年10月</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="outline" size="sm">
+                      <Filter className="h-4 w-4 mr-2" />
+                      筛选
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-lg border dark:border-gray-700">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>员工</TableHead>
+                        <TableHead>部门</TableHead>
+                        <TableHead>日期</TableHead>
+                        <TableHead>上班打卡</TableHead>
+                        <TableHead>下班打卡</TableHead>
+                        <TableHead>工时</TableHead>
+                        <TableHead>地点</TableHead>
+                        <TableHead>状态</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {attendanceRecords.map((record) => (
+                        <TableRow key={record.id}>
+                          <TableCell className="font-medium">{record.employeeName}</TableCell>
+                          <TableCell>{record.department}</TableCell>
+                          <TableCell>{record.date}</TableCell>
+                          <TableCell>{record.checkIn}</TableCell>
+                          <TableCell>{record.checkOut}</TableCell>
+                          <TableCell>{record.workHours}h</TableCell>
+                          <TableCell>
+                            <div className="flex items-center text-xs">
+                              <MapPin className="h-3 w-3 mr-1" />
+                              {record.location}
+                            </div>
+                          </TableCell>
+                          <TableCell>{getStatusBadge(record.status)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* 排班管理 */}
+          <TabsContent value="shift" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>排班规则</CardTitle>
+                <CardDescription>设置和管理班次规则</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {shiftRules.map((rule) => (
+                    <Card key={rule.id} className="hover:shadow-md transition-shadow">
+                      <CardHeader>
+                        <CardTitle className="text-lg">{rule.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-600 dark:text-gray-400">上班时间</span>
+                            <div className="font-semibold text-gray-900 dark:text-white">{rule.checkInTime}</div>
+                          </div>
+                          <div>
+                            <span className="text-gray-600 dark:text-gray-400">下班时间</span>
+                            <div className="font-semibold text-gray-900 dark:text-white">{rule.checkOutTime}</div>
+                          </div>
+                          <div>
+                            <span className="text-gray-600 dark:text-gray-400">工作日</span>
+                            <div className="font-semibold text-gray-900 dark:text-white">{rule.workDays.join(', ')}</div>
+                          </div>
+                          <div>
+                            <span className="text-gray-600 dark:text-gray-400">迟到阈值</span>
+                            <div className="font-semibold text-gray-900 dark:text-white">{rule.lateThreshold}分钟</div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" className="flex-1">编辑</Button>
+                          <Button variant="outline" size="sm" className="flex-1">应用</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* 加班管理 */}
+          <TabsContent value="overtime" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>加班申请</CardTitle>
+                <CardDescription>管理员工的加班申请</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-lg border dark:border-gray-700">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>员工</TableHead>
+                        <TableHead>日期</TableHead>
+                        <TableHead>开始时间</TableHead>
+                        <TableHead>结束时间</TableHead>
+                        <TableHead>加班时长</TableHead>
+                        <TableHead>原因</TableHead>
+                        <TableHead>状态</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {overtimeRequests.map((request) => (
+                        <TableRow key={request.id}>
+                          <TableCell className="font-medium">{request.employeeName}</TableCell>
+                          <TableCell>{request.date}</TableCell>
+                          <TableCell>{request.startTime}</TableCell>
+                          <TableCell>{request.endTime}</TableCell>
+                          <TableCell>{request.hours}h</TableCell>
+                          <TableCell>{request.reason}</TableCell>
+                          <TableCell>{getStatusBadge(request.status)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* 审批管理 */}
+          <TabsContent value="approval" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>待审批</CardTitle>
+                <CardDescription>处理请假、加班等申请审批</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {overtimeRequests.filter(r => r.status === 'pending').map((request) => (
+                    <div key={request.id} className="p-4 border rounded-lg dark:border-gray-700 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="font-semibold text-gray-900 dark:text-white">{request.employeeName} 的加班申请</h3>
+                            {getStatusBadge(request.status)}
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                              <span className="text-gray-600 dark:text-gray-400">日期：</span>
+                              <span className="text-gray-900 dark:text-white">{request.date}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-600 dark:text-gray-400">时长：</span>
+                              <span className="text-gray-900 dark:text-white">{request.hours}小时</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-600 dark:text-gray-400">时间段：</span>
+                              <span className="text-gray-900 dark:text-white">{request.startTime} - {request.endTime}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-600 dark:text-gray-400">原因：</span>
+                              <span className="text-gray-900 dark:text-white">{request.reason}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" className="bg-green-50 hover:bg-green-100 text-green-700 hover:text-green-800 dark:bg-green-900/30 dark:hover:bg-green-900/50 dark:text-green-400">
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            批准
+                          </Button>
+                          <Button size="sm" variant="outline" className="bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-400">
+                            <XCircle className="h-4 w-4 mr-1" />
+                            拒绝
                           </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* 排班管理 */}
-        <TabsContent value="schedule">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>排班管理</CardTitle>
-                <Button>
-                  <Calendar className="mr-2 h-4 w-4" />
-                  新增班次
-                </Button>
-              </div>
-              <CardDescription>管理工作班次和排班规则</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {workSchedules.map((schedule) => (
-                  <Card key={schedule.id}>
-                    <CardHeader>
-                      <CardTitle className="text-lg">{schedule.name}</CardTitle>
-                      <CardDescription>{schedule.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">工作日</span>
-                          <span className="text-sm font-medium">
-                            {schedule.workDays.map((day, i) => (
-                              <Badge key={i} variant="outline" className="mr-1">
-                                {['日', '一', '二', '三', '四', '五', '六'][day]}
-                              </Badge>
-                            ))}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">上班时间</span>
-                          <span className="text-sm font-medium flex items-center gap-1">
-                            <LogIn className="h-3 w-3 text-green-600" />
-                            {schedule.checkInTime}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">下班时间</span>
-                          <span className="text-sm font-medium flex items-center gap-1">
-                            <LogOut className="h-3 w-3 text-blue-600" />
-                            {schedule.checkOutTime}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">迟到宽限</span>
-                          <span className="text-sm font-medium">
-                            {schedule.lateTolerance} 分钟
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 mt-4">
-                        <Button variant="outline" size="sm" className="flex-1">
-                          <Edit className="h-4 w-4 mr-1" />
-                          编辑
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* 考勤设置 */}
-        <TabsContent value="settings">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>打卡设置</CardTitle>
-                <CardDescription>配置打卡方式和规则</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">GPS 定位打卡</div>
-                    <div className="text-sm text-gray-600">要求在指定范围内打卡</div>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">WiFi 打卡</div>
-                    <div className="text-sm text-gray-600">连接指定 WiFi 可打卡</div>
-                  </div>
-                  <Switch />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">人脸识别</div>
-                    <div className="text-sm text-gray-600">打卡时进行人脸验证</div>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">外勤打卡</div>
-                    <div className="text-sm text-gray-600">允许在办公地点外打卡</div>
-                  </div>
-                  <Switch />
                 </div>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>提醒设置</CardTitle>
-                <CardDescription>配置考勤提醒</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium flex items-center gap-2">
-                      <Bell className="h-4 w-4" />
-                      上班提醒
-                    </div>
-                    <div className="text-sm text-gray-600">提前提醒上班打卡</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Input type="number" defaultValue={30} className="w-20" />
-                    <span className="text-sm text-gray-600">分钟</span>
-                    <Switch defaultChecked />
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium flex items-center gap-2">
-                      <Bell className="h-4 w-4" />
-                      下班提醒
-                    </div>
-                    <div className="text-sm text-gray-600">提醒下班打卡</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Input type="number" defaultValue={5} className="w-20" />
-                    <span className="text-sm text-gray-600">分钟</span>
-                    <Switch />
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4" />
-                      异常提醒
-                    </div>
-                    <div className="text-sm text-gray-600">考勤异常时通知</div>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }
