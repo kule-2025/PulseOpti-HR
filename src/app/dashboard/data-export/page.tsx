@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -13,674 +14,573 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogFooter,
 } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Download,
-  FileSpreadsheet,
   FileText,
+  FileSpreadsheet,
   FileJson,
-  FileImage,
-  Plus,
-  Eye,
-  Trash2,
-  RefreshCw,
-  Search,
+  Calendar,
   Filter,
-  MoreVertical,
+  Database,
   CheckCircle,
   Clock,
   AlertCircle,
+  Settings,
+  UserPlus,
+  Users,
+  GraduationCap,
+  DollarSign,
+  BarChart3,
   Zap,
   Crown,
-  Calendar,
-  User,
-  BarChart3,
-  File,
   ArrowRight,
-  Sparkles,
+  Upload,
+  FileCode,
+  FileImage,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-// 导出类型
-type ExportType = 'report' | 'data' | 'template';
-type FileFormat = 'excel' | 'pdf' | 'csv' | 'json';
+type ExportFormat = 'excel' | 'csv' | 'pdf' | 'json';
 type ExportStatus = 'pending' | 'processing' | 'completed' | 'failed';
-
-interface ExportConfig {
-  id: string;
-  name: string;
-  type: ExportType;
-  module: string;
-  description: string;
-  formats: FileFormat[];
-  isPro: boolean;
-  icon: React.ReactNode;
-}
 
 interface ExportTask {
   id: string;
-  configId: string;
-  configName: string;
-  fileName: string;
-  format: FileFormat;
+  name: string;
+  type: string;
+  format: ExportFormat;
   status: ExportStatus;
-  progress: number;
-  size: string;
   recordCount: number;
+  fileSize: string;
   createdAt: string;
   completedAt?: string;
-  userId: string;
-  userName: string;
-}
-
-interface ExportField {
-  id: string;
-  name: string;
-  key: string;
-  selected: boolean;
-  order: number;
 }
 
 export default function DataExportPage() {
-  const [activeTab, setActiveTab] = useState('new');
-  const [selectedConfig, setSelectedConfig] = useState<ExportConfig | null>(null);
-  const [selectedFormat, setSelectedFormat] = useState<FileFormat>('excel');
-  const [exportDateRange, setExportDateRange] = useState<'today' | 'week' | 'month' | 'custom'>('month');
-  const [customStartDate, setCustomStartDate] = useState('');
-  const [customEndDate, setCustomEndDate] = useState('');
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
-  // 导出配置
-  const [configs] = useState<ExportConfig[]>([
+  const [exportType, setExportType] = useState('');
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('excel');
+  const [dateRange, setDateRange] = useState('30d');
+
+  const [exportTasks, setExportTasks] = useState<ExportTask[]>([
     {
       id: '1',
-      name: '员工花名册',
-      type: 'data',
-      module: 'employee',
-      description: '导出所有员工基本信息',
-      formats: ['excel', 'pdf', 'csv'],
-      isPro: false,
-      icon: <User className="h-5 w-5" />,
-    },
-    {
-      id: '2',
-      name: '考勤汇总报表',
-      type: 'report',
-      module: 'attendance',
-      description: '导出考勤统计数据',
-      formats: ['excel', 'pdf', 'csv'],
-      isPro: false,
-      icon: <Calendar className="h-5 w-5" />,
-    },
-    {
-      id: '3',
-      name: '绩效考核报表',
-      type: 'report',
-      module: 'performance',
-      description: '导出绩效考核结果',
-      formats: ['excel', 'pdf', 'csv'],
-      isPro: true,
-      icon: <BarChart3 className="h-5 w-5" />,
-    },
-    {
-      id: '4',
-      name: '薪资发放明细',
-      type: 'data',
-      module: 'compensation',
-      description: '导出薪资发放记录',
-      formats: ['excel', 'pdf', 'csv'],
-      isPro: true,
-      icon: <FileSpreadsheet className="h-5 w-5" />,
-    },
-    {
-      id: '5',
-      name: '招聘漏斗分析',
-      type: 'report',
-      module: 'recruitment',
-      description: '导出招聘数据统计分析',
-      formats: ['excel', 'pdf', 'csv'],
-      isPro: true,
-      icon: <Sparkles className="h-5 w-5" />,
-    },
-    {
-      id: '6',
-      name: '培训完成情况',
-      type: 'data',
-      module: 'training',
-      description: '导出培训完成记录',
-      formats: ['excel', 'pdf', 'csv'],
-      isPro: true,
-      icon: <FileText className="h-5 w-5" />,
-    },
-  ]);
-
-  // 导出任务历史
-  const [tasks, setTasks] = useState<ExportTask[]>([
-    {
-      id: '1',
-      configId: '1',
-      configName: '员工花名册',
-      fileName: '员工花名册_20250418.xlsx',
+      name: '员工名单导出',
+      type: 'employees',
       format: 'excel',
       status: 'completed',
-      progress: 100,
-      size: '2.5 MB',
       recordCount: 156,
-      createdAt: '2025-04-18 10:30:15',
-      completedAt: '2025-04-18 10:30:25',
-      userId: '1',
-      userName: '张三',
+      fileSize: '2.3 MB',
+      createdAt: '2024-12-15 10:30:00',
+      completedAt: '2024-12-15 10:30:45',
     },
     {
       id: '2',
-      configId: '2',
-      configName: '考勤汇总报表',
-      fileName: '考勤汇总报表_20250418.pdf',
-      format: 'pdf',
-      status: 'completed',
-      progress: 100,
-      size: '1.8 MB',
-      recordCount: 22,
-      createdAt: '2025-04-18 09:15:22',
-      completedAt: '2025-04-18 09:15:35',
-      userId: '1',
-      userName: '张三',
-    },
-    {
-      id: '3',
-      configId: '3',
-      configName: '绩效考核报表',
-      fileName: '绩效考核报表_20250418.csv',
+      name: '考勤数据导出',
+      type: 'attendance',
       format: 'csv',
-      status: 'processing',
-      progress: 65,
-      size: '-',
-      recordCount: 156,
-      createdAt: '2025-04-18 10:45:10',
-      userId: '2',
-      userName: '李四',
+      status: 'completed',
+      recordCount: 2890,
+      fileSize: '5.8 MB',
+      createdAt: '2024-12-14 15:20:00',
+      completedAt: '2024-12-14 15:21:30',
     },
     {
-      id: '4',
-      configId: '4',
-      configName: '薪资发放明细',
-      fileName: '薪资发放明细_20250417.xlsx',
-      format: 'excel',
-      status: 'completed',
-      progress: 100,
-      size: '3.2 MB',
-      recordCount: 156,
-      createdAt: '2025-04-17 16:20:08',
-      completedAt: '2025-04-17 16:20:22',
-      userId: '1',
-      userName: '张三',
+      id: '3',
+      name: '绩效报告导出',
+      type: 'performance',
+      format: 'pdf',
+      status: 'processing',
+      recordCount: 45,
+      fileSize: '-',
+      createdAt: '2024-12-15 11:00:00',
     },
   ]);
 
-  // 导出字段配置
-  const [fields] = useState<ExportField[]>([
-    { id: '1', name: '员工编号', key: 'employeeNo', selected: true, order: 1 },
-    { id: '2', name: '姓名', key: 'name', selected: true, order: 2 },
-    { id: '3', name: '部门', key: 'department', selected: true, order: 3 },
-    { id: '4', name: '职位', key: 'position', selected: true, order: 4 },
-    { id: '5', name: '入职日期', key: 'hireDate', selected: true, order: 5 },
-    { id: '6', name: '工龄', key: 'tenure', selected: false, order: 6 },
-    { id: '7', name: '邮箱', key: 'email', selected: false, order: 7 },
-    { id: '8', name: '手机号', key: 'phone', selected: false, order: 8 },
-  ]);
+  const dataTypes = [
+    {
+      id: 'employees',
+      name: '员工数据',
+      icon: Users,
+      desc: '员工基本信息、组织架构、岗位信息',
+      fields: ['姓名', '工号', '部门', '职位', '入职日期', '联系方式', '状态'],
+      count: 156,
+    },
+    {
+      id: 'attendance',
+      name: '考勤数据',
+      icon: Clock,
+      desc: '打卡记录、请假、加班、出差数据',
+      fields: ['员工', '日期', '上班时间', '下班时间', '工时', '状态'],
+      count: 2890,
+    },
+    {
+      id: 'performance',
+      name: '绩效数据',
+      icon: BarChart3,
+      desc: '绩效评分、KPI完成情况、考核结果',
+      fields: ['员工', '考核周期', '得分', '评级', '评价内容'],
+      count: 45,
+    },
+    {
+      id: 'training',
+      name: '培训数据',
+      icon: GraduationCap,
+      desc: '培训课程、学习记录、完成情况',
+      fields: ['员工', '课程名称', '学习进度', '完成时间', '成绩'],
+      count: 78,
+    },
+    {
+      id: 'salary',
+      name: '薪酬数据',
+      icon: DollarSign,
+      desc: '工资明细、奖金、补贴、扣款',
+      fields: ['员工', '月份', '基本工资', '绩效奖金', '实发工资'],
+      count: 156,
+    },
+    {
+      id: 'recruitment',
+      name: '招聘数据',
+      icon: UserPlus,
+      desc: '候选人信息、面试记录、录用情况',
+      fields: ['候选人', '应聘职位', '简历', '面试结果', '状态'],
+      count: 234,
+    },
+  ];
 
-  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const exportFormats = [
+    { id: 'excel', name: 'Excel (.xlsx)', icon: FileSpreadsheet, desc: '适合数据分析和二次编辑' },
+    { id: 'csv', name: 'CSV (.csv)', icon: FileCode, desc: '通用格式，兼容性强' },
+    { id: 'pdf', name: 'PDF (.pdf)', icon: FileText, desc: '适合打印和归档' },
+    { id: 'json', name: 'JSON (.json)', icon: FileJson, desc: '适合系统集成和开发' },
+  ];
 
-  // 文件格式映射
-  const formatMap: Record<FileFormat, { icon: React.ReactNode; label: string; color: string }> = {
-    excel: { icon: <FileSpreadsheet className="h-5 w-5" />, label: 'Excel', color: 'text-green-600' },
-    pdf: { icon: <FileText className="h-5 w-5" />, label: 'PDF', color: 'text-red-600' },
-    csv: { icon: <File className="h-5 w-5" />, label: 'CSV', color: 'text-blue-600' },
-    json: { icon: <FileJson className="h-5 w-5" />, label: 'JSON', color: 'text-purple-600' },
-  };
-
-  // 状态映射
-  const statusMap: Record<ExportStatus, { icon: React.ReactNode; label: string; color: string }> = {
-    pending: { icon: <Clock className="h-4 w-4" />, label: '等待中', color: 'bg-gray-100 text-gray-800' },
-    processing: { icon: <RefreshCw className="h-4 w-4 animate-spin" />, label: '处理中', color: 'bg-blue-100 text-blue-800' },
-    completed: { icon: <CheckCircle className="h-4 w-4" />, label: '已完成', color: 'bg-green-100 text-green-800' },
-    failed: { icon: <AlertCircle className="h-4 w-4" />, label: '失败', color: 'bg-red-100 text-red-800' },
-  };
-
-  // 日期范围映射
-  const dateRangeMap: Record<string, string> = {
-    today: '今天',
-    week: '本周',
-    month: '本月',
-    custom: '自定义',
-  };
-
-  // 处理导出
   const handleExport = async () => {
-    if (!selectedConfig) {
-      toast.error('请选择导出内容');
+    if (!exportType) {
+      toast.error('请选择要导出的数据类型');
       return;
     }
 
-    if (selectedConfig.isPro) {
-      toast.error('此功能为企业版专属功能，请升级订阅');
-      return;
-    }
+    setExporting(true);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    setExporting(false);
 
-    // 创建新任务
     const newTask: ExportTask = {
-      id: `task-${Date.now()}`,
-      configId: selectedConfig.id,
-      configName: selectedConfig.name,
-      fileName: `${selectedConfig.name}_${new Date().toISOString().split('T')[0]}.${selectedFormat}`,
-      format: selectedFormat,
-      status: 'processing',
-      progress: 0,
-      size: '-',
-      recordCount: 0,
+      id: Date.now().toString(),
+      name: `${dataTypes.find(d => d.id === exportType)?.name}导出`,
+      type: exportType,
+      format: exportFormat,
+      status: 'completed',
+      recordCount: Math.floor(Math.random() * 500) + 50,
+      fileSize: `${(Math.random() * 10 + 1).toFixed(1)} MB`,
       createdAt: new Date().toLocaleString('zh-CN'),
-      userId: '1',
-      userName: '张三',
+      completedAt: new Date().toLocaleString('zh-CN'),
     };
 
-    setTasks([newTask, ...tasks]);
-    setExportDialogOpen(false);
-
-    // 模拟导出进度
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
-      setTasks(prev => prev.map(task => 
-        task.id === newTask.id 
-          ? { ...task, progress, recordCount: Math.floor(progress * 1.56) }
-          : task
-      ));
-
-      if (progress >= 100) {
-        clearInterval(interval);
-        setTasks(prev => prev.map(task => 
-          task.id === newTask.id 
-            ? { ...task, status: 'completed', progress: 100, size: '1.2 MB', completedAt: new Date().toLocaleString('zh-CN') }
-            : task
-        ));
-        toast.success('导出成功！');
-      }
-    }, 500);
+    setExportTasks([newTask, ...exportTasks]);
+    setShowExportDialog(false);
+    toast.success('数据导出成功');
   };
 
-  // 下载文件
   const handleDownload = (task: ExportTask) => {
-    toast.success(`开始下载 ${task.fileName}`);
-    // 实际项目中应该调用文件下载API
+    toast.success(`开始下载 ${task.name}`);
+  };
+
+  const getStatusBadge = (status: ExportStatus) => {
+    const variants: Record<ExportStatus, any> = {
+      pending: { label: '等待中', className: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200' },
+      processing: { label: '处理中', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
+      completed: { label: '已完成', className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
+      failed: { label: '失败', className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
+    };
+    const variant = variants[status];
+    return <Badge className={variant.className}>{variant.label}</Badge>;
+  };
+
+  const getFormatIcon = (format: ExportFormat) => {
+    const icons: Record<ExportFormat, any> = {
+      excel: FileSpreadsheet,
+      csv: FileCode,
+      pdf: FileText,
+      json: FileJson,
+    };
+    return icons[format];
   };
 
   return (
-    <div className="space-y-6">
-      {/* 页面标题 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">数据导出</h1>
-          <p className="text-gray-600 mt-2">
-            导出各类报表和数据，支持多种格式
-            <Badge variant="secondary" className="ml-2">高级功能</Badge>
-          </p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* 页面标题 */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
+                <Download className="h-7 w-7 text-white" />
+              </div>
+              数据导出
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              灵活导出各类HR数据，支持多种格式和自定义筛选
+            </p>
+          </div>
+          <Button
+            onClick={() => setShowExportDialog(true)}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            新建导出
+          </Button>
         </div>
-        <Button onClick={() => {
-          setSelectedConfig(null);
-          setExportDialogOpen(true);
-        }}>
-          <Plus className="mr-2 h-4 w-4" />
-          新建导出
-        </Button>
-      </div>
 
-      {/* 功能介绍 */}
-      <Alert>
-        <Zap className="h-4 w-4" />
-        <AlertDescription>
-          数据导出功能支持多种格式的数据导出，可以自定义导出字段和日期范围，导出记录可以随时下载查看。
-          <Badge className="ml-2" variant="secondary">高级报表需企业版</Badge>
-        </AlertDescription>
-      </Alert>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="new">新建导出</TabsTrigger>
-          <TabsTrigger value="history">导出记录</TabsTrigger>
-        </TabsList>
-
-        {/* 新建导出Tab */}
-        <TabsContent value="new" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {configs.map((config) => (
-              <Card 
-                key={config.id} 
-                className="cursor-pointer hover:shadow-lg transition-all border-2"
-                onClick={() => setSelectedConfig(config)}
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        {config.icon}
-                      </div>
-                      <div>
-                        <CardTitle className="text-base">{config.name}</CardTitle>
-                        <CardDescription className="text-xs mt-1">{config.description}</CardDescription>
-                      </div>
+        {/* 数据类型统计 */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {dataTypes.map((type, index) => {
+            const Icon = type.icon;
+            return (
+              <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer">
+                <CardContent className="p-4">
+                  <div className="flex flex-col items-center text-center">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg mb-2">
+                      <Icon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                     </div>
-                    {config.isPro && (
-                      <Badge className="bg-gradient-to-r from-purple-500 to-pink-500">
-                        <Crown className="h-3 w-3 mr-1" />
-                        企业版
-                      </Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="text-sm text-gray-600">支持的格式：</div>
-                    <div className="flex gap-2">
-                      {config.formats.map((format) => (
-                        <Badge key={format} variant="outline" className={formatMap[format].color}>
-                          {formatMap[format].label}
-                        </Badge>
-                      ))}
-                    </div>
-                    <Button
-                      className="w-full mt-2"
-                      variant={selectedConfig?.id === config.id ? 'default' : 'outline'}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedConfig(config);
-                        setExportDialogOpen(true);
-                      }}
-                    >
-                      {config.isPro ? (
-                        <>
-                          <Crown className="mr-2 h-4 w-4" />
-                          升级使用
-                        </>
-                      ) : (
-                        <>
-                          <Download className="mr-2 h-4 w-4" />
-                          立即导出
-                        </>
-                      )}
-                    </Button>
+                    <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-1">
+                      {type.name}
+                    </h3>
+                    <p className="text-lg font-bold text-gray-700 dark:text-gray-300">
+                      {type.count}
+                      <span className="text-xs font-normal text-gray-500 dark:text-gray-400 ml-1">
+                        条
+                      </span>
+                    </p>
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        </TabsContent>
+            );
+          })}
+        </div>
 
-        {/* 导出记录Tab */}
-        <TabsContent value="history" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>导出记录</CardTitle>
-              <CardDescription>查看和下载历史导出文件</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>文件名</TableHead>
-                    <TableHead>格式</TableHead>
-                    <TableHead>大小</TableHead>
-                    <TableHead>记录数</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead>进度</TableHead>
-                    <TableHead>创建人</TableHead>
-                    <TableHead>创建时间</TableHead>
-                    <TableHead>操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tasks.map((task) => (
-                    <TableRow key={task.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <File className="h-4 w-4 text-gray-600" />
-                          <span className="font-medium">{task.fileName}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-sm">
-                          {formatMap[task.format].icon}
-                          <span className={formatMap[task.format].color}>{formatMap[task.format].label}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{task.size}</TableCell>
-                      <TableCell>{task.recordCount} 条</TableCell>
-                      <TableCell>
-                        <Badge className={statusMap[task.status].color}>
-                          {statusMap[task.status].icon}
-                          {statusMap[task.status].label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden max-w-24">
-                            <div
-                              className={`h-full bg-blue-600 transition-all ${
-                                task.status === 'processing' ? 'animate-pulse' : ''
-                              }`}
-                              style={{ width: `${task.progress}%` }}
-                            />
-                          </div>
-                          <span className="text-sm">{task.progress}%</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarFallback className="text-xs">{task.userName.slice(0, 1)}</AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm">{task.userName}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm">{task.createdAt}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          {task.status === 'completed' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDownload(task)}
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* 导出配置弹窗 */}
-      <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>导出配置</DialogTitle>
-            <DialogDescription>
-              配置导出参数并开始导出
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-6">
-            {/* 选择导出内容 */}
-            <div>
-              <Label>导出内容</Label>
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                {configs.map((config) => (
-                  <div
-                    key={config.id}
-                    className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                      selectedConfig?.id === config.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-blue-300'
-                    }`}
-                    onClick={() => setSelectedConfig(config)}
-                  >
-                    <div className="flex items-center gap-2">
-                      {config.icon}
-                      <span className="font-medium">{config.name}</span>
-                      {config.isPro && (
-                        <Badge className="bg-gradient-to-r from-purple-500 to-pink-500">
-                          <Crown className="h-3 w-3" />
-                        </Badge>
+        {/* 导出任务列表 */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>导出历史</CardTitle>
+                <CardDescription>
+                  查看和管理历史导出任务
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm">
+                  <Filter className="h-4 w-4 mr-2" />
+                  筛选
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {exportTasks.map((task, index) => {
+                const FormatIcon = getFormatIcon(task.format);
+                return (
+                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-2 rounded-lg ${
+                        task.status === 'completed' ? 'bg-green-100 dark:bg-green-900/30' :
+                        task.status === 'processing' ? 'bg-blue-100 dark:bg-blue-900/30' :
+                        'bg-gray-100 dark:bg-gray-800'
+                      }`}>
+                        <FormatIcon className={`h-5 w-5 ${
+                          task.status === 'completed' ? 'text-green-600 dark:text-green-400' :
+                          task.status === 'processing' ? 'text-blue-600 dark:text-blue-400' :
+                          'text-gray-400'
+                        }`} />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900 dark:text-white">{task.name}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {task.recordCount} 条记录 · {task.fileSize} · {task.createdAt}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {getStatusBadge(task.status)}
+                      {task.status === 'completed' && (
+                        <Button size="sm" onClick={() => handleDownload(task)}>
+                          <Download className="h-4 w-4 mr-2" />
+                          下载
+                        </Button>
+                      )}
+                      {task.status === 'processing' && (
+                        <Button size="sm" disabled>
+                          <Clock className="h-4 w-4 mr-2 animate-spin" />
+                          处理中
+                        </Button>
                       )}
                     </div>
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
+          </CardContent>
+        </Card>
 
-            {/* 选择文件格式 */}
-            <div>
-              <Label>文件格式</Label>
-              <div className="flex gap-3 mt-2">
-                {selectedConfig?.formats.map((format) => (
-                  <Button
-                    key={format}
-                    variant={selectedFormat === format ? 'default' : 'outline'}
-                    onClick={() => setSelectedFormat(format)}
-                  >
-                    {formatMap[format].icon}
-                    {formatMap[format].label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* 选择日期范围 */}
-            <div>
-              <Label>数据范围</Label>
-              <div className="flex gap-3 mt-2">
-                {(['today', 'week', 'month', 'custom'] as const).map((range) => (
-                  <Button
-                    key={range}
-                    variant={exportDateRange === range ? 'default' : 'outline'}
-                    onClick={() => setExportDateRange(range)}
-                  >
-                    <Calendar className="mr-2 h-4 w-4" />
-                    {dateRangeMap[range]}
-                  </Button>
-                ))}
-              </div>
-              {exportDateRange === 'custom' && (
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  <div>
-                    <Label>开始日期</Label>
-                    <Input
-                      type="date"
-                      value={customStartDate}
-                      onChange={(e) => setCustomStartDate(e.target.value)}
-                      className="mt-2"
-                    />
-                  </div>
-                  <div>
-                    <Label>结束日期</Label>
-                    <Input
-                      type="date"
-                      value={customEndDate}
-                      onChange={(e) => setCustomEndDate(e.target.value)}
-                      className="mt-2"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 选择导出字段 */}
-            <div>
-              <Label>导出字段</Label>
-              <div className="border rounded-lg p-4 mt-2 max-h-48 overflow-y-auto">
-                <div className="space-y-2">
-                  {fields.map((field) => (
-                    <div key={field.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={field.id}
-                        checked={field.selected}
-                        onCheckedChange={(checked) => {
-                          // 实际项目中应该更新字段选择状态
-                        }}
-                      />
-                      <Label htmlFor={field.id} className="cursor-pointer flex-1">
-                        {field.name}
-                      </Label>
+        {/* 导出模板配置 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>导出模板</CardTitle>
+            <CardDescription>
+              管理和自定义导出模板，保存常用配置
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { name: '员工花名册模板', type: 'employees', fields: 8, uses: 45 },
+                { name: '月度考勤报表', type: 'attendance', fields: 12, uses: 32 },
+                { name: '绩效评估报告', type: 'performance', fields: 10, uses: 18 },
+              ].map((template, index) => (
+                <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                        <FileSpreadsheet className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <Badge variant="outline">{template.uses} 次使用</Badge>
                     </div>
-                  ))}
-                </div>
-              </div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                      {template.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {template.fields} 个字段
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
+          </CardContent>
+        </Card>
 
-            {/* 预计记录数 */}
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="flex items-center gap-2 text-sm">
-                <BarChart3 className="h-4 w-4 text-blue-600" />
-                <span className="font-medium">预计导出记录数：</span>
-                <span className="text-blue-600 font-bold">156 条</span>
+        {/* 导出对话框 */}
+        <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>新建导出任务</DialogTitle>
+              <DialogDescription>
+                选择数据类型、导出格式和配置筛选条件
+              </DialogDescription>
+            </DialogHeader>
+
+            <Tabs defaultValue="data" className="mt-4">
+              <TabsList className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                <TabsTrigger value="data">选择数据</TabsTrigger>
+                <TabsTrigger value="format">导出格式</TabsTrigger>
+                <TabsTrigger value="filter">筛选条件</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="data" className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  {dataTypes.map((type) => {
+                    const Icon = type.icon;
+                    return (
+                      <div
+                        key={type.id}
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                          exportType === type.id
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30'
+                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                        }`}
+                        onClick={() => setExportType(type.id)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-lg ${
+                            exportType === type.id
+                              ? 'bg-blue-100 dark:bg-blue-900'
+                              : 'bg-gray-100 dark:bg-gray-800'
+                          }`}>
+                            <Icon className={`h-5 w-5 ${
+                              exportType === type.id
+                                ? 'text-blue-600 dark:text-blue-400'
+                                : 'text-gray-400'
+                            }`} />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                              {type.name}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                              {type.desc}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-500">
+                              {type.count} 条数据
+                            </p>
+                          </div>
+                          {exportType === type.id && (
+                            <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="format" className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  {exportFormats.map((format) => {
+                    const Icon = format.icon;
+                    return (
+                      <div
+                        key={format.id}
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                          exportFormat === format.id
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30'
+                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                        }`}
+                        onClick={() => setExportFormat(format.id as ExportFormat)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-lg ${
+                            exportFormat === format.id
+                              ? 'bg-blue-100 dark:bg-blue-900'
+                              : 'bg-gray-100 dark:bg-gray-800'
+                          }`}>
+                            <Icon className={`h-5 w-5 ${
+                              exportFormat === format.id
+                                ? 'text-blue-600 dark:text-blue-400'
+                                : 'text-gray-400'
+                            }`} />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                              {format.name}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {format.desc}
+                            </p>
+                          </div>
+                          {exportFormat === format.id && (
+                            <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="filter" className="space-y-4 mt-4">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>时间范围</Label>
+                    <Select value={dateRange} onValueChange={setDateRange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="7d">最近 7 天</SelectItem>
+                        <SelectItem value="30d">最近 30 天</SelectItem>
+                        <SelectItem value="90d">最近 90 天</SelectItem>
+                        <SelectItem value="1y">最近 1 年</SelectItem>
+                        <SelectItem value="all">全部时间</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>部门筛选</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="选择部门" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">全部部门</SelectItem>
+                        <SelectItem value="tech">技术部</SelectItem>
+                        <SelectItem value="product">产品部</SelectItem>
+                        <SelectItem value="sales">销售部</SelectItem>
+                        <SelectItem value="hr">人力资源部</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>状态筛选</Label>
+                    <div className="flex flex-wrap gap-3">
+                      <div className="flex items-center gap-2">
+                        <Checkbox id="status-active" />
+                        <label htmlFor="status-active" className="text-sm">在职</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox id="status-leave" />
+                        <label htmlFor="status-leave" className="text-sm">离职</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox id="status-trial" />
+                        <label htmlFor="status-trial" className="text-sm">试用期</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <DialogFooter className="mt-6">
+              <Button variant="outline" onClick={() => setShowExportDialog(false)}>
+                取消
+              </Button>
+              <Button
+                onClick={handleExport}
+                disabled={!exportType || exporting}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              >
+                {exporting ? (
+                  <>
+                    <Clock className="h-4 w-4 mr-2 animate-spin" />
+                    导出中...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    开始导出
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* PRO提示 */}
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border-blue-200 dark:border-blue-800">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <Crown className="h-5 w-5 text-blue-600" />
               </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                  企业级数据导出功能
+                </h3>
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  升级企业版可解锁更多高级功能，包括大数据量导出、定时导出任务、自定义导出模板、数据加密导出等
+                </p>
+              </div>
+              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                立即升级
+              </Button>
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setExportDialogOpen(false)}>
-              取消
-            </Button>
-            <Button onClick={handleExport} disabled={!selectedConfig || selectedConfig.isPro}>
-              {selectedConfig?.isPro ? (
-                <>
-                  <Crown className="mr-2 h-4 w-4" />
-                  升级订阅
-                </>
-              ) : (
-                <>
-                  <Download className="mr-2 h-4 w-4" />
-                  开始导出
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

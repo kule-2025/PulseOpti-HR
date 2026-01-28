@@ -37,7 +37,6 @@ import {
   Calendar,
   MessageSquare,
   FileText,
-  DollarSign,
   Zap,
   Crown,
   ArrowRight,
@@ -48,8 +47,6 @@ import {
   Play,
   Pause,
   Bell,
-  Smartphone,
-  Link,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -57,7 +54,7 @@ type SyncStatus = 'active' | 'paused' | 'error' | 'disconnected';
 type SyncFrequency = 'realtime' | 'hourly' | 'daily' | 'weekly';
 
 interface SyncConfig {
-  appKey: string;
+  appId: string;
   appSecret: string;
   enabled: boolean;
   autoSync: boolean;
@@ -69,7 +66,7 @@ interface SyncConfig {
   syncApprovals: boolean;
 }
 
-export default function DingtalkIntegrationPage() {
+export default function FeishuIntegrationPage() {
   const [loading, setLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -79,7 +76,7 @@ export default function DingtalkIntegrationPage() {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('disconnected');
 
   const [config, setConfig] = useState<SyncConfig>({
-    appKey: '',
+    appId: '',
     appSecret: '',
     enabled: false,
     autoSync: true,
@@ -98,25 +95,25 @@ export default function DingtalkIntegrationPage() {
     { label: '组织架构', value: 12, unit: '个', icon: Building2, color: 'text-blue-600 bg-blue-100 dark:bg-blue-900' },
     { label: '部门数据', value: 45, unit: '个', icon: Users, color: 'text-green-600 bg-green-100 dark:bg-green-900' },
     { label: '员工数据', value: 156, unit: '人', icon: UserPlus, color: 'text-purple-600 bg-purple-100 dark:bg-purple-900' },
-    { label: '考勤记录', value: 3240, unit: '条', icon: Clock, color: 'text-orange-600 bg-orange-100 dark:bg-orange-900' },
+    { label: '考勤记录', value: 2890, unit: '条', icon: Clock, color: 'text-orange-600 bg-orange-100 dark:bg-orange-900' },
   ];
 
   const integrationSteps = [
     {
-      title: '创建钉钉应用',
-      description: '在钉钉开放平台创建H5微应用',
+      title: '创建飞书应用',
+      description: '在飞书开放平台创建自建应用',
       icon: Plug,
       completed: false,
     },
     {
       title: '获取应用凭证',
-      description: '获取AppKey和AppSecret',
+      description: '获取App ID和App Secret',
       icon: Key,
       completed: false,
     },
     {
       title: '配置权限',
-      description: '授予通讯录、考勤、审批等权限',
+      description: '授予组织架构、通讯录、考勤等权限',
       icon: Shield,
       completed: false,
     },
@@ -129,9 +126,10 @@ export default function DingtalkIntegrationPage() {
   ];
 
   useEffect(() => {
+    // 模拟加载
     setTimeout(() => {
-      setLastSyncTime('2024-12-15 09:15:00');
-      setNextSyncTime('2024-12-16 03:00:00');
+      setLastSyncTime('2024-12-15 10:30:00');
+      setNextSyncTime('2024-12-16 02:00:00');
     }, 500);
   }, []);
 
@@ -141,7 +139,7 @@ export default function DingtalkIntegrationPage() {
     setConnecting(false);
     setConnectionStatus('connected');
     setSyncStatus('active');
-    toast.success('钉钉集成连接成功');
+    toast.success('飞书集成连接成功');
     setShowConfigDialog(false);
   };
 
@@ -151,7 +149,7 @@ export default function DingtalkIntegrationPage() {
     setLoading(false);
     setConnectionStatus('disconnected');
     setSyncStatus('disconnected');
-    toast.success('已断开钉钉集成');
+    toast.success('已断开飞书集成');
   };
 
   const handleSyncNow = async () => {
@@ -166,10 +164,10 @@ export default function DingtalkIntegrationPage() {
     setLoading(true);
     await new Promise(resolve => setTimeout(resolve, 1500));
     setLoading(false);
-    if (config.appKey && config.appSecret) {
+    if (config.appId && config.appSecret) {
       toast.success('连接测试成功');
     } else {
-      toast.error('请先配置AppKey和AppSecret');
+      toast.error('请先配置App ID和App Secret');
     }
   };
 
@@ -192,13 +190,13 @@ export default function DingtalkIntegrationPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
-                <Smartphone className="h-7 w-7 text-white" />
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg">
+                <Building2 className="h-7 w-7 text-white" />
               </div>
-              钉钉集成
+              飞书集成
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              与钉钉无缝对接，实现数据自动同步和流程协同
+              与飞书无缝对接，实现数据自动同步和流程协同
             </p>
           </div>
           <div className="flex gap-2">
@@ -229,7 +227,7 @@ export default function DingtalkIntegrationPage() {
             {connectionStatus !== 'connected' && (
               <Button
                 onClick={() => setShowConfigDialog(true)}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
               >
                 <Plug className="h-4 w-4 mr-2" />
                 开始集成
@@ -252,7 +250,7 @@ export default function DingtalkIntegrationPage() {
                   集成状态
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  当前钉钉集成连接状态
+                  当前飞书集成连接状态
                 </CardDescription>
               </div>
               {getStatusBadge(connectionStatus)}
@@ -304,13 +302,13 @@ export default function DingtalkIntegrationPage() {
 
             {connectionStatus !== 'connected' && (
               <div className="text-center py-8">
-                <Smartphone className="h-16 w-16 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
+                <Building2 className="h-16 w-16 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  还未连接钉钉，点击"开始集成"按钮开始配置
+                  还未连接飞书，点击"开始集成"按钮开始配置
                 </p>
                 <Button
                   onClick={() => setShowConfigDialog(true)}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
                 >
                   <Plug className="h-4 w-4 mr-2" />
                   开始集成
@@ -325,7 +323,7 @@ export default function DingtalkIntegrationPage() {
           <CardHeader>
             <CardTitle>集成步骤</CardTitle>
             <CardDescription>
-              按照以下步骤完成钉钉集成配置
+              按照以下步骤完成飞书集成配置
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -383,7 +381,7 @@ export default function DingtalkIntegrationPage() {
               <CardHeader>
                 <CardTitle>同步数据类型</CardTitle>
                 <CardDescription>
-                  选择需要从钉钉同步到本系统的数据类型
+                  选择需要从飞书同步到本系统的数据类型
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -394,7 +392,7 @@ export default function DingtalkIntegrationPage() {
                     </div>
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">组织架构</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">同步钉钉组织架构信息</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">同步飞书组织架构信息</p>
                     </div>
                   </div>
                   <Switch
@@ -411,7 +409,7 @@ export default function DingtalkIntegrationPage() {
                     </div>
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">部门信息</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">同步钉钉部门结构和人员</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">同步飞书部门结构和人员</p>
                     </div>
                   </div>
                   <Switch
@@ -428,7 +426,7 @@ export default function DingtalkIntegrationPage() {
                     </div>
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">员工信息</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">同步钉钉员工基本信息</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">同步飞书员工基本信息</p>
                     </div>
                   </div>
                   <Switch
@@ -445,7 +443,7 @@ export default function DingtalkIntegrationPage() {
                     </div>
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">考勤数据</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">同步钉钉考勤打卡记录</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">同步飞书考勤打卡记录</p>
                     </div>
                   </div>
                   <Switch
@@ -462,7 +460,7 @@ export default function DingtalkIntegrationPage() {
                     </div>
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">审批流程</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">同步钉钉审批记录</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">同步飞书审批记录</p>
                     </div>
                   </div>
                   <Switch
@@ -524,9 +522,9 @@ export default function DingtalkIntegrationPage() {
           <TabsContent value="notifications">
             <Card>
               <CardHeader>
-                <CardTitle>钉钉消息通知</CardTitle>
+                <CardTitle>飞书消息通知</CardTitle>
                 <CardDescription>
-                  配置系统事件推送到钉钉群聊或个人
+                  配置系统事件推送到飞书群聊或个人
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -536,7 +534,6 @@ export default function DingtalkIntegrationPage() {
                     { name: '审批流程通知', icon: FileText, desc: '审批申请和结果通知' },
                     { name: '考勤异常提醒', icon: Clock, desc: '考勤异常时发送提醒' },
                     { name: '生日祝福', icon: Calendar, desc: '员工生日自动发送祝福' },
-                    { name: '工资条推送', icon: DollarSign, desc: '每月工资条自动推送' },
                   ].map((item, index) => {
                     const Icon = item.icon;
                     return (
@@ -565,17 +562,16 @@ export default function DingtalkIntegrationPage() {
               <CardHeader>
                 <CardTitle>审批流程集成</CardTitle>
                 <CardDescription>
-                  集成钉钉审批流程，实现双向同步
+                  集成飞书审批流程，实现双向同步
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {[
-                    { name: '请假审批', icon: Calendar, count: 52, sync: true },
-                    { name: '报销审批', icon: FileText, count: 38, sync: true },
-                    { name: '出差审批', icon: Clock, count: 21, sync: false },
-                    { name: '加班审批', icon: Clock, count: 33, sync: true },
-                    { name: '物品领用', icon: Package, count: 15, sync: true },
+                    { name: '请假审批', icon: Calendar, count: 45, sync: true },
+                    { name: '报销审批', icon: FileText, count: 32, sync: true },
+                    { name: '出差审批', icon: Clock, count: 18, sync: false },
+                    { name: '加班审批', icon: Clock, count: 28, sync: true },
                   ].map((item, index) => {
                     const Icon = item.icon;
                     return (
@@ -612,9 +608,9 @@ export default function DingtalkIntegrationPage() {
         <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>配置钉钉集成</DialogTitle>
+              <DialogTitle>配置飞书集成</DialogTitle>
               <DialogDescription>
-                输入钉钉应用凭证以建立连接
+                输入飞书应用凭证以建立连接
               </DialogDescription>
             </DialogHeader>
 
@@ -627,9 +623,9 @@ export default function DingtalkIntegrationPage() {
                       获取应用凭证
                     </h3>
                     <p className="text-sm text-blue-800 dark:text-blue-200">
-                      1. 访问<a href="https://open.dingtalk.com" target="_blank" rel="noopener noreferrer" className="underline mx-1">钉钉开放平台</a><br />
-                      2. 创建H5微应用或选择已有应用<br />
-                      3. 在"凭证与基础信息"中获取AppKey和AppSecret
+                      1. 访问<a href="https://open.feishu.cn" target="_blank" rel="noopener noreferrer" className="underline mx-1">飞书开放平台</a><br />
+                      2. 创建应用或选择已有应用<br />
+                      3. 在"凭证与基础信息"中获取App ID和App Secret
                     </p>
                   </div>
                 </div>
@@ -637,17 +633,17 @@ export default function DingtalkIntegrationPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="appKey">AppKey *</Label>
+                  <Label htmlFor="appId">App ID *</Label>
                   <Input
-                    id="appKey"
-                    value={config.appKey}
-                    onChange={(e) => setConfig({ ...config, appKey: e.target.value })}
-                    placeholder="dingxxxxxxxxxxxxxxxx"
+                    id="appId"
+                    value={config.appId}
+                    onChange={(e) => setConfig({ ...config, appId: e.target.value })}
+                    placeholder="cli_xxxxxxxxxxxxxxxx"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="appSecret">AppSecret *</Label>
+                  <Label htmlFor="appSecret">App Secret *</Label>
                   <Input
                     id="appSecret"
                     type="password"
@@ -665,8 +661,8 @@ export default function DingtalkIntegrationPage() {
                 </Button>
                 <Button
                   onClick={handleConnect}
-                  disabled={connecting || !config.appKey || !config.appSecret}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 flex-1"
+                  disabled={connecting || !config.appId || !config.appSecret}
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 flex-1"
                 >
                   {connecting ? (
                     <>
@@ -692,7 +688,7 @@ export default function DingtalkIntegrationPage() {
         </Dialog>
 
         {/* PRO提示 */}
-        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 dark:border-blue-800">
+        <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950 border-blue-200 dark:border-blue-800">
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
               <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
@@ -706,7 +702,7 @@ export default function DingtalkIntegrationPage() {
                   升级企业版可解锁更多高级功能，包括双向数据同步、自定义字段映射、历史数据回溯、多租户管理等
                 </p>
               </div>
-              <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+              <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
                 立即升级
               </Button>
             </div>
@@ -714,27 +710,5 @@ export default function DingtalkIntegrationPage() {
         </Card>
       </div>
     </div>
-  );
-}
-
-function Package(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m7.5 4.27 9 5.15" />
-      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-      <path d="m3.3 7 8.7 5 8.7-5" />
-      <path d="M12 22V12" />
-    </svg>
   );
 }
