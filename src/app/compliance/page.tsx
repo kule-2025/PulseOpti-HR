@@ -31,6 +31,11 @@ import {
   BookOpen,
   TrendingUp,
   TrendingDown,
+  Sparkles,
+  Crown,
+  FileCheck,
+  Gavel,
+  FileSignature,
 } from 'lucide-react';
 
 // 劳动合同数据
@@ -564,49 +569,222 @@ export default function CompliancePage() {
           </Card>
         </TabsContent>
 
-        {/* 法律知识 */}
+        {/* 法律知识库 - 深度开发 PRO 功能 */}
         <TabsContent value="legal" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>法律知识库</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-purple-600" />
+                AI 法律知识库
+                <Badge className="bg-gradient-to-r from-purple-600 to-pink-600">PRO</Badge>
+              </CardTitle>
               <CardDescription>
-                劳动法规查询，提供专业法律支持
+                智能检索劳动法规，提供专业法律支持
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[
-                  { title: '劳动合同法', desc: '劳动合同的订立、履行、变更、解除和终止', icon: FileSignature },
-                  { title: '社会保险法', desc: '养老保险、医疗保险、失业保险、工伤保险、生育保险', icon: Shield },
-                  { title: '工资支付规定', desc: '工资支付标准、支付时间、加班工资计算', icon: DollarSign },
-                  { title: '工时管理规定', desc: '标准工时、综合工时、不定时工时制度', icon: Clock },
-                  { title: '女职工保护', desc: '孕期、产期、哺乳期特殊保护规定', icon: UserPlus },
-                  { title: '工伤认定', desc: '工伤认定范围、认定程序、工伤保险待遇', icon: AlertTriangle },
-                ].map((item, index) => {
-                  const Icon = item.icon;
-                  return (
+              {/* AI 智能检索 */}
+              <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-lg border border-purple-200 dark:border-purple-700">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="h-5 w-5 text-purple-600" />
+                  <span className="font-semibold text-gray-900 dark:text-white">AI 智能检索</span>
+                  <Badge variant="outline" className="border-purple-600 text-purple-600">AI</Badge>
+                </div>
+                <div className="relative">
+                  <Input
+                    placeholder="请输入法律问题，例如：'试用期最长时间'、'加班工资如何计算'..."
+                    className="pr-12"
+                  />
+                  <Button
+                    size="sm"
+                    className="absolute right-1 top-1 bg-gradient-to-r from-purple-600 to-pink-600"
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* 劳动合同模板库 */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <FileCheck className="h-5 w-5 text-blue-600" />
+                    劳动合同模板库
+                    <Badge className="bg-gradient-to-r from-blue-600 to-cyan-600">PRO</Badge>
+                  </h3>
+                  <Button variant="outline" size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    添加模板
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[
+                    {
+                      name: '标准劳动合同',
+                      desc: '适用于全日制员工',
+                      category: '通用',
+                      usage: 156,
+                      features: ['固定期限', '无固定期限', '试用期条款'],
+                    },
+                    {
+                      name: '实习协议',
+                      desc: '适用于在校学生',
+                      category: '实习',
+                      usage: 89,
+                      features: ['实习期限', '实习报酬', '意外保险'],
+                    },
+                    {
+                      name: '劳务派遣协议',
+                      desc: '适用于劳务派遣用工',
+                      category: '特殊',
+                      usage: 45,
+                      features: ['派遣单位', '用工单位', '责任划分'],
+                    },
+                    {
+                      name: '兼职合同',
+                      desc: '适用于非全日制用工',
+                      category: '特殊',
+                      usage: 67,
+                      features: ['工作时间', '报酬结算', '社会保险'],
+                    },
+                    {
+                      name: '保密协议',
+                      desc: '保护商业秘密',
+                      category: '专项',
+                      usage: 134,
+                      features: ['保密范围', '保密期限', '违约责任'],
+                    },
+                    {
+                      name: '竞业限制协议',
+                      desc: '限制竞业行为',
+                      category: '专项',
+                      usage: 78,
+                      features: ['竞业范围', '限制期限', '补偿标准'],
+                    },
+                  ].map((template, index) => (
                     <Card
                       key={index}
-                      className="hover:shadow-lg transition-shadow cursor-pointer"
+                      className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-blue-400"
                     >
                       <CardHeader>
-                        <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center mb-3">
-                          <Icon className="h-6 w-6 text-white" />
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge variant="outline">{template.category}</Badge>
+                          <span className="text-xs text-gray-600 dark:text-gray-400">
+                            使用 {template.usage} 次
+                          </span>
                         </div>
-                        <CardTitle className="text-base">{item.title}</CardTitle>
+                        <CardTitle className="text-base">{template.name}</CardTitle>
                         <CardDescription className="text-sm">
-                          {item.desc}
+                          {template.desc}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
+                        <div className="space-y-2 mb-4">
+                          {template.features.map((feature, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
+                            >
+                              <CheckCircle className="h-3 w-3 text-green-600" />
+                              {feature}
+                            </div>
+                          ))}
+                        </div>
                         <Button variant="ghost" size="sm" className="w-full">
-                          <BookOpen className="h-4 w-4 mr-2" />
-                          查看详情
+                          <FileCheck className="h-4 w-4 mr-2" />
+                          使用模板
                         </Button>
                       </CardContent>
                     </Card>
-                  );
-                })}
+                  ))}
+                </div>
+              </div>
+
+              {/* 合规性报告自动生成 */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Scale className="h-5 w-5 text-green-600" />
+                    合规性报告
+                    <Badge className="bg-gradient-to-r from-green-600 to-emerald-600">PRO</Badge>
+                  </h3>
+                  <Button size="sm" className="bg-gradient-to-r from-green-600 to-emerald-600">
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    AI 自动生成
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    {
+                      name: '月度合规报告',
+                      desc: '每月自动生成用工合规性报告',
+                      type: '月度',
+                      lastGenerated: '2024-01-15',
+                      items: ['合同到期提醒', '社保缴纳检查', '加班时间合规性'],
+                    },
+                    {
+                      name: '季度风险评估报告',
+                      desc: '每季度深度分析用工风险',
+                      type: '季度',
+                      lastGenerated: '2024-01-10',
+                      items: ['高风险识别', '改进建议', '预防措施'],
+                    },
+                    {
+                      name: '年度审计报告',
+                      desc: '年度用工合规性审计',
+                      type: '年度',
+                      lastGenerated: '2024-01-05',
+                      items: ['全面合规检查', '问题清单', '整改方案'],
+                    },
+                    {
+                      name: '专项合规报告',
+                      desc: '针对特定问题的深度分析',
+                      type: '专项',
+                      lastGenerated: '2024-01-08',
+                      items: ['加班费合规性', '社保缴费准确性', '个税代扣代缴'],
+                    },
+                  ].map((report, index) => (
+                    <Card
+                      key={index}
+                      className="hover:shadow-lg transition-shadow"
+                    >
+                      <CardHeader>
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge variant="outline">{report.type}</Badge>
+                          <span className="text-xs text-gray-600 dark:text-gray-400">
+                            {report.lastGenerated} 生成
+                          </span>
+                        </div>
+                        <CardTitle className="text-base">{report.name}</CardTitle>
+                        <CardDescription className="text-sm">
+                          {report.desc}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2 mb-4">
+                          {report.items.map((item, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
+                            >
+                              <CheckCircle className="h-3 w-3 text-green-600" />
+                              {item}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" className="flex-1">
+                            <Eye className="h-4 w-4 mr-2" />
+                            查看
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>

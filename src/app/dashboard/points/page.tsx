@@ -308,11 +308,21 @@ export default function PointsPage() {
 
       {/* 主要内容 */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">积分总览</TabsTrigger>
           <TabsTrigger value="records">积分明细</TabsTrigger>
           <TabsTrigger value="exchange">兑换商城</TabsTrigger>
           <TabsTrigger value="rules">积分规则</TabsTrigger>
+          <TabsTrigger value="gamification">
+            <Trophy className="h-4 w-4 mr-1" />
+            游戏化
+            <Badge className="ml-1 bg-gradient-to-r from-purple-600 to-pink-600 scale-75">PRO</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="campaigns">
+            <Sparkles className="h-4 w-4 mr-1" />
+            营销活动
+            <Badge className="ml-1 bg-gradient-to-r from-purple-600 to-pink-600 scale-75">PRO</Badge>
+          </TabsTrigger>
         </TabsList>
 
         {/* 积分总览 */}
@@ -669,6 +679,378 @@ export default function PointsPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* 游戏化 - PRO 功能 */}
+        <TabsContent value="gamification" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="h-5 w-5 text-yellow-600" />
+                积分游戏化
+                <Badge className="bg-gradient-to-r from-yellow-600 to-orange-600">PRO</Badge>
+              </CardTitle>
+              <CardDescription>
+                排行榜、成就系统、等级徽章，提升员工参与度
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* 等级系统 */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Medal className="h-5 w-5 text-purple-600" />
+                  积分等级系统
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  {[
+                    { level: 1, name: '青铜', icon: '🥉', range: '0-999', color: 'from-orange-600 to-yellow-600', perks: ['基础奖励'] },
+                    { level: 2, name: '白银', icon: '🥈', range: '1000-2999', color: 'from-gray-400 to-gray-500', perks: ['额外10%积分', '专属徽章'] },
+                    { level: 3, name: '黄金', icon: '🥇', range: '3000-5999', color: 'from-yellow-500 to-amber-600', perks: ['额外20%积分', '高级礼品', '优先兑换'] },
+                    { level: 4, name: '铂金', icon: '💎', range: '6000-9999', color: 'from-blue-500 to-cyan-600', perks: ['额外30%积分', 'VIP专属礼品', '生日加倍'] },
+                    { level: 5, name: '钻石', icon: '👑', range: '10000+', color: 'from-purple-600 to-pink-600', perks: ['额外50%积分', '独家礼品', '定制奖励'] },
+                  ].map((level, index) => (
+                    <Card
+                      key={index}
+                      className={`hover:shadow-lg transition-all cursor-pointer ${
+                        level.name === '黄金' ? 'border-2 border-yellow-400' : ''
+                      }`}
+                    >
+                      <CardHeader>
+                        <div className={`h-12 w-12 rounded-full bg-gradient-to-br ${level.color} flex items-center justify-center text-2xl mb-3 mx-auto`}>
+                          {level.icon}
+                        </div>
+                        <CardTitle className="text-center text-base">{level.name}等级</CardTitle>
+                        <CardDescription className="text-center text-sm">
+                          {level.range} 积分
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {level.perks.map((perk, i) => (
+                            <div key={i} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                              <CheckCircle className="h-3 w-3 text-green-600" />
+                              {perk}
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {/* 成就系统 */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Award className="h-5 w-5 text-green-600" />
+                  成就系统
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[
+                    {
+                      name: '首次完成',
+                      description: '首次完成项目获得积分',
+                      icon: '🎯',
+                      points: 100,
+                      unlocked: 156,
+                    },
+                    {
+                      name: '连续打卡',
+                      description: '连续打卡7天',
+                      icon: '🔥',
+                      points: 200,
+                      unlocked: 89,
+                    },
+                    {
+                      name: '销售冠军',
+                      description: '月度销售排名前三',
+                      icon: '🏆',
+                      points: 500,
+                      unlocked: 34,
+                    },
+                    {
+                      name: '团队之星',
+                      description: '获得5次团队贡献积分',
+                      icon: '⭐',
+                      points: 300,
+                      unlocked: 67,
+                    },
+                    {
+                      name: '学习达人',
+                      description: '完成10个培训课程',
+                      icon: '📚',
+                      points: 400,
+                      unlocked: 45,
+                    },
+                    {
+                      name: '全能王者',
+                      description: '获得所有成就',
+                      icon: '👑',
+                      points: 2000,
+                      unlocked: 5,
+                    },
+                  ].map((achievement, index) => (
+                    <Card
+                      key={index}
+                      className={`hover:shadow-lg transition-shadow ${
+                        achievement.name === '全能王者' ? 'border-2 border-purple-400' : ''
+                      }`}
+                    >
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className="text-4xl mb-2">{achievement.icon}</div>
+                          <Badge variant="outline">
+                            {achievement.unlocked} 人解锁
+                          </Badge>
+                        </div>
+                        <CardTitle className="text-base">{achievement.name}</CardTitle>
+                        <CardDescription className="text-sm">
+                          {achievement.description}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            奖励:
+                          </span>
+                          <span className="text-lg font-bold text-purple-600">
+                            +{achievement.points} 积分
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {/* 徽章系统 */}
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Diamond className="h-5 w-5 text-blue-600" />
+                  徽章系统
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {[
+                    { name: '新手上路', icon: '🌱', color: 'bg-green-100 text-green-800' },
+                    { name: '项目达人', icon: '🚀', color: 'bg-blue-100 text-blue-800' },
+                    { name: '销售之星', icon: '💰', color: 'bg-yellow-100 text-yellow-800' },
+                    { name: '团队贡献', icon: '🤝', color: 'bg-purple-100 text-purple-800' },
+                    { name: '学习先锋', icon: '📖', color: 'bg-pink-100 text-pink-800' },
+                    { name: '出勤达人', icon: '⏰', color: 'bg-orange-100 text-orange-800' },
+                    { name: '创新先锋', icon: '💡', color: 'bg-cyan-100 text-cyan-800' },
+                    { name: '忠诚卫士', icon: '🛡️', color: 'bg-red-100 text-red-800' },
+                  ].map((badge, index) => (
+                    <Badge
+                      key={index}
+                      variant="secondary"
+                      className={`px-3 py-1.5 text-sm flex items-center gap-1 ${badge.color}`}
+                    >
+                      <span className="text-base">{badge.icon}</span>
+                      {badge.name}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* 营销活动 - PRO 功能 */}
+        <TabsContent value="campaigns" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-pink-600" />
+                积分营销活动
+                <Badge className="bg-gradient-to-r from-pink-600 to-purple-600">PRO</Badge>
+              </CardTitle>
+              <CardDescription>
+                积分抽奖、积分加倍、限时活动，提升员工参与度
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* 活动列表 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {[
+                  {
+                    id: 1,
+                    name: '积分抽奖活动',
+                    description: '使用100积分参与抽奖，赢取丰厚奖励',
+                    type: 'lottery',
+                    status: 'active',
+                    startDate: '2025-01-20',
+                    endDate: '2025-02-20',
+                    participants: 234,
+                    prizes: ['iPhone 15', 'iPad Air', '京东卡500元', '星巴克券'],
+                    color: 'from-purple-600 to-pink-600',
+                  },
+                  {
+                    id: 2,
+                    name: '积分加倍周',
+                    description: '本周所有积分活动获得双倍积分',
+                    type: 'bonus',
+                    status: 'active',
+                    startDate: '2025-01-25',
+                    endDate: '2025-02-01',
+                    participants: 156,
+                    multiplier: '2倍',
+                    color: 'from-yellow-600 to-orange-600',
+                  },
+                  {
+                    id: 3,
+                    name: '限时兑换',
+                    description: '精选商品限时5折兑换',
+                    type: 'discount',
+                    status: 'scheduled',
+                    startDate: '2025-02-05',
+                    endDate: '2025-02-10',
+                    participants: 0,
+                    discount: '5折',
+                    color: 'from-green-600 to-emerald-600',
+                  },
+                  {
+                    id: 4,
+                    name: '新年积分狂欢',
+                    description: '新年特惠，积分兑换立减30%',
+                    type: 'special',
+                    status: 'ended',
+                    startDate: '2025-01-01',
+                    endDate: '2025-01-15',
+                    participants: 456,
+                    discount: '立减30%',
+                    color: 'from-red-600 to-pink-600',
+                  },
+                ].map((campaign, index) => (
+                  <Card
+                    key={index}
+                    className={`hover:shadow-lg transition-shadow ${
+                      campaign.status === 'active' ? 'border-2 border-green-400' : ''
+                    }`}
+                  >
+                    <CardHeader>
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge
+                          variant={
+                            campaign.status === 'active'
+                              ? 'default'
+                              : campaign.status === 'scheduled'
+                              ? 'secondary'
+                              : 'outline'
+                          }
+                          className={
+                            campaign.status === 'active'
+                              ? 'bg-green-600'
+                              : campaign.status === 'scheduled'
+                              ? 'bg-yellow-600'
+                              : ''
+                          }
+                        >
+                          {campaign.status === 'active'
+                            ? '进行中'
+                            : campaign.status === 'scheduled'
+                            ? '即将开始'
+                            : '已结束'}
+                        </Badge>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          {campaign.startDate} - {campaign.endDate}
+                        </span>
+                      </div>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        {campaign.type === 'lottery' && (
+                          <Gift className="h-4 w-4 text-purple-600" />
+                        )}
+                        {campaign.type === 'bonus' && (
+                          <Zap className="h-4 w-4 text-yellow-600" />
+                        )}
+                        {campaign.type === 'discount' && (
+                          <Flame className="h-4 w-4 text-green-600" />
+                        )}
+                        {campaign.type === 'special' && (
+                          <Sparkles className="h-4 w-4 text-red-600" />
+                        )}
+                        {campaign.name}
+                      </CardTitle>
+                      <CardDescription className="text-sm">
+                        {campaign.description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">
+                            参与人数
+                          </span>
+                          <span className="font-medium">
+                            {campaign.participants} 人
+                          </span>
+                        </div>
+                        {campaign.prizes && (
+                          <div>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              奖品:
+                            </span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {campaign.prizes.map((prize, i) => (
+                                <Badge
+                                  key={i}
+                                  variant="outline"
+                                  className="text-xs"
+                                >
+                                  {prize}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {campaign.multiplier && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Zap className="h-4 w-4 text-yellow-600" />
+                            <span className="font-bold text-yellow-600">
+                              {campaign.multiplier}
+                            </span>
+                          </div>
+                        )}
+                        {campaign.discount && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Flame className="h-4 w-4 text-green-600" />
+                            <span className="font-bold text-green-600">
+                              {campaign.discount}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2 mt-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          查看详情
+                        </Button>
+                        {campaign.status === 'active' && (
+                          <Button
+                            size="sm"
+                            className={`bg-gradient-to-r ${campaign.color}`}
+                          >
+                            参与活动
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* 创建活动按钮 */}
+              <div className="flex justify-center">
+                <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                  <Plus className="h-4 w-4 mr-2" />
+                  创建新活动
+                </Button>
               </div>
             </CardContent>
           </Card>

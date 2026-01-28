@@ -36,6 +36,14 @@ import {
   HardDrive,
   Share2,
   Mail,
+  Lock,
+  Timer,
+  ShieldCheck,
+  Play,
+  Pause,
+  RotateCw,
+  Bell,
+  Sparkles,
 } from 'lucide-react';
 
 // 导出统计数据
@@ -290,10 +298,20 @@ export default function DataExportPage() {
 
       {/* 主要内容 */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="templates">导出模板</TabsTrigger>
           <TabsTrigger value="custom">自定义导出</TabsTrigger>
           <TabsTrigger value="history">导出历史</TabsTrigger>
+          <TabsTrigger value="scheduled">
+            <Timer className="h-4 w-4 mr-1" />
+            定时任务
+            <Badge className="ml-1 bg-gradient-to-r from-purple-600 to-pink-600 scale-75">PRO</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="security">
+            <Lock className="h-4 w-4 mr-1" />
+            数据加密
+            <Badge className="ml-1 bg-gradient-to-r from-purple-600 to-pink-600 scale-75">PRO</Badge>
+          </TabsTrigger>
         </TabsList>
 
         {/* 导出模板 */}
@@ -565,6 +583,359 @@ export default function DataExportPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* 定时任务 - PRO 功能 */}
+        <TabsContent value="scheduled" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Timer className="h-5 w-5 text-blue-600" />
+                    定时导出任务
+                    <Badge className="bg-gradient-to-r from-blue-600 to-cyan-600">PRO</Badge>
+                  </CardTitle>
+                  <CardDescription>
+                    自动定时导出数据，定时发送邮件
+                  </CardDescription>
+                </div>
+                <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                  <Plus className="h-4 w-4 mr-2" />
+                  创建定时任务
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  {
+                    id: 1,
+                    name: '月度员工名单导出',
+                    template: '员工名单',
+                    format: 'Excel',
+                    schedule: '每月1日 09:00',
+                    frequency: '每月',
+                    status: 'active',
+                    nextRun: '2025-02-01 09:00',
+                    recipients: ['hr@example.com', 'manager@example.com'],
+                    lastRun: '2025-01-01 09:00',
+                  },
+                  {
+                    id: 2,
+                    name: '月度薪资明细导出',
+                    template: '薪资明细',
+                    format: 'Excel',
+                    schedule: '每月5日 10:00',
+                    frequency: '每月',
+                    status: 'active',
+                    nextRun: '2025-02-05 10:00',
+                    recipients: ['finance@example.com', 'hr@example.com'],
+                    lastRun: '2025-01-05 10:00',
+                  },
+                  {
+                    id: 3,
+                    name: '周考勤汇总导出',
+                    template: '考勤汇总',
+                    format: 'CSV',
+                    schedule: '每周五 17:00',
+                    frequency: '每周',
+                    status: 'paused',
+                    nextRun: '2025-01-31 17:00',
+                    recipients: ['hr@example.com'],
+                    lastRun: '2025-01-17 17:00',
+                  },
+                  {
+                    id: 4,
+                    name: '季度绩效数据导出',
+                    template: '绩效数据',
+                    format: 'PDF',
+                    schedule: '每季度末 16:00',
+                    frequency: '每季度',
+                    status: 'active',
+                    nextRun: '2025-03-31 16:00',
+                    recipients: ['hr@example.com', 'ceo@example.com'],
+                    lastRun: '2024-12-31 16:00',
+                  },
+                ].map((task, index) => (
+                  <Card
+                    key={index}
+                    className={`hover:shadow-lg transition-shadow ${
+                      task.status === 'active' ? 'border-2 border-green-400' : 'opacity-70'
+                    }`}
+                  >
+                    <CardHeader>
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge
+                          variant={task.status === 'active' ? 'default' : 'secondary'}
+                          className={task.status === 'active' ? 'bg-green-600' : ''}
+                        >
+                          {task.status === 'active' ? '运行中' : '已暂停'}
+                        </Badge>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          {task.frequency}
+                        </span>
+                      </div>
+                      <CardTitle className="text-base">{task.name}</CardTitle>
+                      <CardDescription className="text-sm">
+                        {task.template} · {task.format}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                          <Clock className="h-4 w-4" />
+                          <span>定时: {task.schedule}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                          <Play className="h-4 w-4" />
+                          <span>下次运行: {task.nextRun}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                          <RotateCw className="h-4 w-4" />
+                          <span>上次运行: {task.lastRun}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                          <Mail className="h-4 w-4" />
+                          <span>发送给: {task.recipients.length} 人</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          查看详情
+                        </Button>
+                        {task.status === 'active' ? (
+                          <Button variant="outline" size="sm">
+                            <Pause className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                            <Play className="h-4 w-4 mr-2" />
+                            启动
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* 数据加密 - PRO 功能 */}
+        <TabsContent value="security" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lock className="h-5 w-5 text-green-600" />
+                数据加密
+                <Badge className="bg-gradient-to-r from-green-600 to-emerald-600">PRO</Badge>
+              </CardTitle>
+              <CardDescription>
+                导出数据加密，确保数据安全
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* 加密设置 */}
+              <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg border border-green-200 dark:border-green-700">
+                <div className="flex items-center gap-2 mb-3">
+                  <ShieldCheck className="h-5 w-5 text-green-600" />
+                  <span className="font-semibold text-gray-900 dark:text-white">数据加密保护</span>
+                  <Badge variant="outline" className="border-green-600 text-green-600">已启用</Badge>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  所有导出数据都会自动加密，确保数据在传输和存储过程中的安全性。
+                </p>
+              </div>
+
+              {/* 加密方式 */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Lock className="h-5 w-5 text-purple-600" />
+                  支持的加密方式
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    {
+                      name: 'AES-256 加密',
+                      description: '军用级加密标准，最高安全级别',
+                      icon: ShieldCheck,
+                      color: 'from-purple-600 to-pink-600',
+                      recommended: true,
+                    },
+                    {
+                      name: 'RSA 加密',
+                      description: '非对称加密，适合传输敏感数据',
+                      icon: Lock,
+                      color: 'from-blue-600 to-cyan-600',
+                      recommended: false,
+                    },
+                    {
+                      name: 'ZIP 密码保护',
+                      description: '简单快捷，兼容性好',
+                      icon: FileSpreadsheet,
+                      color: 'from-green-600 to-emerald-600',
+                      recommended: false,
+                    },
+                  ].map((method, index) => {
+                    const Icon = method.icon;
+                    return (
+                      <Card
+                        key={index}
+                        className={`hover:shadow-lg transition-shadow ${
+                          method.recommended ? 'border-2 border-purple-400' : ''
+                        }`}
+                      >
+                        <CardHeader>
+                          <div className={`h-12 w-12 rounded-lg bg-gradient-to-br ${method.color} flex items-center justify-center mb-3`}>
+                            <Icon className="h-6 w-6 text-white" />
+                          </div>
+                          <CardTitle className="text-base">{method.name}</CardTitle>
+                          <CardDescription className="text-sm">
+                            {method.description}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          {method.recommended && (
+                            <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 mb-2">
+                              推荐
+                            </Badge>
+                          )}
+                          <Button variant="outline" size="sm" className="w-full">
+                            选择此方式
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 加密配置 */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Settings className="h-5 w-5 text-blue-600" />
+                  加密配置
+                </h3>
+                <Card>
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          自动加密导出文件
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          所有导出文件自动加密保护
+                        </div>
+                      </div>
+                      <input type="checkbox" checked className="h-5 w-5" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          加密邮件发送
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          通过邮件发送的导出文件自动加密
+                        </div>
+                      </div>
+                      <input type="checkbox" checked className="h-5 w-5" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          密码发送方式
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          导出文件密码发送方式
+                        </div>
+                      </div>
+                      <Select defaultValue="separate">
+                        <SelectTrigger className="w-48">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="separate">单独发送密码</SelectItem>
+                          <SelectItem value="same">同一封邮件</SelectItem>
+                          <SelectItem value="none">不发送密码</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* 安全审计 */}
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Bell className="h-5 w-5 text-orange-600" />
+                  安全审计
+                </h3>
+                <div className="space-y-3">
+                  {[
+                    {
+                      time: '2025-01-28 14:30',
+                      event: '用户 HR-张 导出了加密的薪资数据',
+                      user: 'HR-张',
+                      file: '薪资明细_2025-01.xlsx',
+                      status: 'success',
+                    },
+                    {
+                      time: '2025-01-28 11:20',
+                      event: '用户 HR-李 导出了加密的员工名单',
+                      user: 'HR-李',
+                      file: '员工名单_2025-01.xlsx',
+                      status: 'success',
+                    },
+                    {
+                      time: '2025-01-28 09:15',
+                      event: '定时任务"月度员工名单导出"执行失败',
+                      user: '系统',
+                      file: '员工名单_2025-01.xlsx',
+                      status: 'error',
+                    },
+                  ].map((audit, index) => (
+                    <div
+                      key={index}
+                      className={`p-4 border rounded-lg flex items-center justify-between ${
+                        audit.status === 'error'
+                          ? 'bg-red-50 dark:bg-red-950/20 border-red-300 dark:border-red-700'
+                          : 'bg-gray-50 dark:bg-gray-800'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          {audit.status === 'success' ? (
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <AlertCircle className="h-4 w-4 text-red-600" />
+                          )}
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {audit.time}
+                          </span>
+                        </div>
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          {audit.event}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          文件: {audit.file}
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>

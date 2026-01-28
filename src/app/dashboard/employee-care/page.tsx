@@ -52,6 +52,17 @@ import {
   Users,
   TrendingUp,
   Filter,
+  Sparkles,
+  Crown,
+  Target,
+  Zap,
+  Smile,
+  Flame,
+  Bell,
+  Brain,
+  FileText,
+  DollarSign,
+  Settings,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -313,10 +324,20 @@ export default function EmployeeCarePage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="care">关怀记录</TabsTrigger>
           <TabsTrigger value="feedback">员工反馈</TabsTrigger>
           <TabsTrigger value="calendar">关怀日历</TabsTrigger>
+          <TabsTrigger value="smart-reminders">
+            <Sparkles className="h-4 w-4 mr-1" />
+            智能提醒
+            <Badge className="ml-1 bg-gradient-to-r from-purple-600 to-pink-600 scale-75">PRO</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="satisfaction-analysis">
+            <Brain className="h-4 w-4 mr-1" />
+            满意度分析
+            <Badge className="ml-1 bg-gradient-to-r from-purple-600 to-pink-600 scale-75">PRO</Badge>
+          </TabsTrigger>
         </TabsList>
 
         {/* 关怀记录 */}
@@ -596,6 +617,429 @@ export default function EmployeeCarePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 智能提醒 Tab */}
+      <TabsContent value="smart-reminders" className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-purple-600" />
+              智能关怀提醒
+              <Badge className="bg-gradient-to-r from-purple-600 to-pink-600">PRO</Badge>
+            </CardTitle>
+            <CardDescription>
+              AI 智能识别关怀时机，自动提醒不遗漏
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* 提醒类型 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {[
+                {
+                  type: 'birthday',
+                  title: '生日提醒',
+                  description: '员工生日前 7 天自动提醒',
+                  icon: Gift,
+                  color: 'from-pink-600 to-rose-600',
+                  enabled: true,
+                  upcoming: 3,
+                },
+                {
+                  type: 'anniversary',
+                  title: '入职周年',
+                  description: '入职纪念日提前提醒',
+                  icon: Calendar,
+                  color: 'from-blue-600 to-cyan-600',
+                  enabled: true,
+                  upcoming: 5,
+                },
+                {
+                  type: 'holiday',
+                  title: '节假日关怀',
+                  description: '春节、中秋等节日自动提醒',
+                  icon: Flame,
+                  color: 'from-orange-600 to-red-600',
+                  enabled: true,
+                  upcoming: 2,
+                },
+                {
+                  type: 'probation',
+                  title: '试用期转正',
+                  description: '试用期结束前 15 天提醒',
+                  icon: Target,
+                  color: 'from-green-600 to-emerald-600',
+                  enabled: true,
+                  upcoming: 8,
+                },
+                {
+                  type: 'contract',
+                  title: '合同到期',
+                  description: '合同到期前 30 天提醒',
+                  icon: FileText,
+                  color: 'from-yellow-600 to-orange-600',
+                  enabled: true,
+                  upcoming: 12,
+                },
+                {
+                  type: 'health',
+                  title: '健康关怀',
+                  description: '长期加班、病假后提醒',
+                  icon: Heart,
+                  color: 'from-red-600 to-pink-600',
+                  enabled: false,
+                  upcoming: 0,
+                },
+              ].map((reminder, index) => {
+                const Icon = reminder.icon;
+                return (
+                  <Card
+                    key={index}
+                    className={`hover:shadow-lg transition-all ${
+                      reminder.enabled ? 'border-2 border-green-400' : 'opacity-70'
+                    }`}
+                  >
+                    <CardHeader>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className={`p-2 rounded-lg bg-gradient-to-r ${reminder.color}`}>
+                          <Icon className="h-5 w-5 text-white" />
+                        </div>
+                        <Badge
+                          variant={reminder.enabled ? 'default' : 'secondary'}
+                          className={reminder.enabled ? 'bg-green-600' : ''}
+                        >
+                          {reminder.enabled ? '已启用' : '未启用'}
+                        </Badge>
+                      </div>
+                      <CardTitle className="text-base">{reminder.title}</CardTitle>
+                      <CardDescription className="text-sm">
+                        {reminder.description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          即将到来 <span className="font-bold text-purple-600">{reminder.upcoming}</span> 项
+                        </div>
+                        <Button variant="outline" size="sm">
+                          <Settings className="h-4 w-4 mr-2" />
+                          配置
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* 即将到来的提醒 */}
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <Bell className="h-5 w-5 text-orange-600" />
+                即将到来的提醒
+              </h3>
+              <div className="space-y-3">
+                {[
+                  {
+                    employee: '张三',
+                    event: '生日',
+                    date: '2025-02-01',
+                    days: 4,
+                    priority: 'medium',
+                  },
+                  {
+                    employee: '李四',
+                    event: '入职周年',
+                    date: '2025-01-30',
+                    days: 2,
+                    priority: 'high',
+                  },
+                  {
+                    employee: '王五',
+                    event: '试用期转正',
+                    date: '2025-02-10',
+                    days: 13,
+                    priority: 'medium',
+                  },
+                  {
+                    employee: '赵六',
+                    event: '合同到期',
+                    date: '2025-02-05',
+                    days: 8,
+                    priority: 'high',
+                  },
+                ].map((reminder, index) => (
+                  <div
+                    key={index}
+                    className={`p-4 border rounded-lg flex items-center justify-between ${
+                      reminder.priority === 'high'
+                        ? 'bg-orange-50 dark:bg-orange-950/20 border-orange-300 dark:border-orange-700'
+                        : 'bg-gray-50 dark:bg-gray-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold">
+                        {reminder.employee.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-gray-900 dark:text-white">
+                          {reminder.employee} · {reminder.event}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          {reminder.date} · 还有 {reminder.days} 天
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        <Smile className="h-4 w-4 mr-2" />
+                        发送祝福
+                      </Button>
+                      <Button
+                        size="sm"
+                        className={
+                          reminder.priority === 'high'
+                            ? 'bg-orange-600 hover:bg-orange-700'
+                            : 'bg-purple-600 hover:bg-purple-700'
+                        }
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        标记已处理
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      {/* 满意度分析 Tab */}
+      <TabsContent value="satisfaction-analysis" className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-blue-600" />
+              员工满意度深度分析
+              <Badge className="bg-gradient-to-r from-blue-600 to-cyan-600">PRO</Badge>
+            </CardTitle>
+            <CardDescription>
+              AI 深度分析员工满意度，提供改进建议
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* 满意度概览 */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              {[
+                {
+                  label: '整体满意度',
+                  value: '4.2',
+                  trend: '+0.3',
+                  icon: Smile,
+                  color: 'text-green-600',
+                },
+                {
+                  label: '工作环境',
+                  value: '4.5',
+                  trend: '+0.2',
+                  icon: Coffee,
+                  color: 'text-blue-600',
+                },
+                {
+                  label: '薪酬福利',
+                  value: '3.8',
+                  trend: '-0.1',
+                  icon: DollarSign,
+                  color: 'text-orange-600',
+                },
+                {
+                  label: '发展机会',
+                  value: '4.0',
+                  trend: '+0.4',
+                  icon: TrendingUp,
+                  color: 'text-purple-600',
+                },
+              ].map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <Card key={index}>
+                    <CardHeader className="pb-3">
+                      <CardDescription className="flex items-center gap-2">
+                        <Icon className={`h-4 w-4 ${item.color}`} />
+                        {item.label}
+                      </CardDescription>
+                      <CardTitle className="text-3xl">{item.value}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className={`text-sm flex items-center gap-1 ${
+                        item.trend.startsWith('+')
+                          ? 'text-green-600'
+                          : 'text-red-600'
+                      }`}>
+                        {item.trend.startsWith('+') ? (
+                          <TrendingUp className="h-4 w-4" />
+                        ) : (
+                          <TrendingUp className="h-4 w-4 rotate-180" />
+                        )}
+                        <span>较上月 {item.trend}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* 多维度分析 */}
+            <div className="mb-6">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <Target className="h-5 w-5 text-purple-600" />
+                多维度满意度分析
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  {
+                    dimension: '工作满意度',
+                    score: 85,
+                    change: '+5%',
+                    items: [
+                      { label: '工作内容', score: 90 },
+                      { label: '工作负荷', score: 75 },
+                      { label: '团队氛围', score: 88 },
+                      { label: '管理支持', score: 82 },
+                    ],
+                  },
+                  {
+                    dimension: '薪酬满意度',
+                    score: 78,
+                    change: '-2%',
+                    items: [
+                      { label: '基本工资', score: 75 },
+                      { label: '绩效奖金', score: 80 },
+                      { label: '福利待遇', score: 85 },
+                      { label: '晋升机会', score: 70 },
+                    ],
+                  },
+                  {
+                    dimension: '发展满意度',
+                    score: 82,
+                    change: '+8%',
+                    items: [
+                      { label: '培训机会', score: 85 },
+                      { label: '职业发展', score: 78 },
+                      { label: '晋升机制', score: 80 },
+                      { label: '导师指导', score: 75 },
+                    ],
+                  },
+                  {
+                    dimension: '环境满意度',
+                    score: 88,
+                    change: '+3%',
+                    items: [
+                      { label: '办公环境', score: 90 },
+                      { label: '办公设备', score: 85 },
+                      { label: '休息区域', score: 88 },
+                      { label: '交通便利', score: 82 },
+                    ],
+                  },
+                ].map((dimension, index) => (
+                  <Card key={index}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">{dimension.dimension}</CardTitle>
+                        <Badge
+                          variant={dimension.change.startsWith('+') ? 'default' : 'secondary'}
+                          className={dimension.change.startsWith('+') ? 'bg-green-600' : 'bg-red-600'}
+                        >
+                          {dimension.change}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            综合评分
+                          </span>
+                          <span className="text-lg font-bold text-purple-600">
+                            {dimension.score}
+                          </span>
+                        </div>
+                        <Progress value={dimension.score} className="h-2" />
+                      </div>
+                      <div className="space-y-2">
+                        {dimension.items.map((item, i) => (
+                          <div key={i} className="space-y-1">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-600 dark:text-gray-400">
+                                {item.label}
+                              </span>
+                              <span className="font-medium">{item.score}</span>
+                            </div>
+                            <Progress value={item.score} className="h-1" />
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* AI 改进建议 */}
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-lg border border-blue-200 dark:border-blue-700">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-5 w-5 text-purple-600" />
+                <span className="font-semibold text-gray-900 dark:text-white">AI 改进建议</span>
+                <Badge variant="outline" className="border-purple-600 text-purple-600">AI</Badge>
+              </div>
+              <div className="space-y-2">
+                {[
+                  {
+                    priority: 'high',
+                    icon: AlertTriangle,
+                    color: 'text-red-600',
+                    suggestion: '薪酬满意度较低，建议进行薪酬调研，调整薪酬结构',
+                  },
+                  {
+                    priority: 'medium',
+                    icon: Target,
+                    color: 'text-orange-600',
+                    suggestion: '晋升机会评分较低，建议优化晋升机制，增加透明度',
+                  },
+                  {
+                    priority: 'low',
+                    icon: TrendingUp,
+                    color: 'text-green-600',
+                    suggestion: '工作满意度持续提升，继续保持当前工作氛围',
+                  },
+                ].map((item, index) => {
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-start gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg"
+                    >
+                      <Icon className={`h-5 w-5 ${item.color} mt-0.5`} />
+                      <div>
+                        <div className="font-medium text-gray-900 dark:text-white mb-1">
+                          {item.priority === 'high' ? '高优先级' : item.priority === 'medium' ? '中优先级' : '低优先级'}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          {item.suggestion}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <Button className="mt-4 w-full bg-gradient-to-r from-purple-600 to-pink-600">
+                <Sparkles className="h-4 w-4 mr-2" />
+                生成详细改进方案
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
     </div>
   );
 }
