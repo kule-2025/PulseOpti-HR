@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -59,6 +59,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/theme';
 import { useLocalStorage } from '@/hooks/use-performance';
+import { useAuth } from '@/lib/auth/client';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -579,6 +580,32 @@ const SIDEBAR_OPEN_KEY = 'sidebar-open-v2';
 
 export default function DashboardLayoutOptimized({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { isAuthenticated, user, loading, logout } = useAuth();
+
+  // 权限验证：未登录时跳转到登录页
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, loading, router]);
+
+  // 加载中显示 loading
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">加载中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 未登录不渲染
+  if (!isAuthenticated) {
+    return null;
+  }
 
   // 使用 localStorage 持久化侧边栏状态
   const [sidebarOpen, setSidebarOpen] = useLocalStorage<boolean>(SIDEBAR_OPEN_KEY, false);
@@ -981,21 +1008,27 @@ export default function DashboardLayoutOptimized({ children }: DashboardLayoutPr
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>我的账户</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <User className="h-4 w-4 mr-2" />
-                个人资料
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/employee-portal">
+                  <User className="h-4 w-4 mr-2" />
+                  个人资料
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="h-4 w-4 mr-2" />
-                系统设置
+              <DropdownMenuItem asChild>
+                <Link href="/settings">
+                  <Settings className="h-4 w-4 mr-2" />
+                  系统设置
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell className="h-4 w-4 mr-2" />
-                消息通知
-                <Badge className="ml-auto bg-red-600 text-white">5</Badge>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/notifications">
+                  <Bell className="h-4 w-4 mr-2" />
+                  消息通知
+                  <Badge className="ml-auto bg-red-600 text-white">5</Badge>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
+              <DropdownMenuItem className="text-red-600" onClick={logout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 退出登录
               </DropdownMenuItem>
