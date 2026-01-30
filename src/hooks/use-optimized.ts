@@ -133,19 +133,23 @@ export function useLocalStorage<T>(
   key: string,
   initialValue: T
 ): [T, (value: T | ((val: T) => T)) => void, () => void] {
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === 'undefined') {
-      return initialValue;
-    }
+  // 使用 mounted 状态确保客户端已挂载
+  const [mounted, setMounted] = useState(false);
+  const [storedValue, setStoredValue] = useState<T>(initialValue);
 
+  // 客户端挂载后读取 localStorage
+  useEffect(() => {
+    setMounted(true);
     try {
       const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
+      if (item) {
+        const parsed = JSON.parse(item);
+        setStoredValue(parsed);
+      }
     } catch (error) {
       console.error(`Error reading localStorage key "${key}":`, error);
-      return initialValue;
     }
-  });
+  }, [key]);
 
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {
