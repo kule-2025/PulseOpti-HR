@@ -239,7 +239,19 @@ const UserGuideComponent = ({
 
 export const UserGuide = memo(UserGuideComponent);
 
+// 向后兼容的导出（仅供内部使用，不推荐在组件外直接调用）
+// 这是一个普通函数，可以在 useEffect 中调用
+export function shouldShowGuide(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  const completed = localStorage.getItem('pulseopti-guide-completed');
+  const skipped = localStorage.getItem('pulseopti-guide-skipped');
+  return !completed && !skipped;
+}
+
 // 检查是否需要显示引导 - 使用 Hook 以避免 SSR 问题
+// 注意：此 Hook 必须在组件顶层调用，不能在 useEffect 或条件语句中调用
 export function useShouldShowGuide(): boolean {
   const [shouldShow, setShouldShow] = useState(false);
 
@@ -253,28 +265,6 @@ export function useShouldShowGuide(): boolean {
   }, []);
 
   return shouldShow;
-}
-
-// 重置引导状态 - 使用 Hook 以避免 SSR 问题
-export function useResetGuide(): () => void {
-  const reset = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('pulseopti-guide-completed');
-      localStorage.removeItem('pulseopti-guide-skipped');
-    }
-  }, []);
-
-  return reset;
-}
-
-// 向后兼容的导出（仅供内部使用，不推荐在组件外直接调用）
-export function shouldShowGuide(): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-  const completed = localStorage.getItem('pulseopti-guide-completed');
-  const skipped = localStorage.getItem('pulseopti-guide-skipped');
-  return !completed && !skipped;
 }
 
 // 悬浮提示按钮组件

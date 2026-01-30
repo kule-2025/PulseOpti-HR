@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { UserGuide, useShouldShowGuide } from '@/components/layout/user-guide';
+import { UserGuide, shouldShowGuide } from '@/components/layout/user-guide';
 import {
   LayoutDashboard,
   Users,
@@ -333,7 +333,7 @@ export default function DashboardPageOptimized() {
   // 确保客户端已挂载
   useEffect(() => {
     setMounted(true);
-    setShowGuide(useShouldShowGuide());
+    setShowGuide(shouldShowGuide());
   }, []);
 
   // 显示的待办事项
