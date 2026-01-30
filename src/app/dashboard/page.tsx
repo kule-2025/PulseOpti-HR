@@ -324,27 +324,38 @@ const COMPLIANCE_RISK_CONFIG = {
 };
 
 export default function DashboardPageOptimized() {
+  const [mounted, setMounted] = useState(false);
   const [showAllTasks, setShowAllTasks] = useState(false);
   const [showProBanner, setShowProBanner] = useState(true);
   const [currentDate, setCurrentDate] = useState('');
-  const [showGuide, setShowGuide] = useState(useShouldShowGuide());
+  const [showGuide, setShowGuide] = useState(false);
+
+  // 确保客户端已挂载
+  useEffect(() => {
+    setMounted(true);
+    setShowGuide(useShouldShowGuide());
+  }, []);
 
   // 显示的待办事项
   const displayTasks = showAllTasks ? dashboardData.tasks : dashboardData.tasks.slice(0, 3);
 
   // 3秒后自动隐藏PRO推广横幅
   useEffect(() => {
+    if (!mounted) return;
+    
     const timer = setTimeout(() => {
       setShowProBanner(false);
     }, 30000); // 30秒后隐藏
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [mounted]);
 
   // 设置当前日期（客户端）
   useEffect(() => {
+    if (!mounted) return;
+    
     setCurrentDate(new Date().toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
-  }, []);
+  }, [mounted]);
 
   return (
     <div className="space-y-6">

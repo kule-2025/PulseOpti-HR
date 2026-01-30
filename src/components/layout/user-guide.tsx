@@ -123,13 +123,17 @@ const UserGuideComponent = ({
     setShowGuide(false);
     onComplete?.();
     // 标记已完成引导
-    localStorage.setItem('pulseopti-guide-completed', 'true');
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pulseopti-guide-completed', 'true');
+    }
   };
 
   const handleSkip = () => {
     setSkipped(true);
     setShowGuide(false);
-    localStorage.setItem('pulseopti-guide-skipped', 'true');
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pulseopti-guide-skipped', 'true');
+    }
     onClose?.();
   };
 
@@ -240,6 +244,9 @@ export function useShouldShowGuide(): boolean {
   const [shouldShow, setShouldShow] = useState(false);
 
   useEffect(() => {
+    // 只在客户端执行
+    if (typeof window === 'undefined') return;
+    
     const completed = localStorage.getItem('pulseopti-guide-completed');
     const skipped = localStorage.getItem('pulseopti-guide-skipped');
     setShouldShow(!completed && !skipped);
@@ -251,8 +258,10 @@ export function useShouldShowGuide(): boolean {
 // 重置引导状态 - 使用 Hook 以避免 SSR 问题
 export function useResetGuide(): () => void {
   const reset = useCallback(() => {
-    localStorage.removeItem('pulseopti-guide-completed');
-    localStorage.removeItem('pulseopti-guide-skipped');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('pulseopti-guide-completed');
+      localStorage.removeItem('pulseopti-guide-skipped');
+    }
   }, []);
 
   return reset;
