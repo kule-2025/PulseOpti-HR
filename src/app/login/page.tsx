@@ -12,6 +12,7 @@ import { Users, ArrowLeft, Loader2, Eye, EyeOff, Bug, Info } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isDevMode, setIsDevMode] = useState(false);
@@ -25,9 +26,14 @@ export default function LoginPage() {
     password: '',
   });
 
-  // 检测是否是开发模式
+  // 确保客户端已挂载
   useEffect(() => {
-    setIsDevMode(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    setMounted(true);
+    // 检测是否是开发模式
+    setIsDevMode(
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    );
   }, []);
 
   // 开发模式快速登录
@@ -58,9 +64,11 @@ export default function LoginPage() {
         throw new Error(data.message || '开发模式登录失败');
       }
 
-      // 保存用户信息
-      localStorage.setItem('user', JSON.stringify(data.data.user));
-      localStorage.setItem('token', data.data.token);
+      // 保存用户信息到 localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(data.data.user));
+        localStorage.setItem('token', data.data.token);
+      }
 
       router.push('/dashboard');
     } catch (err: any) {
@@ -104,10 +112,12 @@ export default function LoginPage() {
         throw new Error(data.message || '登录失败');
       }
 
-      // 保存用户信息到localStorage
+      // 保存用户信息到 localStorage
       if (data.data?.user && data.data?.token) {
-        localStorage.setItem('user', JSON.stringify(data.data.user));
-        localStorage.setItem('token', data.data.token);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('user', JSON.stringify(data.data.user));
+          localStorage.setItem('token', data.data.token);
+        }
       } else {
         throw new Error('服务器返回数据格式错误');
       }
@@ -120,6 +130,20 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          <Card className="bg-white shadow-xl dark:bg-gray-800">
+            <CardContent className="flex items-center justify-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-6">

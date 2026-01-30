@@ -14,6 +14,8 @@ import { cn } from '@/lib/utils';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -44,8 +46,15 @@ export default function RegisterPage() {
     password: { status: 'idle' as 'idle' | 'valid' | 'invalid', message: '' },
   });
 
+  // 确保客户端已挂载
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // 防抖检查邮箱
   useEffect(() => {
+    if (!mounted) return;
+
     const timer = setTimeout(() => {
       if (formData.email && formData.email.includes('@')) {
         checkEmail();
@@ -54,10 +63,12 @@ export default function RegisterPage() {
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [formData.email]);
+  }, [formData.email, mounted]);
 
   // 防抖检查手机号
   useEffect(() => {
+    if (!mounted) return;
+
     const timer = setTimeout(() => {
       if (formData.phone && formData.phone.length === 11) {
         checkPhone();
@@ -66,10 +77,12 @@ export default function RegisterPage() {
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [formData.phone]);
+  }, [formData.phone, mounted]);
 
   // 防抖检查用户名
   useEffect(() => {
+    if (!mounted) return;
+
     const timer = setTimeout(() => {
       if (formData.username && formData.username.length >= 4) {
         checkUsername();
@@ -78,7 +91,7 @@ export default function RegisterPage() {
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [formData.username]);
+  }, [formData.username, mounted]);
 
   // 检查邮箱是否已被注册
   const checkEmail = async () => {
@@ -212,6 +225,8 @@ export default function RegisterPage() {
 
   // 验证密码强度
   useEffect(() => {
+    if (!mounted) return;
+
     if (!formData.password) {
       setValidations(prev => ({ ...prev, password: { status: 'idle', message: '' } }));
       return;
@@ -236,7 +251,7 @@ export default function RegisterPage() {
       ...prev,
       password: { status: 'valid', message: '密码强度合格' }
     }));
-  }, [formData.password]);
+  }, [formData.password, mounted]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -325,9 +340,11 @@ export default function RegisterPage() {
       }
 
       setSuccess(true);
-      // 保存用户信息
-      localStorage.setItem('user', JSON.stringify(data.data.user));
-      localStorage.setItem('token', data.data.token);
+      // 保存用户信息到 localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(data.data.user));
+        localStorage.setItem('token', data.data.token);
+      }
 
       // 2秒后跳转到仪表盘
       setTimeout(() => {
@@ -347,6 +364,20 @@ export default function RegisterPage() {
     validation.status === 'valid' && 'border-green-500 focus-visible:ring-green-500',
     validation.status === 'invalid' && 'border-red-500 focus-visible:ring-red-500'
   );
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-6 py-12">
+        <div className="w-full max-w-lg">
+          <Card className="bg-white shadow-xl dark:bg-gray-800">
+            <CardContent className="flex items-center justify-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-6 py-12">
