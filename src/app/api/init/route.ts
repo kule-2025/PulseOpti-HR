@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     // 步骤3: 验证超级管理员账号
     try {
-      const adminEmail = process.env.ADMIN_EMAIL || '208343256@qq.com';
+      const adminEmail = process.env.ADMIN_EMAIL || 'admin@pulseopti.com';
       const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
 
       const loginResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:5000'}/api/auth/login`, {
@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
         },
       },
       adminInfo: {
-        email: process.env.ADMIN_EMAIL || '208343256@qq.com',
+        email: process.env.ADMIN_EMAIL || 'admin@pulseopti.com',
         password: process.env.ADMIN_PASSWORD || 'admin123',
         hint: '请妥善保管此信息，并在初始化后立即修改密码',
       },

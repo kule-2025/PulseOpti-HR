@@ -18,11 +18,13 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@pulseopti.com';
+
     // 检查是否已有超级管理员
     const existingAdmin = await db
       .select()
       .from(users)
-      .where(require('drizzle-orm').eq(users.email, '208343256@qq.com'));
+      .where(require('drizzle-orm').eq(users.email, adminEmail));
 
     if (existingAdmin.length > 0) {
       return NextResponse.json({
@@ -41,8 +43,8 @@ export async function POST(request: NextRequest) {
     const [admin] = await db
       .insert(users)
       .values({
-        email: '208343256@qq.com',
-        username: '208343256@qq.com',
+        email: adminEmail,
+        username: adminEmail,
         password: hashedPassword,
         name: '超级管理员',
         role: 'admin',

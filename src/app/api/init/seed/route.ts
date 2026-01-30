@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
             'PulseOpti HR 脉策聚效',
             'https://www.aizhixuan.com.cn',
             true, true, true, true, true, false,
-            '208343256@qq.com', '400-888-8888', '北京市朝阳区'
+            'support@pulseopti.com', '400-888-8888', '北京市朝阳区'
           )
           RETURNING id, site_name
         `);
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
 
     // 3. 创建超级管理员
     try {
-      const adminEmail = process.env.ADMIN_EMAIL || '208343256@qq.com';
+      const adminEmail = process.env.ADMIN_EMAIL || 'admin@pulseopti.com';
       const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
 
       const existingAdmin = await db.execute(
@@ -251,7 +251,7 @@ export async function GET(request: NextRequest) {
     const hasCompanies = companies.length > 0;
 
     // 检查超级管理员
-    const adminEmail = process.env.ADMIN_EMAIL || '208343256@qq.com';
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@pulseopti.com';
     const admins = await db.execute(
       `SELECT id, email FROM users WHERE email = '${adminEmail}' LIMIT 1`
     );

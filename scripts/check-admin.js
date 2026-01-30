@@ -10,7 +10,7 @@ async function createSuperAdmin() {
     await client.connect();
     console.log('Connected to database');
 
-    const adminEmail = process.env.ADMIN_EMAIL || '208343256@qq.com';
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@pulseopti.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
 
     // 检查是否已存在

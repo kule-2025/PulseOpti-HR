@@ -13,7 +13,7 @@ async function createSuperAdmin() {
     // 检查是否已存在超级管理员
     const checkResult = await client.query(
       'SELECT id, email, name, is_super_admin FROM users WHERE email = $1',
-      ['208343256@qq.com']
+      ['admin@pulseopti.com']
     );
 
     if (checkResult.rows.length > 0) {
@@ -45,8 +45,8 @@ async function createSuperAdmin() {
         NOW()
       ) RETURNING id, username, email, name, role, is_super_admin`,
       [
-        '208343256@qq.com',
-        '208343256@qq.com',
+        'admin@pulseopti.com',
+        'admin@pulseopti.com',
         hashedPassword,
         '超级管理员',
         'admin',
