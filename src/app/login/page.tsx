@@ -7,13 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Users, ArrowLeft, Loader2, Bug, Eye, EyeOff } from 'lucide-react';
+import { Users, ArrowLeft, Loader2, Eye, EyeOff, Bug, Info } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [loginMethod, setLoginMethod] = useState<'password' | 'sms' | 'email'>('password');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isDevMode, setIsDevMode] = useState(false);
@@ -21,31 +19,16 @@ export default function LoginPage() {
   // 密码显示状态
   const [showPassword, setShowPassword] = useState(false);
 
+  // 表单状态
+  const [formData, setFormData] = useState({
+    account: '',
+    password: '',
+  });
+
   // 检测是否是开发模式
   useEffect(() => {
     setIsDevMode(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
   }, []);
-
-  // 密码登录表单状态
-  const [passwordForm, setPasswordForm] = useState({
-    username: '',
-    password: '',
-  });
-
-  // 短信登录表单状态
-  const [smsForm, setSmsForm] = useState({
-    phone: '',
-    code: '',
-  });
-  const [smsCountdown, setSmsCountdown] = useState(0);
-
-  // 邮箱登录表单状态
-  const [emailForm, setEmailForm] = useState({
-    email: '',
-    code: '',
-  });
-  const [emailCountdown, setEmailCountdown] = useState(0);
-  const [devCode, setDevCode] = useState(''); // 开发环境验证码
 
   // 开发模式快速登录
   const handleDevLogin = async () => {
@@ -87,7 +70,7 @@ export default function LoginPage() {
     }
   };
 
-  const handlePasswordLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -99,8 +82,8 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          account: passwordForm.username,
-          password: passwordForm.password,
+          account: formData.account,
+          password: formData.password,
         }),
       });
 
@@ -138,199 +121,6 @@ export default function LoginPage() {
     }
   };
 
-  // 发送短信验证码
-  const handleSendSmsCode = async () => {
-    if (!smsForm.phone) {
-      setError('请先输入手机号');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await fetch('/api/auth/send-sms', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          phone: smsForm.phone,
-          purpose: 'login',
-        }),
-      });
-
-      if (!response.ok) {
-        let errorMessage = '发送失败';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch {
-          errorMessage = `发送失败 (${response.status})`;
-        }
-        throw new Error(errorMessage);
-      }
-
-      // 开始倒计时
-      setSmsCountdown(60);
-      const timer = setInterval(() => {
-        setSmsCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      setError('');
-    } catch (err: any) {
-      setError(err.message || '验证码发送失败');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 发送邮箱验证码
-  const handleSendEmailCode = async () => {
-    if (!emailForm.email) {
-      setError('请先输入邮箱');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await fetch('/api/auth/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: emailForm.email,
-          purpose: 'login',
-        }),
-      });
-
-      if (!response.ok) {
-        let errorMessage = '发送失败';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch {
-          errorMessage = `发送失败 (${response.status})`;
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
-
-      // 开发环境：保存验证码以便显示给用户
-      if (data.data?.code) {
-        setDevCode(data.data.code);
-      }
-
-      // 开始倒计时
-      setEmailCountdown(60);
-      const timer = setInterval(() => {
-        setEmailCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      setError('');
-    } catch (err: any) {
-      setError(err.message || '验证码发送失败');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSmsLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const response = await fetch('/api/auth/login/sms', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(smsForm),
-      });
-
-      if (!response.ok) {
-        let errorMessage = '验证码错误';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch {
-          errorMessage = `验证码错误 (${response.status})`;
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.message || '验证码错误');
-      }
-
-      localStorage.setItem('user', JSON.stringify(data.data.user));
-      localStorage.setItem('token', data.data.token);
-
-      router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || '验证码错误');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const response = await fetch('/api/auth/login/email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(emailForm),
-      });
-
-      if (!response.ok) {
-        let errorMessage = '验证码错误';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch {
-          errorMessage = `验证码错误 (${response.status})`;
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.message || '验证码错误');
-      }
-
-      localStorage.setItem('user', JSON.stringify(data.data.user));
-      localStorage.setItem('token', data.data.token);
-
-      router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || '验证码错误');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-6">
       <div className="w-full max-w-md">
@@ -350,10 +140,10 @@ export default function LoginPage() {
             <CardDescription>登录到 PulseOpti HR 脉策聚效</CardDescription>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="space-y-6">
             {/* 开发模式快速登录 */}
             {isDevMode && (
-              <Alert className="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
+              <Alert className="bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
                 <Bug className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                 <AlertDescription className="flex items-center justify-between">
                   <span className="text-sm text-yellow-800 dark:text-yellow-200">
@@ -372,168 +162,81 @@ export default function LoginPage() {
               </Alert>
             )}
 
-            <Tabs defaultValue="password" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="password" onClick={() => setLoginMethod('password')}>
-                  密码登录
-                </TabsTrigger>
-                <TabsTrigger value="sms" onClick={() => setLoginMethod('sms')}>
-                  手机验证
-                </TabsTrigger>
-                <TabsTrigger value="email" onClick={() => setLoginMethod('email')}>
-                  邮箱登录
-                </TabsTrigger>
-              </TabsList>
+            {/* 登录提示 */}
+            <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+              <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <AlertDescription className="text-sm text-blue-800 dark:text-blue-200">
+                支持使用邮箱、手机号或用户名登录
+              </AlertDescription>
+            </Alert>
 
-              <TabsContent value="password" className="space-y-4">
-                <form onSubmit={handlePasswordLogin}>
-                  <div className="space-y-2">
-                    <Label htmlFor="username">账号</Label>
-                    <Input
-                      id="username"
-                      type="text"
-                      placeholder="请输入手机号或邮箱"
-                      value={passwordForm.username}
-                      onChange={(e) => setPasswordForm({ ...passwordForm, username: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="password">密码</Label>
-                      <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700">
-                        忘记密码?
-                      </Link>
-                    </div>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="请输入密码"
-                        value={passwordForm.password}
-                        onChange={(e) => setPasswordForm({ ...passwordForm, password: e.target.value })}
-                        required
-                        className="pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-                  {error && <p className="text-sm text-red-600">{error}</p>}
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                    disabled={loading}
-                  >
-                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : '登录'}
-                  </Button>
-                </form>
-              </TabsContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              {/* 账号输入 */}
+              <div className="space-y-2">
+                <Label htmlFor="account">账号 *</Label>
+                <Input
+                  id="account"
+                  type="text"
+                  placeholder="请输入邮箱、手机号或用户名"
+                  value={formData.account}
+                  onChange={(e) => setFormData({ ...formData, account: e.target.value })}
+                  required
+                  autoComplete="username"
+                />
+              </div>
 
-              <TabsContent value="sms" className="space-y-4">
-                <form onSubmit={handleSmsLogin}>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">手机号</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="请输入手机号"
-                      value={smsForm.phone}
-                      onChange={(e) => setSmsForm({ ...smsForm, phone: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sms-code">验证码</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="sms-code"
-                        type="text"
-                        placeholder="请输入验证码"
-                        className="flex-1"
-                        value={smsForm.code}
-                        onChange={(e) => setSmsForm({ ...smsForm, code: e.target.value })}
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="shrink-0"
-                        onClick={handleSendSmsCode}
-                        disabled={smsCountdown > 0 || loading}
-                      >
-                        {smsCountdown > 0 ? `${smsCountdown}秒后重试` : '获取验证码'}
-                      </Button>
-                    </div>
-                  </div>
-                  {error && <p className="text-sm text-red-600">{error}</p>}
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                    disabled={loading}
+              {/* 密码输入 */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">密码 *</Label>
+                  <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700">
+                    忘记密码?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="请输入密码"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                    autoComplete="current-password"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                   >
-                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : '登录'}
-                  </Button>
-                </form>
-              </TabsContent>
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
 
-              <TabsContent value="email" className="space-y-4">
-                <form onSubmit={handleEmailLogin}>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">邮箱</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="请输入邮箱"
-                      value={emailForm.email}
-                      onChange={(e) => setEmailForm({ ...emailForm, email: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email-code">验证码</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="email-code"
-                        type="text"
-                        placeholder="请输入验证码"
-                        className="flex-1"
-                        value={emailForm.code}
-                        onChange={(e) => setEmailForm({ ...emailForm, code: e.target.value })}
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="shrink-0"
-                        onClick={handleSendEmailCode}
-                        disabled={emailCountdown > 0 || loading}
-                      >
-                        {emailCountdown > 0 ? `${emailCountdown}秒后重试` : '获取验证码'}
-                      </Button>
-                    </div>
-                    {devCode && (
-                      <div className="text-sm text-blue-600 bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
-                        💡 开发环境验证码：<strong>{devCode}</strong>
-                      </div>
-                    )}
-                  </div>
-                  {error && <p className="text-sm text-red-600">{error}</p>}
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                    disabled={loading}
-                  >
-                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : '登录'}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+              {/* 错误提示 */}
+              {error && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                </div>
+              )}
+
+              {/* 登录按钮 */}
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    登录中...
+                  </>
+                ) : (
+                  '登录'
+                )}
+              </Button>
+            </form>
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-4">
