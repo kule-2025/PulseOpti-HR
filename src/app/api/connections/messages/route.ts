@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     // 发送消息
     const result = await connectionService.sendMessage({
-      fromUserId: user.userId,
+      fromUserId: user.id,
       toUserId,
       message,
       messageType,
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1', 10);
     const pageSize = parseInt(searchParams.get('pageSize') || '20', 10);
 
-    const messages = await connectionService.getMessages(user.userId, page, pageSize);
+    const messages = await connectionService.getMessages(user.id, page, pageSize);
 
     return NextResponse.json({
       success: true,

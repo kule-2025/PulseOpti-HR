@@ -10,6 +10,10 @@ export interface JWTPayload {
   userType: string; // 账号类型：main_account/sub_account/employee/developer
   isSuperAdmin: boolean;
   name: string;
+  email?: string;
+  phone?: string;
+  parentUserId?: string;
+  metadata?: any;
 }
 
 // 生成JWT token

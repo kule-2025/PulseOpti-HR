@@ -16,14 +16,18 @@ export async function getUserFromRequest(request: NextRequest): Promise<AuthUser
 
     const payload = await verifyToken(token);
     
+    if (!payload) {
+      return null;
+    }
+    
     // 构建用户权限
     const user: AuthUser = {
       id: payload.userId,
       name: payload.name,
       email: payload.email,
       phone: payload.phone,
-      role: payload.role,
-      userType: payload.userType,
+      role: payload.role as any, // 类型转换，因为 payload.role 是 string，但 AuthUser.role 是 Role 枚举
+      userType: payload.userType as any, // 类型转换，因为 payload.userType 是 string，但 AuthUser.userType 是 UserType 枚举
       isSuperAdmin: payload.isSuperAdmin || false,
       companyId: payload.companyId,
       parentUserId: payload.parentUserId,
@@ -86,14 +90,14 @@ export async function requireAnyPermission(
 /**
  * 检查是否为超级管理员
  */
-export function isSuperAdmin(user: JWTPayload): boolean {
+export function isSuperAdmin(user: AuthUser): boolean {
   return user.isSuperAdmin || user.role === 'super_admin';
 }
 
 /**
  * 要求超级管理员
  */
-export async function requireSuperAdmin(request: NextRequest): Promise<NextResponse | JWTPayload> {
+export async function requireSuperAdmin(request: NextRequest): Promise<NextResponse | AuthUser> {
   const user = await getUserFromRequest(request);
 
   if (!user) {

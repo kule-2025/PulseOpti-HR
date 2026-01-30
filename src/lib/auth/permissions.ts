@@ -216,7 +216,7 @@ const USER_TYPE_PERMISSIONS: Record<UserType, Permission[]> = {
 export interface AuthUser {
   id: string;
   name: string;
-  email: string;
+  email?: string;
   phone?: string;
   role: Role;
   userType: UserType;
@@ -292,9 +292,9 @@ export function getDataAccessScope(user: AuthUser): 'all' | 'company' | 'departm
 /**
  * 从 Cookie 中解析 JWT token 并返回用户信息
  */
-export function getAuthUserFromRequest(): AuthUser | null {
+export async function getAuthUserFromRequest(): Promise<AuthUser | null> {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
 
     if (!token) {
@@ -335,8 +335,8 @@ export function getAuthUserFromRequest(): AuthUser | null {
 /**
  * 验证用户是否已登录
  */
-export function requireAuth(): AuthUser {
-  const user = getAuthUserFromRequest();
+export async function requireAuth(): Promise<AuthUser> {
+  const user = await getAuthUserFromRequest();
 
   if (!user) {
     throw new Error('Unauthorized: 用户未登录');
@@ -348,8 +348,8 @@ export function requireAuth(): AuthUser {
 /**
  * 验证用户是否有指定权限
  */
-export function requirePermission(permission: Permission): AuthUser {
-  const user = requireAuth();
+export async function requirePermission(permission: Permission): Promise<AuthUser> {
+  const user = await requireAuth();
 
   if (!hasPermission(user, permission)) {
     throw new Error('Forbidden: 权限不足');
@@ -361,8 +361,8 @@ export function requirePermission(permission: Permission): AuthUser {
 /**
  * 验证用户是否可以访问指定公司
  */
-export function requireCompanyAccess(companyId: string): AuthUser {
-  const user = requireAuth();
+export async function requireCompanyAccess(companyId: string): Promise<AuthUser> {
+  const user = await requireAuth();
 
   if (!canAccessCompany(user, companyId)) {
     throw new Error('Forbidden: 无权访问该企业数据');

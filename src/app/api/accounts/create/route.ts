@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     const result = await accountManagementService.createAccount({
       companyId: user.companyId || '',
       userType,
-      parentUserId: parentUserId || user.userId,
+      parentUserId: parentUserId || user.id,
       name,
       email,
       phone,

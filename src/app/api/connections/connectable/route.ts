@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const user = await requireAuth(request);
     if (user instanceof NextResponse) return user;
 
-    const accounts = await connectionService.getConnectableAccounts(user.userId);
+    const accounts = await connectionService.getConnectableAccounts(user.id);
 
     return NextResponse.json({
       success: true,

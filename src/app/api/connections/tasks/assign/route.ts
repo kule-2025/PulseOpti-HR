@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     // 指派任务
     const result = await connectionService.assignTask({
-      fromUserId: user.userId,
+      fromUserId: user.id,
       toUserId,
       taskType,
       title,

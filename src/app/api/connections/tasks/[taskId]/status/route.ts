@@ -37,7 +37,7 @@ export async function PUT(
     // 更新任务状态
     await connectionService.updateTaskStatus(
       taskId,
-      user.userId,
+      user.id,
       status,
       feedback
     );

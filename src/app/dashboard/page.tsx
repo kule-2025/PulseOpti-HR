@@ -327,7 +327,7 @@ export default function DashboardPageOptimized() {
   const [showAllTasks, setShowAllTasks] = useState(false);
   const [showProBanner, setShowProBanner] = useState(true);
   const [currentDate, setCurrentDate] = useState('');
-  const showGuide = useShouldShowGuide();
+  const [showGuide, setShowGuide] = useState(useShouldShowGuide());
 
   // 显示的待办事项
   const displayTasks = showAllTasks ? dashboardData.tasks : dashboardData.tasks.slice(0, 3);

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') as TaskStatus | null;
 
-    const tasks = await connectionService.getTasks(user.userId, status || undefined);
+    const tasks = await connectionService.getTasks(user.id, status || undefined);
 
     return NextResponse.json({
       success: true,

@@ -4,7 +4,7 @@
  */
 
 import { sql, and, eq, SQL } from 'drizzle-orm';
-import { getDb } from '@/storage/database';
+import { getDb } from '@/lib/db';
 import { AuthUser, requireAuth, getDataAccessScope } from './permissions';
 
 // ==================== 数据隔离辅助函数 ====================
@@ -151,8 +151,8 @@ export class IsolatedDataAccess {
 /**
  * 创建数据访问实例
  */
-export function createIsolatedDataAccess(user?: AuthUser): IsolatedDataAccess {
-  const authUser = user || requireAuth();
+export async function createIsolatedDataAccess(user?: AuthUser): Promise<IsolatedDataAccess> {
+  const authUser = user || await requireAuth();
   return new IsolatedDataAccess(authUser);
 }
 
@@ -165,7 +165,7 @@ export async function verifyDataOwnership(
   userId: string,
   companyId: string
 ): Promise<boolean> {
-  const user = requireAuth();
+  const user = await requireAuth();
 
   // 超级管理员可以访问所有数据
   if (user.isSuperAdmin || user.userType === 'developer') {
@@ -185,7 +185,7 @@ export async function verifyDataOwnership(
  * 验证用户是否属于指定公司
  */
 export async function verifyUserInCompany(companyId: string): Promise<boolean> {
-  const user = requireAuth();
+  const user = await requireAuth();
 
   // 超级管理员可以访问所有公司
   if (user.isSuperAdmin || user.userType === 'developer') {
